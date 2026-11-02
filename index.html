@@ -1,0 +1,2018 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Seconde Vie – Atelier</title>
+<link rel="icon" href="logo.png">
+<style>
+:root{--bg:#f2f4f1;--surf:#fff;--ink:#17261f;--mut:#5d6b64;--line:#dfe4e0;--brand:#1f4d3f;--bad:#b3261e;--ok:#22703f;--warn:#b86e00}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+.app{max-width:480px;margin:0 auto;padding:20px 20px 100px;width:100%}
+.card,.modal .card{width:100%}
+img{max-width:100%}
+input,select,textarea,button{max-width:100%}
+h1{font-size:22px;margin:4px 0 12px}
+h2{font-size:17px;margin:14px 0 8px}
+.card{background:var(--surf);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.row{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.m{color:var(--mut);font-size:13px}
+.t{font-weight:600}
+span.chip{cursor:default}
+button:not(:disabled),.card[onclick]{transition:transform .15s,box-shadow .15s}
+button:not(:disabled):hover,.card[onclick]:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.12)}
+.chip{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:99px;background:var(--line);white-space:nowrap;border:0;cursor:pointer;font-family:inherit}
+.late{background:#fde4e1;color:var(--bad)}
+.ok{background:#def3e5;color:var(--ok)}
+.warn{background:#fff1d6;color:var(--warn)}
+.code{font-family:ui-monospace,Menlo,monospace;background:var(--bg);padding:2px 6px;border-radius:6px}
+input,select,textarea{width:100%;font:inherit;color:var(--ink);background:var(--surf);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:6px}
+label{display:block;font-size:13px;font-weight:600;margin:8px 0 3px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn{width:100%;border:0;background:var(--brand);color:#fff;font-family:inherit;font-weight:600;font-size:15px;padding:12px;border-radius:12px;margin-top:8px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--brand);border:1px solid var(--brand)}
+.btn.small{width:auto;padding:7px 12px;margin:0;font-size:13px}
+.err{color:var(--bad);font-size:13px;min-height:18px;margin:6px 0}
+.hide{display:none!important}
+nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;box-sizing:border-box;padding-bottom:env(safe-area-inset-bottom);background:var(--surf);border-top:1px solid var(--line);box-shadow:0 100px 0 0 var(--surf);display:flex;z-index:5}
+nav button{flex:1;border:0;background:none;padding:10px 2px;font-family:inherit;font-weight:600;font-size:12px;color:var(--mut);cursor:pointer}
+nav button.on{color:var(--brand)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}
+.modal .card{max-width:360px;width:100%;margin:0}
+.fb-wrap{position:fixed;left:14px;bottom:14px;z-index:15}
+.fb-wrap.rep{bottom:72px}
+.fb-panel{position:fixed;left:14px;bottom:80px;width:300px;max-width:calc(100% - 28px);background:var(--surf);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:25}
+.fb-head{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line);cursor:move;user-select:none;touch-action:none;font-weight:600}
+.fb-body{padding:12px}
+.fb-close{border:0;background:none;font-size:20px;line-height:1;cursor:pointer;color:var(--mut);padding:0 4px}
+.fb-btn{width:52px;height:52px;border-radius:50%;border:0;background:var(--brand);color:#fff;font-size:22px;box-shadow:0 4px 14px rgba(0,0,0,.2);cursor:pointer}
+.fb-x{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;border:0;background:var(--ink);color:#fff;font-size:13px;line-height:22px;padding:0;cursor:pointer}
+.fb-edge{border:0;background:var(--brand);color:#fff;width:22px;height:44px;border-radius:0 10px 10px 0;font-size:20px;line-height:1;padding:0;cursor:pointer;box-shadow:2px 2px 8px rgba(0,0,0,.2)}
+.fb-pill{border:0;background:var(--brand);color:#fff;font-family:inherit;font-weight:600;font-size:12px;padding:6px 12px;border-radius:99px;box-shadow:0 2px 8px rgba(0,0,0,.2);cursor:pointer}
+.flash{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;z-index:40;font-weight:600;font-size:15px;box-shadow:0 8px 24px rgba(0,0,0,.25);pointer-events:none}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:90px;background:var(--ink);color:#fff;padding:10px 14px;border-radius:10px;z-index:30;max-width:90%;font-size:14px}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<nav id="nav" class="hide"></nav>
+<div id="modal" class="modal hide"></div>
+<div id="fbWrap" class="fb-wrap"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SB = supabase.createClient("https://bagucelglclcssoclyaw.supabase.co", "sb_publishable_AMjguQV7hN0iXFLhhUhIiw_kgsK9B3O");
+const MAIL = "seconde.vie.nantes.44@gmail.com";
+const STEPS = ["Devis en cours", "En cours", "Terminé", "Remis"];
+const lblS = s => s === "Devis en cours" ? "Devis" : s;
+const PST = ["À commander", "Commandé", "Réservée"];
+function pstOpts(p){
+  const list = p.statut === "À réserver" ? [...PST, "À réserver"] : PST;
+  return list.map(x => `<option ${x === p.statut ? "selected" : ""}>${x}</option>`).join("");
+}
+const PUCES = [["Puce Switch V1","Switch V1"],["Puce Switch V2","Switch V2"],["Puce Switch Lite","Switch Lite"],["Puce Switch OLED","Switch OLED"]];
+// Clé API Google Maps (Places). Vide = pas d’autocomplétion, seul le bouton « Chercher sur Google Maps » reste.
+const GMAPS_KEY = "";
+const REP_NAV = [["dossiers","Réparations et ventes"],["clients","Clients"],["new","Nouvelle prestation"],["newvente","Nouvelle vente"],["ventes","Ventes"],["avis","Suggestions & Bugs"],["stock","Stock"],["catalogue","Réparations & Mods"]];
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fullName = c => [c && c.prenom, c && c.nom].filter(Boolean).join(" ") || "Sans nom";
+const nz = s => String(s ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+const fr = d => d ? new Date(d + "T00:00").toLocaleDateString("fr-FR") : "–";
+function left(d){ if(!d) return null; const e = new Date(d + "T00:00"), t = new Date(); t.setHours(0,0,0,0); return Math.round((e - t) / 864e5); }
+function jours(n){ return n == null ? "" : n < 0 ? "Délai dépassé" : n == 0 ? "aujourd’hui" : n + (n > 1 ? " jours restants" : " jour restant"); }
+function pcs(id){ return S.pieces.filter(p => p.dossier_id === id); }
+
+let S = {dossiers:[], pieces:[], clients:[], stock:[], inv:[], devices:[], catalogue:[], sav:[], feedback:[], ventes:[], stockApp:[]};
+let ME = null, ROLE = null, VIEW = "dossiers", DOSSIER = null, CM = "login";
+
+function toast(msg){
+  const t = document.createElement("div"); t.className = "toast"; t.textContent = msg;
+  document.body.appendChild(t); setTimeout(() => t.remove(), 2600);
+}
+function msgErr(e){
+  const m = e.message || "";
+  if (e.code === "23505" || /duplicate key/.test(m)) return "Ce client existe déjà (même téléphone ou email).";
+  if (/Invalid login credentials/.test(m)) return "Email ou mot de passe incorrect.";
+  if (/already registered/.test(m)) return "Un compte existe déjà avec cet email : utilise « J’ai déjà un compte ».";
+  return m;
+}
+function showModal(html){ $("modal").innerHTML = '<div class="card">' + html + '</div>'; $("modal").classList.remove("hide"); }
+function closeModal(){ $("modal").classList.add("hide"); }
+function showDup(name){
+  showModal(`<div class="t" style="font-size:18px">Compte déjà existant</div>
+  <p class="m">Un compte existe déjà avec ce téléphone ou cet email${name ? " (" + esc(name) + ")" : ""}.</p>
+  <a class="btn" style="display:block;text-align:center;text-decoration:none;box-sizing:border-box" href="mailto:${MAIL}?subject=${encodeURIComponent("Compte déjà existant")}">Envoyer un mail à ${MAIL}</a>
+  <button class="btn ghost" onclick="closeModal()">Fermer</button>`);
+}
+
+/* ---------- Données ---------- */
+async function loadAll(){
+  const q = [
+    SB.from("dossiers").select("*, clients(prenom,nom)").order("created_at", {ascending:false}),
+    SB.from("pieces_dossier").select("*")
+  ];
+  if (ROLE === "rep") q.push(SB.from("clients").select("*").order("nom"), SB.from("stock").select("*").order("sku"), SB.from("invitations").select("*"));
+  else q.push(SB.from("clients").select("*"));
+  const r = await Promise.all(q);
+  const bad = r.find(x => x.error); if (bad) throw bad.error;
+  S.dossiers = r[0].data; S.pieces = r[1].data; S.clients = r[2].data;
+  if (ROLE === "rep"){ S.stock = r[3].data; S.inv = r[4].data; }
+  const dv = await SB.from("devices").select("*");
+  if (dv.error) throw dv.error;
+  S.devices = dv.data;
+  if (ROLE === "rep") { const cg = await SB.from("catalogue").select("*"); S.catalogue = cg.data || []; if (cg.error) toast("Catalogue : " + msgErr(cg.error)); }
+  if (ROLE === "rep") { const vt = await SB.from("ventes").select("*"); S.ventes = vt.data || []; }
+  if (ROLE === "rep") { const sa = await SB.from("stock_appareils").select("*").order("nom"); if (sa.error) toast("Appareils à vendre : " + msgErr(sa.error)); else S.stockApp = sa.data || []; }
+  const sv = await SB.from("sav").select("*").order("created_at", {ascending:false});
+  if (sv.error) toast("SAV : " + msgErr(sv.error)); else S.sav = sv.data || [];
+  if (ROLE === "rep") {
+    const fb = await SB.from("feedback").select("*").order("created_at", {ascending:false});
+    if (fb.error) toast("Suggestions : " + msgErr(fb.error)); else S.feedback = fb.data || [];
+  }
+}
+async function reload(){ try { await loadAll(); } catch(e){ toast("Erreur : " + msgErr(e)); } render(); }
+
+/* ---------- Connexion ---------- */
+function loginView(){
+  const isNew = CM === "code" || CM === "data";
+  const perso = CM === "data" ? `<div class="two"><div><label>Prénom *</label><input id="nP"></div><div><label>Nom *</label><input id="nN"></div></div>
+    <label>Téléphone *</label><input id="nT" inputmode="tel" maxlength="20">
+    <label>Adresse *</label><input id="nA">
+    <div class="two"><div><label>Code postal *</label><input id="nCp" inputmode="numeric" maxlength="5"></div><div><label>Ville *</label><input id="nV"></div></div>` : "";
+  const code = CM === "code" ? '<label>Code d’invitation *</label><input id="lC" inputmode="numeric" maxlength="6" placeholder="000000">' : "";
+  const pick = CM === "pick" ? `<div class="modal"><div class="card">
+    <div class="row" style="align-items:center"><div class="t" style="font-size:18px">Créer mon espace</div>
+    <button class="chip" onclick="setCM('login')" aria-label="Fermer" style="font-size:16px">✕</button></div>
+    <p class="m">As-tu un code d’invitation donné par ton réparateur ?</p>
+    <button class="btn" onclick="setCM('code')">Oui, j’ai un code</button>
+    <button class="btn ghost" onclick="setCM('data')">Non, je rentre mes données</button>
+  </div></div>` : "";
+  return `<img src="logo.png" alt="Seconde Vie" style="display:block;width:180px;max-width:70%;margin:10px auto 14px">
+  ${pick}
+  <div class="card">
+    ${perso}
+    <label>Email *</label><input id="lE" type="email" autocomplete="username">
+    <label>Mot de passe *</label><input id="lP" type="password" autocomplete="${isNew ? "new-password" : "current-password"}">
+    <label style="font-weight:400;display:flex;gap:8px;align-items:center;margin-top:6px"><input type="checkbox" onchange="$('lP').type=this.checked?'text':'password'" style="width:auto;margin:0"> Afficher le mot de passe</label>
+    ${code}
+    <div class="err" id="lErr"></div>
+    <button class="btn" onclick="doLogin()">${isNew ? "Créer mon espace" : "Se connecter"}</button>
+    ${isNew ? '<button class="btn ghost" onclick="setCM(\'login\')">Retour à la connexion</button>' : '<button class="btn ghost" onclick="setCM(\'pick\')">Créer mon espace</button>'}
+  </div>`;
+}
+function setCM(v){ CM = v; render(); }
+
+async function doLogin(){
+  const e = $("lE").value.trim(), p = $("lP").value, err = $("lErr");
+  err.textContent = "";
+  if (!e || !p) { err.textContent = "Email et mot de passe requis."; return; }
+  if (CM === "login") {
+    const { error } = await SB.auth.signInWithPassword({ email: e, password: p });
+    if (error) { err.textContent = msgErr(error); return; }
+    return boot();
+  }
+  const v = id => $(id).value.trim();
+  let d = null, code = "";
+  if (CM === "data") {
+    d = {prenom:v("nP"), nom:v("nN"), tel:v("nT"), adr:v("nA"), cp:v("nCp"), ville:v("nV")};
+    if (!d.prenom || !d.nom || !d.tel || !d.adr || !d.cp || !d.ville) { err.textContent = "Tous les champs marqués * sont obligatoires."; return; }
+    if (!/^[0-9+ .\-]{6,20}$/.test(d.tel)) { err.textContent = "Le téléphone ne doit contenir que des chiffres."; return; }
+    if (!/^\d{5}$/.test(d.cp)) { err.textContent = "Le code postal doit comporter 5 chiffres."; return; }
+  } else {
+    code = v("lC");
+    if (!/^\d{6}$/.test(code)) { err.textContent = "Le code doit comporter 6 chiffres."; return; }
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) { err.textContent = "L’email n’est pas valide."; return; }
+  const { error: se } = await SB.auth.signUp({ email: e, password: p });
+  if (se) { err.textContent = msgErr(se); return; }
+  const { error: le } = await SB.auth.signInWithPassword({ email: e, password: p });
+  if (le) { err.textContent = msgErr(le); return; }
+  if (code) {
+    const { error: ce } = await SB.rpc("claim_invitation", { p_code: code });
+    if (ce) { err.textContent = /code_invalide/.test(ce.message) ? "Code invalide ou déjà utilisé. Ton compte est créé : reconnecte-toi, ou contacte ton réparateur." : "Erreur : " + ce.message; return; }
+  } else {
+    const { data: u } = await SB.auth.getUser();
+    const { error: ie } = await SB.from("clients").insert({ ...d, mail: e, auth_user_id: u.user.id });
+    if (ie) {
+      err.textContent = ie.code === "23505" ? "Un client existe déjà avec ce téléphone ou cet email. Utilise ton code d’invitation ou contacte ton réparateur." : msgErr(ie);
+      return;
+    }
+  }
+  CM = "login";
+  await boot();
+}
+
+async function boot(){
+  const { data } = await SB.auth.getSession();
+  ME = data.session ? data.session.user : null;
+  if (!ME) { ROLE = null; return render(); }
+  const { data: r } = await SB.from("repairers").select("user_id").eq("user_id", ME.id).maybeSingle();
+  ROLE = r ? "rep" : "cli";
+  if (ROLE === "rep") restoreNav();
+  try { await loadAll(); } catch(e) { toast("Erreur de chargement : " + msgErr(e)); }
+  if (ROLE === "rep") await syncReservations();
+  render();
+}
+async function logout(){ await SB.auth.signOut(); ME = null; ROLE = null; DOSSIER = null; render(); }
+
+/* ---------- Affichage ---------- */
+function render(){
+  const app = $("app"), nav = $("nav");
+  saveNav();
+  if (!ME) { nav.classList.add("hide"); app.innerHTML = loginView(); return; }
+  if (ROLE === "rep") {
+    nav.classList.remove("hide");
+    nav.innerHTML = REP_NAV.map(([v,l]) => `<button class="${VIEW===v?"on":""}" onclick="go('${v}')">${l}</button>`).join("");
+    app.innerHTML = '<div class="row" style="align-items:center;margin:4px 0 8px"><img src="logo.png" alt="Seconde Vie" style="height:44px"><button class="btn small ghost" onclick="logout()">Déconnexion</button></div>' + (DOSSIER ? detailView() : REP[VIEW]());
+    if (VIEW === "stock" && !DOSSIER) { mpDraw("n"); mpDraw("a"); }
+    if (VIEW === "newvente") mpDraw("v");
+    if (VENTE_OPEN && VIEW === "dossiers" && !DOSSIER) mpDraw("v");
+    if (VIEW === "newvente" || (VENTE_OPEN && VIEW === "dossiers" && !DOSSIER)) attachPlaces();
+    if (DOSSIER) paintDetail();
+  } else {
+    nav.classList.add("hide");
+    app.innerHTML = cliView();
+  }
+  renderFb();
+}
+async function syncReservations(){
+  const actif = id => { const d = S.dossiers.find(x => x.id === id); return !!d && !["Terminé", "Remis"].includes(d.statut); };
+  const changes = S.stock.map(s => {
+    const want = S.pieces.filter(p => p.sku === s.sku && p.statut === "Réservée" && actif(p.dossier_id)).reduce((t, p) => t + (+p.qte || 0), 0);
+    return [s.sku, want, +s.res || 0];
+  }).filter(([, want, have]) => want !== have);
+  if (!changes.length) return 0;
+  for (const [sku, want] of changes) {
+    const { error } = await SB.from("stock").update({ res: want }).eq("sku", sku);
+    if (error) { toast(msgErr(error)); return 0; }
+  }
+  await reload();
+  return changes.length;
+}
+async function go(v){
+  if (v === "out") return logout();
+  VIEW = v; DOSSIER = null;
+  if (v === "newvente") { VENTE_OPEN = false; VENTE_EDIT = null; VENTE_LIGNES = []; VT_COMPAT = false; MP.v = []; PKS.v = {app:"", cat:""}; VT_SEL = null; }
+  if (v === "stock" && ROLE === "rep") await syncReservations();
+  if (v === "avis" && ROLE === "rep") {
+    const fb = await SB.from("feedback").select("*").order("created_at", {ascending:false});
+    if (fb.error) toast("Suggestions : " + msgErr(fb.error)); else S.feedback = fb.data || [];
+  }
+  render();
+}
+function saveNav(){
+  try { localStorage.setItem("navState", JSON.stringify({VIEW, DOSSIER, CLI_OPEN})); } catch(e) {}
+}
+function restoreNav(){
+  try {
+    const n = JSON.parse(localStorage.getItem("navState") || "null");
+    if (n) { VIEW = n.VIEW === "sav" ? "dossiers" : (n.VIEW || VIEW); DOSSIER = n.DOSSIER || null; CLI_OPEN = n.CLI_OPEN || null; }
+  } catch(e) {}
+}
+function flash(msg){
+  const f = document.createElement("div");
+  f.className = "flash"; f.textContent = msg;
+  document.body.appendChild(f);
+  setTimeout(() => f.remove(), 1600);
+}
+
+/* ---------- Réparateur ---------- */
+var SORT_REP = "ech", SORT_VENTE = "date";
+var DOSS_F = {statut: "", app: ""}, VENTE_F = {kind: "", app: ""};
+function filtersRow(items){
+  return '<div class="row" style="gap:6px;flex-wrap:wrap;margin:0 0 8px">' + items.map(i => '<select onchange="' + i.js + '">' + selOpts([["", i.all]].concat(i.opts), i.cur) + '</select>').join("") + '</div>';
+}
+function setSortRep(v){ SORT_REP = v; render(); }
+function setSortVente(v){ SORT_VENTE = v; render(); }
+function sortSelect(val, opts, fn){
+  return '<div class="row" style="align-items:center;gap:6px;margin:0 0 8px"><span class="m">Trier par</span><select onchange="' + fn + '(this.value)">'
+    + opts.map(o => '<option value="' + o[0] + '"' + (o[0] === val ? ' selected' : '') + '>' + o[1] + '</option>').join("") + '</select></div>';
+}
+const REP = {
+  dossiers(){
+    const cmpRep = {
+      ech: (a, b) => (a.echeance || "9999") < (b.echeance || "9999") ? -1 : 1,
+      statut: (a, b) => STEPS.indexOf(a.statut) - STEPS.indexOf(b.statut),
+      appareil: (a, b) => ((a.appareil || "") + " " + (a.modele || "")).localeCompare((b.appareil || "") + " " + (b.modele || ""))
+    }[SORT_REP] || ((a, b) => 0);
+    const baseList = S.dossiers.filter(d => d.statut !== "Remis");
+    const list = baseList
+      .filter(d => !DOSS_F.statut || d.statut === DOSS_F.statut)
+      .filter(d => !DOSS_F.app || d.appareil === DOSS_F.app)
+      .sort(cmpRep);
+    const repApps = [...new Set(baseList.map(d => d.appareil).filter(Boolean))].sort().map(x => [x, x]);
+    const aCommander = S.pieces.filter(p => p.statut === "À commander"), enRoute = S.pieces.filter(p => p.statut === "Commandé");
+    const lignes = arr => arr.map(p => '<div class="card" style="padding:8px 10px"><div class="t" style="font-size:14px">' + p.qte + ' × ' + esc(p.nom) + '</div></div>').join("");
+    const piecesHtml = (aCommander.length ? '<h2 style="color:#c2410c">Pièces à commander</h2>' + lignes(aCommander) : "")
+      + (enRoute.length ? '<h2 style="color:#1f8a4c">Pièces en route</h2>' + lignes(enRoute) : "");
+    const aAch = [];
+    (S.ventes || []).filter(v => !v.archivee).forEach(v => venteLignes(v).forEach((l, i) => { if (l.acheter) aAch.push({v, l, i}); }));
+    const achatHtml = aAch.length ? '<h2 style="color:#7c3aed">Appareils à acheter</h2>' + aAch.map(x => '<div class="card" style="padding:8px 10px"><div class="t" style="font-size:14px">' + x.l.quantite + ' × ' + esc([x.l.appareil, x.l.categorie, x.l.modele, x.l.couleur].filter(Boolean).join(" · ")) + '</div><div class="m">' + esc(venteClient(x.v)) + '</div><div style="margin-top:6px"><button class="chip" onclick="acheterReserver(\'' + x.v.id + '\',' + x.i + ')">Réserver si en stock</button></div></div>').join("") : "";
+    const savSec = (S.sav || []).length ? '<h2>SAV</h2>' + savTabHtml("rep") : "";
+    const nVentes = (S.ventes || []).filter(v => !v.archivee).length;
+    const nRep = baseList.length;
+    const badge = n => ' <span style="font-size:11px;font-weight:600;opacity:.8">' + n + '</span>';
+    const tab = (k, label, n) => '<button class="chip ' + (DOSS_TAB === k ? "ok" : "") + '" style="flex:1;text-align:center;padding:8px" onclick="setDossTab(\'' + k + '\')">' + label + (n != null ? badge(n) : "") + '</button>';
+    const tabs = '<div class="row" style="gap:6px;align-items:center;margin:8px 0 12px">' + tab("rep", "Réparations", nRep) + tab("ventes", "Ventes", nVentes) + tab("agenda", "Agenda") + '</div>';
+    const body = DOSS_TAB === "agenda"
+      ? agendaBody()
+      : DOSS_TAB === "ventes"
+        ? ventesHtml()
+        : savSec + sortSelect(SORT_REP, [["ech", "Échéance"], ["statut", "Statut"], ["appareil", "Appareil"]], "setSortRep")
+          + filtersRow([
+              {all: "Tous les statuts", opts: STEPS.filter(x => x !== "Remis").map(x => [x, x]), cur: DOSS_F.statut, js: "DOSS_F.statut=this.value;render()"},
+              {all: "Tous les appareils", opts: repApps, cur: DOSS_F.app, js: "DOSS_F.app=this.value;render()"}
+            ]) + (list.map(dossierCard).join("") || '<p class="m">Aucune réparation pour le moment.</p>');
+    return `<h1>Réparations et ventes</h1>` + piecesHtml + achatHtml + appResHtml() + tabs + body;
+  },
+  newvente(){
+    return `<h1>Nouvelle vente</h1>` + ventesFormHtml(null);
+  },
+  sav(){
+    return `<h1>SAV</h1>` + savTabHtml("rep");
+  },
+  avis(){
+    const all = [...(S.feedback || [])];
+    const act = all.filter(x => !x.archive), arch = all.filter(x => x.archive);
+    const card = x => `<div class="card">
+      <div class="t" style="font-size:15px">${esc(x.auteur)}</div>
+      <div class="m">${esc(x.page)} · ${fr(String(x.created_at).slice(0, 10))}</div>
+      <div class="m">Type : ${esc(x.type)}</div>
+      ${x.resolu ? '<div style="margin-top:6px"><span class="chip ok">Résolu</span></div>' : ''}
+      <div class="m" style="margin-top:6px;white-space:pre-wrap;color:var(--ink)">${esc(x.message)}</div>
+      <div class="row" style="margin-top:8px;flex-wrap:wrap;gap:6px">
+        ${x.archive ? `<button class="chip" onclick="avisUpd('${x.id}',{archive:false})">Désarchiver</button>` : `<button class="chip" onclick="avisUpd('${x.id}',{archive:true,resolu:true})">Archiver</button>`}
+        <button class="chip late" onclick="avisDel('${x.id}')">Supprimer</button>
+      </div>
+    </div>`;
+    const recap = AVIS_RECAP ? `<div class="card"><div class="t" style="margin-bottom:6px">Récap</div>
+      <textarea id="recapTxt" readonly style="min-height:200px;white-space:pre">${esc(recapText(act))}</textarea>
+      <button class="btn small" onclick="copyRecap()">Copier</button></div>` : "";
+    return `<h1>Suggestions &amp; Bugs</h1><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:8px"><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="chip" onclick="toggleRecap()">${AVIS_RECAP ? 'Fermer le récap' : 'Récap'}</button><button class="chip" onclick="copyRecapNow()">Copier le récap</button>${act.length ? '<button class="chip" onclick="archiveAll()">Tout archiver</button>' : ''}</div><span style="font-weight:600;white-space:nowrap">${act.length} suggestion${act.length > 1 ? "s" : ""}</span></div>` + recap
+      + (act.map(card).join("") || '<p class="m">Aucune suggestion pour le moment.</p>')
+      + (arch.length ? `<button class="btn ghost small" style="margin-top:8px" onclick="toggleArch()">${AVIS_ARCH ? 'Masquer les archives' : 'Afficher les archives (' + arch.length + ')'}</button>` + (AVIS_ARCH ? arch.map(card).join("") : "") : "");
+  },
+  clients(){
+    return `<h1>Clients</h1>
+    <button class="btn" onclick="$('addBox').classList.toggle('hide')">+ Créer un compte client</button>
+    <div id="addBox" class="card hide">
+      <div class="two"><div><label>Prénom *</label><input id="cP"></div><div><label>Nom *</label><input id="cN"></div></div>
+      <label>Téléphone *</label><input id="cT" inputmode="tel" maxlength="20">
+      <label>Email *</label><input id="cM" type="email">
+      <label>Adresse</label><input id="cA">
+      <div class="two"><div><label>Code postal</label><input id="cCp" inputmode="numeric" maxlength="5"></div><div><label>Ville</label><input id="cV"></div></div>
+      <p class="m" style="margin:4px 0 0">Adresse, code postal et ville peuvent rester vides : le client les complétera à sa première connexion.</p>
+      <label>Notes</label><textarea id="cNo" rows="2"></textarea>
+      <button class="btn" onclick="addClient()">Enregistrer le client</button>
+      <div class="err" id="cErr"></div>
+    </div>
+    <input id="cliQ" placeholder="Rechercher un client" oninput="$('cliL').innerHTML=cliHtml(nz(this.value))" style="margin-top:10px">
+    <button class="btn ghost small" style="margin-top:8px" onclick="CLI_TRASH=!CLI_TRASH;render()">${CLI_TRASH ? "Voir les clients actifs" : "Corbeille (" + S.clients.filter(c => c.deleted_at).length + ")"}</button><div id="cliL">${cliHtml("")}</div>`;
+  },
+  new(){
+    if (!S.clients.filter(c => !c.deleted_at).length) return `<h1>Nouvelle prestation</h1><p class="m">Crée d’abord un client dans l’onglet Clients.</p>`;
+    return `<h1>Nouvelle prestation</h1><div class="card">
+      <label>Client</label><select id="nC" onchange="$('nD').innerHTML=this.value?devOpts(this.value):'<option value=&quot;&quot;>- choisis d’abord un client -</option>'"><option value="">- sélectionner un client -</option>${S.clients.filter(c => !c.deleted_at).map(c => `<option value="${c.id}">${esc(fullName(c))}</option>`).join("")}</select>
+      <label>Type</label><select id="nT"><option>Réparation</option><option>Mod</option><option>SAV</option></select>
+      <label>Appareil du client</label><select id="nD"><option value="">- choisis d’abord un client -</option></select>
+      <label>Panne / prestation</label><input id="nW" placeholder="Ex. Joystick Hall effect">
+      <div class="two"><div><label>Prix (€)</label><input id="nP" inputmode="decimal" placeholder="à définir"></div><div><label>Durée de réparation</label><input id="nDu" placeholder="Ex. 1h"></div></div>
+      <label>Retour prévu</label><input id="nE" type="date">
+      <button class="btn" onclick="createD()">Créer le dossier</button>
+      <div class="err" id="nErr"></div>
+    </div>`;
+  },
+  catalogue(){ return catalogueView(); },
+  ventes(){ return ventesBilanHtml(); },
+  stock(){
+    const tabs = '<div class="row" style="gap:6px;margin:8px 0 12px"><button class="chip ' + (STOCK_TAB === "pieces" ? "ok" : "") + '" style="flex:1;text-align:center;padding:8px" onclick="setStockTab(\'pieces\')">Pièces</button><button class="chip ' + (STOCK_TAB === "appareils" ? "ok" : "") + '" style="flex:1;text-align:center;padding:8px" onclick="setStockTab(\'appareils\')">Appareils</button></div>';
+    const piecesTab = `
+    <input id="sQ" placeholder="Rechercher par SKU, pièce, type ou modèle" value="${esc(STK_Q)}" oninput="STK_Q=this.value;$('stkL').innerHTML=stkHtml(STK_Q)">
+    ${stkControls()}
+    <div id="stkL">${stkHtml(STK_Q)}</div>
+    ${S.stock.some(s => /Puce/.test(s.nom)) ? "" : '<button class="btn ghost" onclick="seedPuces()">Ajouter les puces Switch au stock</button>'}
+    <details style="margin-top:10px"><summary class="btn ghost small" style="display:inline-block;list-style:none;cursor:pointer">+ Ajouter une pièce</summary><div class="card" style="margin-top:8px">
+      <label>Nom</label><input id="sN">
+      <label>Quantité</label><input id="sQt" inputmode="numeric" value="0">
+      <label>Modèles</label><div id="mp-n"></div>
+      <button class="btn" onclick="addStock()">Ajouter au stock</button>
+      <div class="err" id="sErr"></div>
+    </div></details>`;
+    const appTab = `
+    <input id="aQ" placeholder="Rechercher un appareil" value="${esc(APP_Q)}" oninput="APP_Q=this.value;$('aL').innerHTML=appStkHtml()">
+    ${appControls()}
+    <div id="aL" style="margin-top:8px">${appStkHtml()}</div>
+    ${DEV_EDIT ? "" : `<details style="margin-top:10px"><summary class="btn ghost small" style="display:inline-block;list-style:none;cursor:pointer">+ Ajouter un appareil à vendre</summary><div class="card" style="margin-top:8px">
+      <label>Type / marque / modèle</label><div id="mp-a"></div>
+      <div id="aCouleurBox" style="display:none"><label>Couleur</label><select id="aCouleur"></select></div>
+      <label>Quantité</label><input id="aQt" inputmode="numeric" value="1">
+      <button class="btn" onclick="addAppareil()">Ajouter au stock</button>
+      <div class="err" id="aErr"></div>
+    </div></details>`}`;
+    return `<h1>Stock</h1>` + tabs + (STOCK_TAB === "appareils" ? appTab : piecesTab);
+  }
+};
+
+function appResHtml(){
+  const res = (S.stockApp || []).filter(x => (x.res || 0) > 0);
+  if (!res.length) return "";
+  return '<div style="margin-bottom:22px"><h2 style="color:#2563eb">Appareils réservés</h2>' + res.map(x => '<div class="card" style="padding:8px 10px"><div class="t" style="font-size:14px">' + x.res + ' × ' + esc(x.nom) + '</div></div>').join("") + '</div>';
+}
+function stepsHtml(statut){
+  const i = STEPS.indexOf(statut);
+  return '<div style="display:flex;gap:6px;margin:10px 0 4px">' + STEPS.map((l, k) => '<div style="flex:1;min-width:0;font-size:12px;color:' + (k === i ? 'var(--ink)' : 'var(--mut)') + ';font-weight:' + (k === i ? 600 : 400) + '"><i style="display:block;height:6px;border-radius:3px;margin-bottom:5px;background:' + (k <= i ? 'var(--brand)' : 'var(--line)') + '"></i>' + lblS(l) + '</div>').join("") + '</div>';
+}
+function plus30(dateStr){
+  const b = dateStr ? new Date(dateStr + "T00:00") : new Date();
+  b.setHours(0, 0, 0, 0); b.setDate(b.getDate() + 30);
+  return b.getFullYear() + "-" + String(b.getMonth() + 1).padStart(2, "0") + "-" + String(b.getDate()).padStart(2, "0");
+}
+function durNorm(v){
+  const t = (v || "").trim().replace(/\s+/g, "");
+  if (!t) return null;
+  const m = t.match(/^(\d+(?:[.,]\d+)?)h?$/i);
+  return m ? m[1].replace(",", ".") + "h" : t;
+}
+function todayIso(){
+  const t = new Date();
+  return t.getFullYear() + "-" + String(t.getMonth() + 1).padStart(2, "0") + "-" + String(t.getDate()).padStart(2, "0");
+}
+function recupHtml(d){
+  const dl = d.date_termine ? plus30(d.date_termine) : d.date_retour;
+  if (!dl) return '<div class="m" style="margin-top:6px;color:var(--warn);font-weight:600">Date de fin à définir</div>';
+  const l = left(dl);
+  const pct = Math.min(100, Math.max(0, (30 - l) / 30 * 100));
+  const col = l < 0 ? 'var(--bad)' : l <= 7 ? 'var(--warn)' : 'var(--brand)';
+  return '<div style="margin-top:6px"><div style="height:8px;border-radius:4px;background:var(--line);overflow:hidden"><div style="height:100%;width:' + pct + '%;background:' + col + '"></div></div>'
+    + '<div style="display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-weight:600;color:' + col + '"><span>Retour avant le ' + fr(dl) + '</span><span>' + jours(l) + '</span></div></div>';
+}
+function payInfo(d){
+  const vir = +d.paye_virement || 0, esp = +d.paye_especes || 0, aco = +d.acompte || 0, tot = vir + esp + aco;
+  const prix = d.prix == null ? null : +d.prix;
+  return {vir, esp, aco, tot, prix, reste: prix == null ? null : Math.max(0, prix - tot)};
+}
+function payTxt(d){
+  const p = payInfo(d);
+  if (p.prix == null) return "Prix à définir";
+  if (p.reste <= 0) return "Réglé";
+  return p.tot > 0 ? "Reste " + p.reste + " € à régler" : p.prix + " € à régler";
+}
+function payChip(d){
+  const t = payTxt(d);
+  return '<span class="chip ' + (t === "Réglé" ? "ok" : t === "Prix à définir" ? "" : "late") + '">' + t + '</span>';
+}
+const SAV_ST = ["Ouverte", "En cours", "Résolue"];
+var SAV_OPEN=null;
+function toggleSav(id){ SAV_OPEN = SAV_OPEN === id ? null : id; render(); }
+function savHtml(d, who){
+  const list = (S.sav || []).filter(x => x.dossier_id === d.id);
+  const rows = list.map(x => {
+    const open = SAV_OPEN === x.id;
+    let body = "";
+    if (open) {
+      body = '<div class="m" style="margin-top:6px;white-space:pre-wrap">' + esc(x.description) + '</div>'
+        + (who === "rep"
+          ? '<select style="margin-top:6px" onchange="savSt(\'' + x.id + '\', this.value)">' + SAV_ST.map(s => '<option' + (s === x.statut ? ' selected' : '') + '>' + s + '</option>').join("") + '</select>'
+            + '<button class="chip late" style="margin-top:6px" onclick="savDel(\'' + x.id + '\')">Supprimer cette demande SAV</button>'
+          : '');
+    }
+    return '<div class="card" style="margin:6px 0;padding:8px 10px">'
+      + '<div class="row" style="align-items:center"><div class="m">SAV du ' + fr(String(x.created_at).slice(0, 10)) + '</div><span class="chip">' + esc(x.statut) + '</span><button class="chip" onclick="toggleSav(\'' + x.id + '\')">' + (open ? 'Masquer les détails' : 'Voir les détails') + '</button></div>'
+      + body + '</div>';
+  }).join("");
+  return '<div class="t" style="margin-top:12px">SAV</div>' + (rows || '<div class="m">Aucune demande SAV.</div>')
+    + '<label>Nouvelle demande SAV</label><textarea id="sav-' + d.id + '" placeholder="Décris le problème"></textarea>'
+    + '<div class="err" id="savErr-' + d.id + '"></div>'
+    + '<button class="btn small" onclick="addSav(\'' + d.id + '\')">Créer la demande SAV</button>';
+}
+var FB_PAGE = "Espace client";
+function detectPage(){
+  if (ROLE !== "rep") return "Espace client";
+  const mid = window.innerHeight * 0.5;
+  let best = null, bestTop = -Infinity;
+  document.querySelectorAll("[data-page]").forEach(el => {
+    const top = el.getBoundingClientRect().top;
+    if (el.offsetParent !== null && top <= mid && top > bestTop) { best = el; bestTop = top; }
+  });
+  if (best) return best.getAttribute("data-page");
+  if (ROLE !== "rep") return "Espace client";
+  const nav = REP_NAV.find(([v]) => v === VIEW);
+  return "Espace réparateur" + (DOSSIER ? " · Détail réparation" : nav ? " · " + nav[1] : "");
+}
+var FB_HIDDEN = (function(){ try { return localStorage.getItem("fbHidden") === "1"; } catch(e){ return false; } })();
+function setFbHidden(v){ FB_HIDDEN = v; try { localStorage.setItem("fbHidden", v ? "1" : "0"); } catch(e){} renderFb(); }
+function renderFb(){
+  const w = $("fbWrap");
+  if (!ME || !ROLE) { w.innerHTML = ""; return; }
+  w.className = "fb-wrap" + (ROLE === "rep" ? " rep" : "");
+  w.style.left = FB_HIDDEN ? "0" : "";
+  w.innerHTML = FB_HIDDEN
+    ? '<button class="fb-edge" onclick="setFbHidden(false)" title="Afficher le bouton Suggestions">›</button>'
+    : '<div style="position:relative"><button class="fb-btn" onclick="openFeedback()" title="Signaler un problème ou suggérer une amélioration">💬</button><button class="fb-x" onclick="setFbHidden(true)" title="Masquer le bouton">×</button></div>';
+}
+var DRAG = null;
+function dragStart(e, panel){
+  if (e.target.closest("button")) return;
+  const pt = e.touches ? e.touches[0] : e, r = panel.getBoundingClientRect();
+  DRAG = {panel, sx: pt.clientX, sy: pt.clientY, ox: r.left, oy: r.top};
+  panel.style.bottom = "auto";
+  panel.style.left = r.left + "px";
+  panel.style.top = r.top + "px";
+  if (e.cancelable) e.preventDefault();
+}
+function dragMove(e){
+  if (!DRAG) return;
+  const pt = e.touches ? e.touches[0] : e, p = DRAG.panel;
+  const x = Math.max(0, Math.min(DRAG.ox + pt.clientX - DRAG.sx, innerWidth - p.offsetWidth));
+  const y = Math.max(0, Math.min(DRAG.oy + pt.clientY - DRAG.sy, innerHeight - p.offsetHeight));
+  p.style.left = x + "px";
+  p.style.top = y + "px";
+  if (e.cancelable) e.preventDefault();
+}
+function dragEnd(){ DRAG = null; }
+document.addEventListener("mousemove", dragMove);
+document.addEventListener("touchmove", dragMove, {passive: false});
+document.addEventListener("mouseup", dragEnd);
+document.addEventListener("touchend", dragEnd);
+function openFeedback(){
+  FB_PAGE = detectPage();
+  let p = $("fbPanel");
+  if (!p) { p = document.createElement("div"); p.id = "fbPanel"; p.className = "fb-panel"; document.body.appendChild(p); }
+  p.innerHTML = `<div class="fb-head" id="fbHead"><span>Signaler ou suggérer</span><button class="fb-close" onclick="closeFeedback()" title="Fermer">×</button></div>
+    <div class="fb-body">
+    <label>Type</label><select id="fbType" onchange="if(this.value)$('fbMsg').focus()"><option value="">- sélectionner -</option><option>Suggestion</option><option>Bug</option></select>
+    <div class="m" style="margin:4px 0 6px">Page : <b>${esc(FB_PAGE)}</b></div>
+    <label>Ton message</label><textarea id="fbMsg" placeholder="Décris le problème ou ton idée"></textarea>
+    <div class="err" id="fbErr"></div>
+    <button class="btn" onclick="sendFeedback()">Envoyer</button>
+    </div>`;
+  p.style.display = "block";
+  $("fbMsg").focus();
+  const head = $("fbHead");
+  head.onmousedown = e => dragStart(e, p);
+  head.ontouchstart = e => dragStart(e, p);
+}
+function closeFeedback(){ const p = $("fbPanel"); if (p) p.style.display = "none"; }
+async function sendFeedback(){
+  const err = $("fbErr"), msg = $("fbMsg").value.trim();
+  err.textContent = "";
+  if (!$("fbType").value) { err.textContent = "Choisis un type."; return; }
+  if (!msg) { err.textContent = "Écris ton message."; return; }
+  const c = S.clients.find(x => x.auth_user_id === ME.id);
+  const auteur = ROLE === "rep" ? "admin" : c ? fullName(c) : "Client";
+  const { error } = await SB.from("feedback").insert({
+    auteur, auth_user_id: ME.id,
+    type: $("fbType").value, page: FB_PAGE, message: msg
+  });
+  if (error) { err.textContent = msgErr(error); return; }
+  closeFeedback();
+  toast("Merci, ton message a bien été envoyé");
+}
+function savRow(x, who){
+  const open = SAV_OPEN === x.id;
+  const d = S.dossiers.find(y => y.id === x.dossier_id);
+  const titre = d ? esc(d.panne) + ' · ' + esc(d.appareil) : 'Réparation supprimée';
+  const qui = who === "rep" && d && d.clients ? ' · ' + esc(fullName(d.clients)) : '';
+  let body = "";
+  if (open) {
+    body = '<div class="m" style="margin-top:8px;white-space:pre-wrap">' + esc(x.description) + '</div>'
+      + (who === "rep"
+        ? '<select style="margin-top:6px" onchange="savSt(\'' + x.id + '\', this.value)">' + SAV_ST.map(s => '<option' + (s === x.statut ? ' selected' : '') + '>' + s + '</option>').join("") + '</select>'
+          + '<button class="chip late" style="margin-top:6px" onclick="savDel(\'' + x.id + '\')">Supprimer cette demande SAV</button>'
+        : '');
+  }
+  return '<div class="card" style="margin:6px 0;padding:10px">'
+    + '<div class="row" style="align-items:center"><div><div class="t" style="font-size:15px">' + titre + qui + '</div><div class="m">SAV du ' + fr(String(x.created_at).slice(0, 10)) + '</div></div><span class="chip">' + esc(x.statut) + '</span></div>'
+    + '<div style="margin-top:6px"><button class="chip" onclick="toggleSav(\'' + x.id + '\')">' + (open ? 'Masquer les détails' : 'Voir les détails') + '</button></div>'
+    + body + '</div>';
+}
+function savTabHtml(who){
+  const list = [...(S.sav || [])].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
+  return list.map(x => savRow(x, who)).join("") || '<p class="m">Aucune demande SAV.</p>';
+}
+var AVIS_ARCH = false, AVIS_RECAP = false;
+function toggleArch(){ AVIS_ARCH = !AVIS_ARCH; render(); }
+function toggleRecap(){ AVIS_RECAP = !AVIS_RECAP; render(); }
+function recapText(list){ return "Récapitulatif des suggestions et bugs\n\n" + list.map(x => "Page : " + x.page + "\nType : " + x.type + "\nMessage : " + x.message).join("\n\n"); }
+async function copyRecapNow(){
+  const list = (S.feedback || []).filter(x => !x.archive);
+  if (!list.length) { flash("Aucune suggestion à copier"); return; }
+  const txt = recapText(list);
+  const ta = document.createElement("textarea");
+  ta.value = txt; document.body.appendChild(ta); ta.select();
+  let ok = false;
+  try { await navigator.clipboard.writeText(txt); ok = true; }
+  catch(e) { ok = document.execCommand("copy"); }
+  ta.remove();
+  flash(ok ? "Récap copié ✓" : "Copie impossible");
+}
+async function archiveAll(){
+  if (!confirm("Archiver toutes les suggestions ?")) return;
+  const { error } = await SB.from("feedback").update({archive: true, resolu: true}).eq("archive", false);
+  if (error) { toast(msgErr(error)); return; }
+  await go("avis");
+}
+async function copyRecap(){
+  const t = $("recapTxt");
+  t.focus(); t.select();
+  let ok = false;
+  try { await navigator.clipboard.writeText(t.value); ok = true; }
+  catch(e) { ok = document.execCommand("copy"); }
+  flash(ok ? "Récap copié ✓" : "Copie impossible : sélectionne le texte");
+}
+async function avisUpd(id, change){
+  const { error } = await SB.from("feedback").update(change).eq("id", id);
+  if (error) { toast(msgErr(error)); return; }
+  await reload();
+}
+async function avisDel(id){
+  if (!confirm("Supprimer cet avis ?")) return;
+  const { error } = await SB.from("feedback").delete().eq("id", id);
+  if (error) { toast(msgErr(error)); return; }
+  toast("Suggestion supprimée");
+  await reload();
+}
+async function savDel(id){
+  if (!confirm("Supprimer cette demande SAV ?")) return;
+  const { error } = await SB.from("sav").delete().eq("id", id);
+  if (error) { toast(msgErr(error)); return; }
+  SAV_OPEN = null;
+  toast("Demande SAV supprimée");
+  await reload();
+}
+async function addSav(did){
+  const d = S.dossiers.find(x => x.id === did), err = $("savErr-" + did);
+  const txt = $("sav-" + did).value.trim(); err.textContent = "";
+  if (!txt) { err.textContent = "Décris le problème."; return; }
+  const { error } = await SB.from("sav").insert({dossier_id: did, client_id: d.client_id, device_id: d.device_id || null, description: txt, statut: "Ouverte"});
+  if (error) { err.textContent = msgErr(error); return; }
+  toast("Demande SAV créée");
+  await reload();
+}
+async function savSt(id, v){
+  const { error } = await SB.from("sav").update({statut: v}).eq("id", id);
+  if (error) { toast(msgErr(error)); return; }
+  toast("SAV mis à jour");
+  await reload();
+}
+function pieceBulle(d){
+  const h = pieceInner(d);
+  return h ? '<div style="margin-top:8px">' + h + '</div>' : "";
+}
+function pieceInner(d){
+  if (d.statut === "Remis") return "";
+  const ps = pcs(d.id), bulle = (t, vert) => '<span style="display:inline-block;background:' + (vert ? '#e7f6ec' : '#fff4e5') + ';color:' + (vert ? '#1f8a4c' : '#c2410c') + ';border:2px solid ' + (vert ? '#1f8a4c' : '#f97316') + ';border-radius:999px;padding:3px 12px;font-weight:700;font-size:13px;margin:0 6px 6px 0">' + t + '</span>';
+  let h = "";
+  h += d.date_recup ? bulle("Déposé", true) : bulle("À déposer");
+  if (ps.some(p => p.statut === "Commandé")) h += bulle("Pièce en route", true);
+  if (ps.some(p => p.statut === "À commander")) h += bulle("Pièce à commander");
+  return h;
+}
+function infosManquantes(d){
+  return !(d.panne || "").trim() || d.prix == null || !d.duree || (d.statut === "Remis" && !d.echeance);
+}
+/* ---------- Ventes ---------- */
+var VENTE_OPEN = false, VT_SEL = null, VENTE_EDIT = null, VT_COMPAT = false;
+const COMPAT_PRE = "Compatible : ";
+function venteClient(v){
+  if (v.client_id) { const c = S.clients.find(x => x.id === v.client_id); return c ? fullName(c) : "Client supprimé"; }
+  return v.client_nom || "Client de passage";
+}
+function mapsUrl(q){ return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(q); }
+function mapsLieu(){ const q = $("vLieu").value.trim() || "Nantes"; window.open(mapsUrl(q), "_blank", "noopener"); }
+function convHref(x){ return /^https?:\/\//i.test(x) ? x : "https://" + x; }
+function apNom(v){ const x = v.appareil_id ? (S.stockApp || []).find(s => s.id === v.appareil_id) : null; return x ? x.nom : ""; }
+async function devAdj(id, dq, dr){
+  const s = (S.stockApp || []).find(x => x.id === id);
+  if (!s) return "Appareil introuvable dans le stock.";
+  const { error } = await SB.from("stock_appareils").update({ qte: s.qte + dq, res: (s.res || 0) + dr }).eq("id", id);
+  return error ? msgErr(error) : null;
+}
+/* Recherche de lieu Google Maps (autocomplétion) : active seulement si GMAPS_KEY est renseignée. */
+var GMAPS_READY = false, GMAPS_LOADING = false;
+function loadGmaps(){
+  if (!GMAPS_KEY || GMAPS_READY || GMAPS_LOADING) return;
+  GMAPS_LOADING = true;
+  const sc = document.createElement("script");
+  sc.src = "https://maps.googleapis.com/maps/api/js?key=" + encodeURIComponent(GMAPS_KEY) + "&libraries=places&language=fr&callback=gmapsReady";
+  sc.async = true;
+  document.head.appendChild(sc);
+}
+function gmapsReady(){ GMAPS_READY = true; attachPlaces(); }
+function attachPlaces(){
+  if (!GMAPS_KEY) return;
+  if (!GMAPS_READY) { loadGmaps(); return; }
+  const inp = $("vLieu");
+  if (!inp || inp.dataset.ac) return;
+  inp.dataset.ac = "1";
+  const ac = new google.maps.places.Autocomplete(inp, { fields: ["name", "formatted_address"], componentRestrictions: { country: "fr" } });
+  ac.addListener("place_changed", () => { const p = ac.getPlace(); if (p && (p.formatted_address || p.name)) inp.value = p.formatted_address || p.name; });
+}
+const ENVOI_STATUTS = ["En préparation", "Envoyé", "Reçu"];
+const TRANSPORTEURS = {"Colissimo": "https://www.laposte.fr/outils/suivre-vos-envois?code=", "Chronopost": "https://www.chronopost.fr/tracking-no-cms/suivi-page?lienBt=CH&lang=fr_FR&numeroEnvoi=", "Mondial Relay": "https://www.mondialrelay.fr/suivi-de-colis/?numeroExpedition=", "UPS": "https://www.ups.com/track?loc=fr_FR&tracknum=", "DHL": "https://www.dhl.com/fr-fr/home/suivi.html?tracking-id=", "Autre": ""};
+function suivreColis(id){
+  const v = (S.ventes || []).find(x => x.id === id); if (!v) return;
+  if (!v.suivi) { toast("Renseigne d’abord le numéro de suivi."); return; }
+  if (!v.transporteur) { toast("Choisis d’abord le transporteur."); return; }
+  const base = TRANSPORTEURS[v.transporteur];
+  if (!base) { toast("Pas de lien de suivi pour « Autre » : vérifie sur le site du transporteur."); return; }
+  window.open(base + encodeURIComponent(v.suivi), "_blank", "noopener");
+}
+var VENTE_LIGNES = [];
+/* Lignes d’une vente : une vente a plusieurs modèles. Les anciennes ventes (sans lignes) sont lues comme une seule ligne. */
+function venteLignes(v){
+  if (Array.isArray(v.lignes) && v.lignes.length) return v.lignes;
+  if (v.appareil) return [{appareil: v.appareil, categorie: v.categorie, modele: v.modele, quantite: v.quantite || 1, appareil_id: v.appareil_id || null, couleur: null}];
+  return [];
+}
+function venteTitre(v){
+  const t = venteLignes(v).map(l => [l.appareil, l.categorie, l.modele, l.couleur].filter(Boolean).join(" · ") + (l.quantite > 1 ? " × " + l.quantite : "")).join(" + ");
+  return t || "Vente";
+}
+function lignesRes(lignes){
+  const m = {};
+  lignes.forEach(l => { if (l.appareil_id) m[l.appareil_id] = (m[l.appareil_id] || 0) + (l.quantite || 1); });
+  return m;
+}
+function vLigneFromForm(){
+  let l;
+  if (VT_COMPAT) {
+    const txt = $("vCompatTxt").value.trim();
+    if (!PKS.v || !PKS.v.app || !PKS.v.cat) return {error: "Choisis le type et la marque."};
+    if (!txt) return {error: "Précise de quel modèle il s’agit."};
+    l = {appareil: PKS.v.app, categorie: PKS.v.cat, modele: COMPAT_PRE + txt};
+  } else {
+    if (!VT_SEL || !VT_SEL.mod) return {error: "Choisis le type, la marque et le modèle, ou coche « Compatible »."};
+    l = {appareil: VT_SEL.app, categorie: VT_SEL.cat, modele: VT_SEL.mod};
+  }
+  const qte = parseInt($("vQte").value, 10);
+  if (isNaN(qte) || qte < 1) return {error: "Quantité invalide."};
+  const coulOn = $("vCouleurRow").style.display !== "none", ct = $("vCouleur").value;
+  if (coulOn && !ct) return {error: "Choisis la couleur."};
+  l.quantite = qte;
+  l.couleur = coulOn ? ct : null;
+  l.appareil_id = $("vAppId").value || null;
+  l.acheter = !!($("vAchat") && $("vAchat").checked && !l.appareil_id);
+  return {line: l};
+}
+function vLignesHtml(){
+  return VENTE_LIGNES.map((l, i) => {
+    const dev = l.appareil_id ? (S.stockApp || []).find(x => x.id === l.appareil_id) : null;
+    return '<span class="chip ok" style="margin:2px 4px 2px 0">' + esc([l.appareil, l.categorie, l.modele, l.couleur].filter(Boolean).join(" · ")) + (l.quantite > 1 ? " × " + l.quantite : "") + (dev ? " · réservé du stock" : "") + (l.acheter ? " · à acheter" : "") + ' <button style="border:0;background:none;cursor:pointer;font-weight:700" onclick="vDelLigne(' + i + ')">×</button></span>';
+  }).join("") || '<p class="m">Aucun modèle ajouté pour le moment.</p>';
+}
+function vDrawLignes(){ const box = $("vLignes"); if (box) box.innerHTML = vLignesHtml(); }
+function resetPicker(){
+  VT_SEL = null; MP.v = []; PKS.v = {app:"", cat:""}; VT_COMPAT = false;
+  $("vCompat").checked = false; $("vCompatBox").style.display = "none"; $("vCompatTxt").value = "";
+  $("vQte").value = "1"; $("vCouleurRow").style.display = "none"; $("vCouleur").innerHTML = ""; $("vAppId").value = ""; if ($("vAchat")) $("vAchat").checked = false;
+  mpDraw("v");
+}
+function vAddLigne(){
+  const err = $("vErr"); err.textContent = "";
+  const r = vLigneFromForm();
+  if (r.error) { err.textContent = r.error; return; }
+  VENTE_LIGNES.push(r.line);
+  resetPicker(); vDrawLignes();
+}
+function vDelLigne(i){ VENTE_LIGNES.splice(i, 1); vDrawLignes(); }
+async function setEnvoiStatut(id, v){
+  const { error } = await SB.from("ventes").update({ envoi_statut: v }).eq("id", id);
+  if (error) { toast(msgErr(error)); return; }
+  flash("Statut mis à jour");
+  await reload();
+}
+async function setProbleme(id, on){
+  const { error } = await SB.from("ventes").update({ probleme: on }).eq("id", id);
+  if (error) { toast(msgErr(error)); return; }
+  flash(on ? "Transaction mise en pause" : "Problème résolu");
+  await reload();
+}
+function vEnvoiChange(on){ $("vEnvoiDet").style.display = on ? "block" : "none"; vRdvRefresh(); }
+/* Avec un envoi, pas de date, d’heure ni de lieu de rendez-vous */
+function vRdvRefresh(){
+  const envoi = $("vPasse").checked && $("vTyp").value === "leboncoin" && $("vEnvoi").checked;
+  $("vRdvBox").style.display = envoi ? "none" : "block";
+}
+function ventesFormHtml(ed){
+  const passe = !!ed && !ed.client_id;
+  const t = !ed || ed.client_id ? "" : ed.client_nom === "Client de passage" ? "sans" : String(ed.client_nom || "").indexOf("leboncoin : ") === 0 ? "leboncoin" : "avec";
+  const nomVal = t === "avec" ? (ed.client_nom || "") : "";
+  const pseudoVal = t === "leboncoin" ? String(ed.client_nom).slice("leboncoin : ".length) : "";
+  const opt = (v, l) => '<option value="' + v + '"' + (t === v ? ' selected' : '') + '>' + l + '</option>';
+  const apOpts = (S.stockApp || []).filter(x => x.qte > 0 || VENTE_LIGNES.some(l => l.appareil_id === x.id)).map(x => '<option value="' + x.id + '">' + esc(x.nom) + (x.qte > 0 ? ' (' + x.qte + ' dispo)' : '') + '</option>').join("");
+  const envoiOn = t === "leboncoin" && !!ed && !!ed.envoi;
+  const transpOpts = '<option value="">- Sélectionner -</option>' + Object.keys(TRANSPORTEURS).map(x => '<option' + (ed && ed.transporteur === x ? ' selected' : '') + '>' + x + '</option>').join("");
+  const envOpts = ENVOI_STATUTS.map(x => '<option' + (ed && ed.envoi_statut === x ? ' selected' : '') + '>' + x + '</option>').join("");
+  return `<div class="card" style="margin:8px 0">
+      <div class="t" style="margin-bottom:6px">${ed ? "Modifier la vente" : "Nouvelle vente"}</div>
+      <div class="t" style="font-size:14px">Modèles de la vente</div>
+      <div id="vLignes">${vLignesHtml()}</div>
+      <div style="border-top:1px solid var(--line);margin-top:8px;padding-top:8px"><div class="t" style="font-size:14px">Ajouter un modèle</div>
+      <label>Type / marque / modèle</label><div id="mp-v"></div>
+      <label style="font-weight:400;display:flex;align-items:center;gap:6px;margin-top:6px"><input type="checkbox" id="vCompat" style="width:auto;margin:0" onchange="vCompatChange(this.checked)"> Compatible : je précise le modèle</label>
+      <div id="vCompatBox" style="display:none"><input id="vCompatTxt" placeholder="De quel modèle s’agit-il ? Ex. PS4 Slim"></div>
+      <div id="vCouleurRow" style="display:none"><label>Couleur</label><select id="vCouleur" onchange="vAutoDev()"></select></div>
+      <label>Appareil du stock (réservé automatiquement)</label><select id="vAppId" onchange="vAchatChange(false)"><option value="">- Aucun -</option>${apOpts}</select>
+      <label style="font-weight:400;display:flex;align-items:center;gap:6px;margin-top:6px"><input type="checkbox" id="vAchat" style="width:auto;margin:0" onchange="vAchatChange(this.checked)"> Pas en stock : mettre dans « Appareils à acheter »</label>
+      <label>Quantité de ce modèle</label><input id="vQte" inputmode="numeric" oninput="numOnly(this)" value="1">
+      <button class="chip ok" type="button" onclick="vAddLigne()">+ Ajouter ce modèle à la vente</button></div>
+      <div class="row" style="align-items:center;justify-content:space-between;margin-top:12px"><label style="margin:0">Client</label><label style="margin:0;font-weight:400;display:flex;align-items:center;gap:6px"><input type="checkbox" id="vPasse" style="width:auto;margin:0" ${passe ? "checked" : ""} onchange="toggleVPasse(this.checked)"> Client de passage</label></div>
+      <div id="vAcc" style="display:${passe ? "none" : "block"}"><select id="vCli"><option value="">- Sélectionner -</option>${S.clients.filter(c => !c.deleted_at).map(c => `<option value="${c.id}"${ed && ed.client_id === c.id ? " selected" : ""}>${esc(fullName(c))}</option>`).join("")}</select></div>
+      <div id="vPas" style="display:${passe ? "block" : "none"}"><select id="vTyp" onchange="vTypChange(this.value)"><option value="">- Sélectionner -</option>${opt("sans", "sans nom")}${opt("avec", "avec nom")}${opt("leboncoin", "leboncoin (nécessite pseudo)")}</select>
+        <div id="vNomBox" style="display:${t === "avec" ? "block" : "none"}"><label>Nom (n’apparaît que dans cette vente)</label><input id="vNom" value="${esc(nomVal)}"></div>
+        <div id="vPseudoBox" style="display:${t === "leboncoin" ? "block" : "none"}"><label>Pseudo leboncoin *</label><input id="vPseudo" value="${esc(pseudoVal)}"></div>
+        <div id="vEnvoiBox" style="display:${t === "leboncoin" ? "block" : "none"}"><label style="font-weight:400;display:flex;align-items:center;gap:6px;margin-top:6px"><input type="checkbox" id="vEnvoi" style="width:auto;margin:0" ${ed && ed.envoi ? "checked" : ""} onchange="vEnvoiChange(this.checked)"> Envoi (colis)</label>
+          <div id="vEnvoiDet" style="display:${ed && ed.envoi ? "block" : "none"}"><label>Transporteur</label><select id="vTransp">${transpOpts}</select><label>Numéro de suivi (optionnel)</label><input id="vSuivi" value="${esc(ed && ed.suivi ? ed.suivi : "")}"><label>Statut de l’envoi</label><select id="vEnvStat">${envOpts}</select></div></div></div>
+      <div id="vRdvBox" style="display:${envoiOn ? "none" : "block"}"><div class="two"><div><label>Date du rendez-vous</label><input id="vDate" type="date" value="${ed ? esc(ed.date_rdv) : ""}"></div>
+        <div><label>Heure (optionnel)</label><input id="vHeure" type="time" value="${ed && ed.heure_rdv ? esc(String(ed.heure_rdv).slice(0, 5)) : ""}"></div></div>
+      <label>Lieu de la remise</label><input id="vLieu" placeholder="Ex. Gare de Nantes" value="${ed ? esc(ed.lieu || "") : ""}">
+      ${GMAPS_KEY ? "" : '<button class="chip" type="button" onclick="mapsLieu()">Chercher sur Google Maps</button>'}
+      </div>
+      <label>Lien de la conversation (optionnel)</label><input id="vConv" placeholder="Lien de la discussion" value="${ed ? esc(ed.lien_conv || "") : ""}">
+      <label>Prix total de la vente (€)</label><input id="vPrix" inputmode="decimal" placeholder="à définir" oninput="numOnly(this)" value="${ed && ed.prix != null ? ed.prix : ""}">
+      <button class="btn" onclick="saveVente()">${ed ? "Enregistrer les modifications" : "Enregistrer la vente"}</button>
+      ${ed ? '<button class="btn ghost" type="button" style="color:var(--bad);border-color:var(--bad);margin-top:8px" onclick="deleteVente(\'' + ed.id + '\')">Supprimer cette vente</button>' : ''}
+      <div class="err" id="vErr"></div></div>`;
+}
+function venteCard(v){
+  const ap = venteLignes(v).filter(l => l.appareil_id).map(l => {
+    const x = (S.stockApp || []).find(s => s.id === l.appareil_id);
+    return '<div class="m">Réservé : ' + esc(x ? x.nom : "appareil") + (l.quantite > 1 ? " × " + l.quantite : "") + '</div>';
+  }).join("");
+  const envoi = v.envoi ? '<div class="row" style="align-items:center;gap:6px;margin-top:6px;flex-wrap:wrap"><select onchange="setEnvoiStatut(\'' + v.id + '\',this.value)">' + ENVOI_STATUTS.map(x => '<option' + (v.envoi_statut === x ? ' selected' : '') + '>' + x + '</option>').join("") + '</select>'
+    + (v.envoi_statut === "Reçu" && !v.probleme ? ' <button class="chip late" onclick="setProbleme(\'' + v.id + '\',true)">Un problème est survenu</button>' : '') + '</div>'
+    + '<div class="m">Transporteur : ' + (v.transporteur ? esc(v.transporteur) : 'non renseigné') + ' · Suivi : ' + (v.suivi ? esc(v.suivi) : 'non renseigné') + '</div>'
+    + (v.transporteur && v.suivi ? '<div class="row" style="margin-top:6px"><button class="chip" onclick="suivreColis(\'' + v.id + '\')">Suivre le colis</button></div>' : '') : "";
+  const rdv = v.envoi ? "" : '<div class="m">Rendez-vous le ' + fr(v.date_rdv) + (v.heure_rdv ? " à " + esc(String(v.heure_rdv).slice(0, 5)) : "") + (v.lieu ? " · " + esc(v.lieu) + ' · <a href="' + mapsUrl(v.lieu) + '" target="_blank" rel="noopener">Carte</a>' : "") + '</div>';
+  const conv = v.lien_conv ? '<div class="m"><a href="' + esc(convHref(v.lien_conv)) + '" target="_blank" rel="noopener">Ouvrir la conversation</a></div>' : "";
+  const pause = v.probleme ? '<div class="m" style="color:var(--bad);font-weight:600">⚠ Problème · transaction en pause</div>' : "";
+  return '<div class="card"' + (v.probleme ? ' style="border:2px solid var(--bad)"' : '') + '><div class="t">' + esc(venteTitre(v)) + '</div>'
+    + pause + '<div class="m">' + (v.envoi ? 'Envoi ' : '') + esc(venteClient(v)) + '</div>' + rdv + conv + ap + envoi
+    + '<div class="row" style="margin-top:6px;align-items:center"><span class="chip">' + (v.prix == null ? "Prix à définir" : v.prix + " €") + '</span><span>'
+    + '<button class="chip" onclick="editVente(\'' + v.id + '\')">Modifier / décaler</button> '
+    + '<button class="chip ok" onclick="rdvFait(\'' + v.id + '\')">' + (v.envoi ? "Vente effectuée" : "RDV effectué") + '</button> '
+    + (v.probleme ? '<button class="chip ok" onclick="setProbleme(\'' + v.id + '\',false)">Problème résolu</button> ' : '')
+    + '</span></div></div>';
+}
+function ventesHtml(){
+  const cmpV = {
+    appareil: (a, b) => venteTitre(a).localeCompare(venteTitre(b))
+  }[SORT_VENTE] || ((a, b) => (String(a.date_rdv) + String(a.heure_rdv || "")).localeCompare(String(b.date_rdv) + String(b.heure_rdv || "")));
+  const baseV = (S.ventes || []).filter(v => !v.archivee);
+  const venteApps = [...new Set(baseV.flatMap(v => venteLignes(v).map(l => l.appareil)).filter(Boolean))].sort().map(x => [x, x]);
+  const list = baseV
+    .filter(v => !VENTE_F.kind || (VENTE_F.kind === "envoi" ? !!v.envoi : !v.envoi))
+    .filter(v => !VENTE_F.app || venteLignes(v).some(l => l.appareil === VENTE_F.app))
+    .sort((a, b) => (b.probleme ? 1 : 0) - (a.probleme ? 1 : 0) || cmpV(a, b));
+  const ed = VENTE_EDIT ? (S.ventes || []).find(v => v.id === VENTE_EDIT) : null;
+  const form = VENTE_OPEN ? ventesFormHtml(ed || null) : "";
+  return `<h2>Ventes</h2><button class="btn ghost small" onclick="toggleVente()">${VENTE_OPEN ? "Fermer" : "+ Nouvelle vente"}</button>${form}${sortSelect(SORT_VENTE, [["date", "Date RDV"], ["appareil", "Appareil"]], "setSortVente")}${filtersRow([
+    {all: "Tous les types", opts: [["rdv", "Rendez-vous"], ["envoi", "Envoi"]], cur: VENTE_F.kind, js: "VENTE_F.kind=this.value;render()"},
+    {all: "Tous les appareils", opts: venteApps, cur: VENTE_F.app, js: "VENTE_F.app=this.value;render()"}
+  ])}${list.map(venteCard).join("")}`;
+}
+function toggleVente(){ VENTE_OPEN = !VENTE_OPEN; VENTE_EDIT = null; VENTE_LIGNES = []; VT_COMPAT = false; MP.v = []; PKS.v = {app:"", cat:""}; VT_SEL = null; render(); }
+function editVente(id){
+  const v = (S.ventes || []).find(x => x.id === id); if (!v) return;
+  VENTE_EDIT = id; VENTE_OPEN = true;
+  VENTE_LIGNES = venteLignes(v).map(l => Object.assign({}, l));
+  VT_COMPAT = false; VT_SEL = null; MP.v = []; PKS.v = {app: "", cat: ""};
+  render(); window.scrollTo(0, 0);
+}
+function vCompatChange(on){ VT_COMPAT = on; VT_SEL = null; MP.v = []; $("vCompatBox").style.display = on ? "block" : "none"; mpDraw("v"); }
+
+/* ---------- Appareils à vendre ---------- */
+var DEV_SEL = null;
+var APP_Q = "", DEV_EDIT = null;
+function appStkHtml(){
+  const all = S.stockApp || [];
+  if (!all.length) return '<p class="m">Aucun appareil à vendre pour le moment.</p>';
+  const q = nz(APP_Q).trim();
+  const acmp = {
+    dispo: (x, y) => (y.qte || 0) - (x.qte || 0),
+    res: (x, y) => (y.res || 0) - (x.res || 0)
+  }[ASORT] || ((x, y) => String(x.nom).localeCompare(String(y.nom)));
+  const list = all
+    .filter(x => !q || nz(x.nom).includes(q))
+    .filter(x => !ATYPE || x.appareil === ATYPE)
+    .filter(x => !AST || (AST === "dispo" ? x.qte > 0 : !(x.qte > 0)))
+    .sort(acmp);
+  if (!list.length) return '<p class="m">Aucun appareil trouvé.</p>';
+  return list.map(x => x.id === DEV_EDIT ? devEditHtml(x) : '<div class="card" style="cursor:pointer" onclick="editAppareil(\'' + x.id + '\')">'
+    + '<div class="t">' + esc(x.nom) + '</div>'
+    + '<div class="row" style="align-items:center;justify-content:flex-start;gap:4px;margin-top:4px;flex-wrap:wrap"><span class="chip ' + (x.qte > 0 ? "ok" : "late") + '">' + (x.qte > 0 ? x.qte + " en stock" : "Rupture") + '</span>'
+    + (x.res > 0 ? '<span class="chip">' + x.res + ' réservé' + (x.res > 1 ? "s" : "") + '</span>' : "") + '</div></div>').join("");
+}
+function appControls(){
+  const types = [...new Set((S.stockApp || []).map(x => x.appareil).filter(Boolean))].sort().map(t => [t, t]);
+  return '<div class="row" style="gap:6px;flex-wrap:wrap;margin:0 0 8px">'
+    + '<select onchange="ASORT=this.value;render()">' + selOpts([["nom", "Trier : nom"], ["dispo", "Trier : quantité dispo"], ["res", "Trier : réservé"]], ASORT) + '</select>'
+    + '<select onchange="ATYPE=this.value;render()">' + selOpts([["", "Tous les types"]].concat(types), ATYPE) + '</select>'
+    + '<select onchange="AST=this.value;render()">' + selOpts([["", "Tous"], ["dispo", "En stock"], ["rupture", "Rupture"]], AST) + '</select></div>';
+}
+function devEditHtml(x){
+  const list = couleursFor(x.appareil, x.modele);
+  const coul = list ? (String(x.nom).split(" · ")[3] || "") : "";
+  const opts = list ? '<option value="">- Sélectionner -</option>' + list.map(c => '<option' + (c === coul ? ' selected' : '') + '>' + c + '</option>').join("") : "";
+  return '<div class="card" style="border:2px solid var(--brand)">'
+    + '<div class="t">Modifier « ' + esc(x.nom) + ' »</div>'
+    + '<label>Type / marque / modèle</label><div id="mp-a"></div>'
+    + '<div id="aCouleurBox" style="display:' + (list ? "block" : "none") + '"><label>Couleur</label><select id="aCouleur">' + opts + '</select></div>'
+    + '<label>Quantité disponible (hors réservés)</label><input id="aQt" inputmode="numeric" value="' + x.qte + '">'
+    + '<p class="m">Réservé : ' + (x.res || 0) + '</p>'
+    + '<div class="row" style="gap:6px"><button class="btn" onclick="saveAppareil()">Enregistrer</button><button class="btn ghost" onclick="cancelAppEdit()">Annuler</button></div>'
+    + '<div class="err" id="aErr"></div>'
+    + '<div style="margin-top:12px"><button class="chip late" onclick="deleteAppStock(\'' + x.id + '\')">Supprimer cet appareil</button></div></div>';
+}
+function editAppareil(id){
+  const x = (S.stockApp || []).find(y => y.id === id); if (!x) return;
+  DEV_EDIT = id;
+  DEV_SEL = {app: x.appareil, cat: x.categorie, mod: x.modele};
+  PKS.a = {app: x.appareil || "", cat: x.categorie || "", gam: ""};
+  MP.a = [[x.appareil, x.categorie, x.modele].filter(Boolean).join(" · ")];
+  DEV_PK_OPEN = false;
+  render();
+}
+function cancelAppEdit(){ DEV_EDIT = null; DEV_SEL = null; MP.a = []; PKS.a = {app: "", cat: ""}; render(); }
+async function saveAppareil(){
+  const err = $("aErr"); err.textContent = "";
+  const x = (S.stockApp || []).find(y => y.id === DEV_EDIT); if (!x) return;
+  if (!DEV_SEL || !DEV_SEL.mod) { err.textContent = "Choisis le type, la marque et le modèle."; return; }
+  const dispo = parseInt($("aQt").value, 10);
+  if (isNaN(dispo) || dispo < 0) { err.textContent = "Quantité invalide."; return; }
+  const coul = $("aCouleurBox") && $("aCouleurBox").style.display !== "none" ? $("aCouleur").value : "";
+  if (couleursFor(DEV_SEL.app, DEV_SEL.mod) && !coul) { err.textContent = "Choisis la couleur."; return; }
+  const nom = [DEV_SEL.app, DEV_SEL.cat, DEV_SEL.mod, coul].filter(Boolean).join(" · ");
+  if ((S.stockApp || []).some(y => y.nom === nom && y.id !== x.id)) { err.textContent = "Cet appareil existe déjà dans le stock."; return; }
+  const { error } = await SB.from("stock_appareils").update({ nom, appareil: DEV_SEL.app, categorie: DEV_SEL.cat, modele: DEV_SEL.mod, qte: dispo }).eq("id", x.id);
+  if (error) { err.textContent = msgErr(error); return; }
+  DEV_EDIT = null; DEV_SEL = null; MP.a = []; PKS.a = {app: "", cat: ""};
+  flash("Appareil modifié");
+  await reload();
+}
+async function addAppareil(){
+  const err = $("aErr"); err.textContent = "";
+  const q = parseInt($("aQt").value, 10);
+  if (!DEV_SEL || !DEV_SEL.mod) { err.textContent = "Choisis le type, la marque et le modèle."; return; }
+  if (isNaN(q) || q < 1) { err.textContent = "Quantité invalide."; return; }
+  const coul = $("aCouleurBox") && $("aCouleurBox").style.display !== "none" ? $("aCouleur").value : "";
+  if (couleursFor(DEV_SEL.app, DEV_SEL.mod) && !coul) { err.textContent = "Choisis la couleur."; return; }
+  const nom = [DEV_SEL.app, DEV_SEL.cat, DEV_SEL.mod, coul].filter(Boolean).join(" · ");
+  if ((S.stockApp || []).some(x => x.nom === nom)) { err.textContent = "Cet appareil est déjà dans le stock : modifie sa quantité avec « Modifier » dans la liste."; return; }
+  const { error } = await SB.from("stock_appareils").insert({ nom, appareil: DEV_SEL.app, categorie: DEV_SEL.cat, modele: DEV_SEL.mod, qte: q });
+  if (error) { err.textContent = msgErr(error); return; }
+  DEV_SEL = null; MP.a = []; PKS.a = {app:"", cat:""};
+  flash("Appareil ajouté au stock");
+  await reload();
+}
+async function deleteAppStock(id){
+  const s = (S.stockApp || []).find(x => x.id === id); if (!s) return;
+  if (s.res > 0) { toast("Impossible : cet appareil est réservé pour une vente."); return; }
+  if (!confirm("Supprimer « " + s.nom + " » du stock ?")) return;
+  const { error } = await SB.from("stock_appareils").delete().eq("id", id);
+  if (error) { toast(msgErr(error)); return; }
+  DEV_EDIT = null; DEV_SEL = null;
+  flash("Appareil supprimé");
+  await reload();
+}
+
+/* ---------- Agenda ---------- */
+var DOSS_TAB = "rep";
+function setDossTab(t){ DOSS_TAB = t; render(); }
+function agendaData(){
+  const today = todayIso(), items = [], sans = [];
+  const byDate = (a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0;
+  S.dossiers.filter(d => d.statut !== "Remis").forEach(d => {
+    const nom = [d.appareil, d.clients ? fullName(d.clients) : ""].filter(Boolean).join(" · ") || "Réparation";
+    const go = "openD('" + d.id + "')";
+    if (d.statut === "Terminé") {
+      if (d.date_retour) items.push({date: d.date_retour, txt: "Limite de retrait · " + nom, go});
+      else sans.push({txt: "Date de fin à définir · " + nom, go});
+      return;
+    }
+    if (d.statut === "Devis") {
+      if (d.date_recup) items.push({date: d.date_recup, txt: "Dépôt de l’appareil · " + nom, go});
+      else sans.push({txt: "Date de dépôt à fixer · " + nom, go});
+    }
+    if (d.echeance) items.push({date: d.echeance, txt: "Prêt à rendre · " + nom, go});
+    else sans.push({txt: "Date de prêt à fixer · " + nom, go});
+  });
+  S.pieces.filter(p => p.statut === "À commander").forEach(p => sans.push({txt: "Pièce à commander · " + p.qte + " × " + p.nom}));
+  (S.ventes || []).filter(v => !v.archivee && !v.envoi).forEach(v => items.push({date: v.date_rdv, txt: "Vente · " + venteTitre(v) + " · " + venteClient(v) + (v.lieu ? " · " + v.lieu : "") + (v.heure_rdv ? " · " + String(v.heure_rdv).slice(0, 5) : "")}));
+  return {
+    today, sans,
+    late: items.filter(e => e.date < today).sort(byDate),
+    future: items.filter(e => e.date >= today).sort(byDate)
+  };
+}
+function agendaBody(){
+  const a = agendaData();
+  const line = e => '<div class="m" style="margin-top:4px;' + (e.go ? 'cursor:pointer' : '') + '"' + (e.go ? ' onclick="' + e.go + '"' : '') + '>' + esc(e.txt) + '</div>';
+  const block = (title, arr, col) => '<div class="card" style="padding:8px 10px"><div class="t" style="font-size:14px;' + (col ? 'color:' + col : '') + '">' + esc(title) + '</div>' + arr.map(line).join("") + '</div>';
+  const dayTitle = k => {
+    if (k === a.today) return "Aujourd’hui";
+    const lbl = new Date(k + "T00:00").toLocaleDateString("fr-FR", {weekday: "long", day: "numeric", month: "long"});
+    return lbl.charAt(0).toUpperCase() + lbl.slice(1);
+  };
+  const days = {};
+  a.future.forEach(e => { (days[e.date] = days[e.date] || []).push(e); });
+  let html = "";
+  if (a.late.length) html += block("En retard ou à clôturer", a.late.map(e => ({...e, txt: e.txt + " · " + fr(e.date)})), "var(--bad)");
+  Object.keys(days).sort().forEach(k => { html += block(dayTitle(k), days[k]); });
+  if (a.sans.length) html += block("Sans date", a.sans);
+  return '<div class="card" style="margin-bottom:10px">' + (html || '<p class="m">Rien à faire pour le moment.</p>') + '</div>';
+}
+function toggleVPasse(on){ $("vAcc").style.display = on ? "none" : "block"; $("vPas").style.display = on ? "block" : "none"; $("vTyp").value = ""; vTypChange(""); }
+function vTypChange(t){ $("vNomBox").style.display = t === "avec" ? "block" : "none"; $("vPseudoBox").style.display = t === "leboncoin" ? "block" : "none"; $("vEnvoiBox").style.display = t === "leboncoin" ? "block" : "none"; vRdvRefresh(); }
+async function saveVente(){
+  const err = $("vErr"); err.textContent = "";
+  const passe = $("vPasse").checked, prixT = $("vPrix").value.trim().replace(",", ".");
+  let client_id = null, client_nom = null;
+  if (!passe) { client_id = $("vCli").value || null; if (!client_id) { err.textContent = "Sélectionne un client, ou coche « Client de passage »."; return; } }
+  else {
+    const t = $("vTyp").value;
+    if (t === "sans") client_nom = "Client de passage";
+    else if (t === "avec") { client_nom = $("vNom").value.trim(); if (!client_nom) { err.textContent = "Indique le nom."; return; } }
+    else if (t === "leboncoin") { const ps = $("vPseudo").value.trim(); if (!ps) { err.textContent = "Indique le pseudo leboncoin."; return; } client_nom = "leboncoin : " + ps; }
+    else { err.textContent = "Choisis sans nom, avec nom ou leboncoin."; return; }
+  }
+  const envoi = passe && $("vTyp").value === "leboncoin" && $("vEnvoi").checked;
+  // si aucun modèle n’est ajouté, on prend celui qui est saisi dans le sélecteur
+  if (!VENTE_LIGNES.length) {
+    const r = vLigneFromForm();
+    if (r.error) { err.textContent = r.error; return; }
+    VENTE_LIGNES.push(r.line);
+  }
+  const date = envoi ? todayIso() : $("vDate").value;
+  if (!date) { err.textContent = "Indique la date du rendez-vous."; return; }
+  if (prixT !== "" && isNaN(parseFloat(prixT))) { err.textContent = "Prix invalide."; return; }
+  const editing = !!VENTE_EDIT;
+  const old = editing ? venteLignes((S.ventes || []).find(v => v.id === VENTE_EDIT) || {}) : [];
+  const oldKeys = new Set(old.map(lineKey));
+  for (const l of VENTE_LIGNES) {
+    if (l.appareil_id || l.acheter || oldKeys.has(lineKey(l))) continue;
+    err.textContent = (l.modele || "Ce modèle") + " : pas en stock. Choisis l’appareil du stock, ou coche « Pas en stock » pour le mettre dans les appareils à acheter.";
+    return;
+  }
+  const had = lignesRes(old), want = lignesRes(VENTE_LIGNES);
+  for (const id of Object.keys(want)) {
+    const x = (S.stockApp || []).find(s => s.id === id);
+    if (!x) { err.textContent = "Un appareil choisi n’est plus disponible en stock."; return; }
+    const dispo = x.qte + (had[id] || 0);
+    if (dispo < want[id]) { err.textContent = x.nom + " : stock insuffisant (" + dispo + " disponible(s), " + want[id] + " demandé(s))."; return; }
+  }
+  const first = VENTE_LIGNES[0];
+  const row = {
+    appareil: first.appareil, categorie: first.categorie, modele: first.modele, lignes: VENTE_LIGNES,
+    lieu: envoi ? null : ($("vLieu").value.trim() || null), prix: prixT === "" ? null : parseFloat(prixT), date_rdv: date,
+    heure_rdv: envoi ? null : ($("vHeure").value || null), lien_conv: $("vConv").value.trim() || null,
+    envoi, transporteur: envoi ? ($("vTransp").value || null) : null, suivi: envoi ? ($("vSuivi").value.trim() || null) : null, envoi_statut: envoi ? $("vEnvStat").value : null,
+    client_id, client_nom
+  };
+  const { error } = editing
+    ? await SB.from("ventes").update(row).eq("id", VENTE_EDIT)
+    : await SB.from("ventes").insert(row);
+  if (error) { err.textContent = msgErr(error); return; }
+  const ids = new Set([...Object.keys(had), ...Object.keys(want)]);
+  for (const id of ids) {
+    const dq = (had[id] || 0) - (want[id] || 0), dr = (want[id] || 0) - (had[id] || 0);
+    if (dq || dr) { const e = await devAdj(id, dq, dr); if (e) toast(e); }
+  }
+  VENTE_OPEN = false; VENTE_EDIT = null; VENTE_LIGNES = []; VT_COMPAT = false; MP.v = []; PKS.v = {app:"", cat:""}; VT_SEL = null;
+  flash(editing ? "Vente modifiée" : "Vente enregistrée");
+  await reload();
+}
+async function acheterReserver(id, idx){
+  const v = (S.ventes || []).find(x => x.id === id);
+  if (!v || !Array.isArray(v.lignes) || !v.lignes[idx] || !v.lignes[idx].acheter) return;
+  const l = v.lignes[idx], q = l.quantite || 1;
+  const x = (S.stockApp || []).find(s => s.nom === [l.appareil, l.categorie, l.modele, l.couleur].filter(Boolean).join(" · "));
+  if (!x || x.qte < q) { toast("Pas encore assez en stock : " + (x ? x.qte : 0) + " dispo sur " + q + " demandé(s)."); return; }
+  const lignes = v.lignes.map((k, j) => j === idx ? Object.assign({}, k, {acheter: false, appareil_id: x.id}) : k);
+  const { error } = await SB.from("ventes").update({ lignes }).eq("id", id);
+  if (error) { toast(msgErr(error)); return; }
+  const e = await devAdj(x.id, -q, q);
+  if (e) toast(e);
+  flash("Appareil réservé depuis le stock");
+  await reload();
+}
+async function rdvFait(id){
+  const v = (S.ventes || []).find(x => x.id === id); if (!v) return;
+  const { error } = await SB.from("ventes").update({ archivee: true, date_effectue: todayIso(), client_affiche: venteClient(v) }).eq("id", id);
+  if (error) { toast(msgErr(error)); return; }
+  const r = lignesRes(venteLignes(v));
+  for (const k of Object.keys(r)) { const e = await devAdj(k, 0, -r[k]); if (e) toast(e); }
+  flash("RDV effectué : vente archivée");
+  await reload();
+}
+var VMOIS = null;
+function moisOf(v){ return String(v.date_effectue || v.date_rdv || "").slice(0, 7); }
+function moisLabel(k){ return k ? new Date(k + "-01T00:00").toLocaleDateString("fr-FR", {month: "long", year: "numeric"}) : ""; }
+function setVMois(k){ VMOIS = k; render(); }
+function ventesBilanHtml(){
+  const arch = (S.ventes || []).filter(v => v.archivee);
+  const cur = todayIso().slice(0, 7);
+  const mois = VMOIS || cur;
+  const keys = [...new Set([cur, ...arch.map(moisOf)].filter(Boolean))].sort().reverse();
+  const doMois = arch.filter(v => moisOf(v) === mois).sort((a, b) => String(b.date_effectue || b.date_rdv).localeCompare(String(a.date_effectue || a.date_rdv)));
+  const total = doMois.reduce((t, v) => t + (+v.prix || 0), 0);
+  const sansPrix = doMois.filter(v => v.prix == null).length;
+  const sel = '<select onchange="setVMois(this.value)">' + keys.map(k => '<option value="' + k + '"' + (k === mois ? ' selected' : '') + '>' + esc(moisLabel(k)) + (k === cur ? ' (en cours)' : '') + '</option>').join("") + '</select>';
+  const cards = doMois.map(v => `<div class="card"><div class="t">${esc(venteTitre(v))}</div>
+      <div class="m">${esc(v.client_affiche || venteClient(v))}</div>
+      <div class="m">Effectué le ${fr(v.date_effectue || v.date_rdv)}${v.lieu ? " · " + esc(v.lieu) : ""}</div>
+      <div class="row" style="margin-top:6px"><span class="chip">${v.prix == null ? "Prix non renseigné" : v.prix + " €"}</span></div></div>`).join("");
+  const parMois = keys.filter(k => k !== mois).map(k => {
+    const l = arch.filter(v => moisOf(v) === k), t = l.reduce((a, v) => a + (+v.prix || 0), 0);
+    return '<div class="card" style="cursor:pointer" onclick="setVMois(\'' + k + '\')"><div class="row"><div class="t">' + esc(moisLabel(k)) + '</div><span class="chip">' + l.length + ' vente' + (l.length > 1 ? 's' : '') + ' · ' + t + ' €</span></div></div>';
+  }).join("");
+  return `<h1>Ventes</h1>${sel}
+    <div class="card" style="margin-top:8px"><div class="t">${esc(moisLabel(mois))}</div>
+      <div class="m">${doMois.length} vente${doMois.length > 1 ? "s" : ""} · Total ${total} €${sansPrix ? " · " + sansPrix + " sans prix" : ""}</div></div>
+    ${cards || '<p class="m">Aucune vente effectuée sur ce mois.</p>'}
+    ${parMois ? '<h2>Mois précédents</h2>' + parMois : ''}`;
+}
+async function deleteVente(id){
+  if (!confirm("Supprimer cette vente ?")) return;
+  const v = (S.ventes || []).find(x => x.id === id);
+  const { error } = await SB.from("ventes").delete().eq("id", id);
+  if (error) { toast(msgErr(error)); return; }
+  if (v && !v.archivee) {
+    const r = lignesRes(venteLignes(v));
+    for (const k of Object.keys(r)) { const e = await devAdj(k, r[k], -r[k]); if (e) toast(e); }
+  }
+  VENTE_OPEN = false; VENTE_EDIT = null; VENTE_LIGNES = [];
+  flash("Vente supprimée");
+  await reload();
+}
+function dossierCard(d){
+  const c = d.clients ? fullName(d.clients) : "";
+  const manque = infosManquantes(d) ? '<span title="Infos manquantes" style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;border:2px solid #dc2626;color:#dc2626;font-weight:800;font-size:14px;margin-right:6px">!</span>' : "";
+  const l = left(d.echeance);
+  const cls = l == null ? "" : l < 0 ? "late" : l <= 2 ? "warn" : "";
+  return `<div class="card" style="cursor:pointer" onclick="openD('${d.id}')">
+    <div class="row" style="align-items:center"><div style="flex:1;min-width:0;text-align:left;align-self:flex-start"><div style="text-align:left"><span class="chip">${esc(d.type)}</span></div><div class="t" style="text-align:left;margin-top:4px">${esc(d.appareil)} · ${esc(c)}</div><div class="m" style="text-align:left">${esc(d.panne)}</div></div>${manque}</div>
+    ${stepsHtml(d.statut)}
+    <div class="row" style="margin-top:8px">
+      ${d.statut === "Terminé" ? "" : d.statut === "Remis" ? `<span class="chip">${d.echeance ? "Remis le " + fr(d.echeance) : "Remis"}</span>` : `<span class="chip ${cls}">${l == null ? "Pas de date prévue" : "Prêt pour le " + fr(d.echeance) + " · " + jours(l)}</span>`}
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px"><div>${pieceInner(d)}</div>${payChip(d)}</div>${d.statut === "Terminé" ? recupHtml(d) : ""}</div>`;
+}
+
+var CLI_OPEN=null, CLI_TRASH=false;
+function cliHtml(q){
+  const list = S.clients.filter(c => (CLI_TRASH ? !!c.deleted_at : !c.deleted_at) && (!q || nz(fullName(c)).indexOf(q) > -1))
+    .sort((a,b) => ((a.nom || "") + (a.prenom || "")).localeCompare((b.nom || "") + (b.prenom || ""), "fr"));
+  return list.map(c => {
+    const inv = S.inv.find(i => i.client_id === c.id && !i.used_at);
+    const acc = c.auth_user_id ? '<span class="chip ok">Compte créé</span> ' + (c.infos_verifiees_at ? '<span class="chip ok">Infos vérifiées</span>' : '<span class="chip warn">Infos à vérifier</span>')
+      : inv ? 'Code : <span class="code">' + esc(inv.code) + '</span>'
+      : '<button class="chip" onclick="newCode(\'' + c.id + '\')">Générer un code</button>';
+    const head = '<div style="cursor:pointer" onclick="toggleCli(\'' + c.id + '\')"><div class="t">' + esc(fullName(c)) + (c.deleted_at ? ' <span class="chip late">Supprimé</span>' : '') + '</div><div class="m">' + esc(c.tel) + ' · ' + esc(c.mail) + '</div></div>';
+    if (CLI_OPEN !== c.id) return '<div class="card">' + head + '</div>';
+    const actions = c.deleted_at
+      ? '<button class="btn" onclick="restoreCli(\'' + c.id + '\')">Restaurer</button><button class="btn ghost" style="color:var(--bad);border-color:var(--bad)" onclick="purgeCli(\'' + c.id + '\')">Supprimer définitivement</button>'
+      : '<button class="btn" onclick="editCli(\'' + c.id + '\')">Modifier</button><button class="btn ghost" onclick="softDelCli(\'' + c.id + '\')">Supprimer</button>';
+    return '<div class="card">' + head
+      + '<div class="m" style="margin-top:8px">' + esc(c.adr) + ', ' + esc(c.cp) + ' ' + esc(c.ville) + '</div>'
+      + (c.notes ? '<div class="m">' + esc(c.notes) + '</div>' : '')
+      + '<div style="margin-top:6px">' + acc + '</div>'
+      + '<div id="cEd"></div>' + devHtml(c) + actions + '<div class="err" id="cliErr"></div></div>';
+  }).join("") || '<p class="m">' + (CLI_TRASH ? 'La corbeille est vide.' : 'Aucun client.') + '</p>';
+}
+function devOpts(cid){
+  const ds = S.devices.filter(d => d.client_id === cid);
+  return ds.length ? ds.map(d => '<option value="' + d.id + '">' + esc(d.modele) + (d.couleur ? ' · ' + esc(d.couleur) : '') + ' — ' + esc(d.type === "Téléphone" ? 'IMEI ' + d.imei : 'SN ' + (d.sn || '')) + '</option>').join("")
+    : '<option value="">Aucun appareil : ajoute-le dans la fiche client</option>';
+}
+/* ---- Catalogue des réparations et prix ---- */
+var CAT={app:"",cat:"",mod:""}, APPS=["Console","Manette","Téléphone","PC portable"];
+var CAT_SEED=[["Console",null,"PlayStation","PS5","Lecteur","79","24 h",false],["Console",null,"Nintendo","Nintendo DS (Tank)","Écran haut",null,null,false],["Console",null,"Nintendo","Nintendo DS (Tank)","Écran bas",null,null,false],["Console",null,"Nintendo","Nintendo DS Lite","Écran haut",null,null,false],["Console",null,"Nintendo","Nintendo DS Lite","Écran bas",null,null,false],["Console",null,"Nintendo","Nintendo DSi","Écran haut",null,null,false],["Console",null,"Nintendo","Nintendo DSi","Écran bas",null,null,false],["Console",null,"Nintendo","Nintendo DSi XL","Écran haut",null,null,false],["Console",null,"Nintendo","Nintendo DSi XL","Écran bas",null,null,false],["Console",null,"Nintendo","Nintendo 3DS","Écran haut",null,null,false],["Console",null,"Nintendo","Nintendo 3DS","Écran bas",null,null,false],["Console",null,"Nintendo","Nintendo 3DS XL","Écran haut",null,null,false],["Console",null,"Nintendo","Nintendo 3DS XL","Écran bas",null,null,false],["Console",null,"Nintendo","New Nintendo 3DS","Écran haut",null,null,false],["Console",null,"Nintendo","New Nintendo 3DS","Écran bas",null,null,false],["Console",null,"Nintendo","New Nintendo 3DS XL","Écran haut",null,null,false],["Console",null,"Nintendo","New Nintendo 3DS XL","Écran bas",null,null,false],["Console",null,"Nintendo","Nintendo 2DS","Remplacement écran haut + bas",null,null,false],["Console",null,"Nintendo","New Nintendo 2DS XL","Remplacement écran haut + bas",null,null,false],["Console",null,"Nintendo","Nintendo","Écran LCD","60",null,false],["Console",null,"Nintendo","Nintendo","Vitre tactile","50",null,false],["Console",null,"Nintendo","Nintendo","Bloc avant complet (LCD + tactile + châssis)","100",null,false],["Console",null,"Nintendo","Nintendo","Connecteur LCD","75",null,false],["Console",null,"Nintendo","Nintendo","Écran bleu fixe","140",null,false],["Console",null,"Nintendo","Nintendo","Prise jack (casque)","35",null,false],["Console",null,"Nintendo","Nintendo","Lecteur de cartouches","45",null,false],["Console",null,"Nintendo","Nintendo","Connecteur USB-C (charge)","80",null,false],["Console",null,"Nintendo","Nintendo","Connecteur micro SD (carte mère)","75",null,false],["Console",null,"Nintendo","Nintendo","Port carte micro SD","35",null,false],["Console",null,"Nintendo","Nintendo","Batterie","50",null,false],["Console",null,"Nintendo","Nintendo","Gauge (gestion batterie)","80",null,false],["Console",null,"Nintendo","Nintendo","Multi-réparation (IC, lecteur, joystick Joy-con)","115",null,false],["Console",null,"Nintendo","Nintendo","Ventilateur","40",null,false],["Console",null,"Nintendo","Nintendo","Pâte thermique et nettoyage des radiateurs","30",null,false],["Console",null,"Nintendo","Nintendo","Boutons Power / Volume","35",null,false],["Console",null,"Nintendo","Nintendo","Rails de fixation Joy-con (console)","35",null,false],["Console",null,"Nintendo","Nintendo","Châssis","60",null,false],["Console",null,"Nintendo","Nintendo","Coque (arrière ou complète)","40",null,false],["Console",null,"Nintendo","Nintendo","Carte mère complète","200",null,false],["Console",null,"Nintendo","Nintendo","Désoxydation carte mère","40",null,false],["Console",null,"Nintendo","Nintendo Switch / Switch Lite","Connecteur batterie","50",null,false],["Console",null,"Nintendo","Nintendo Switch / Switch Lite","Remplacement IC (M92T36 / BQ24193 / PI3USB)","70",null,false],["Console",null,"Nintendo","Dock TV Nintendo Switch","Port USB-C mâle","35",null,false],["Console",null,"Nintendo","Dock TV Nintendo Switch","Dock TV (HDMI, USB, USB-C)","50",null,false],["Manette",null,"PlayStation","DualSense (PS5)","Stick","25","45 min",false],["Manette",null,"Nintendo","Joy-con Switch","Joystick (drift)","15",null,false],["Manette",null,"Nintendo","Joy-con Switch","Vibreur HD","20",null,false],["Manette",null,"Nintendo","Joy-con Switch","Blocs de verrouillage rapide","15",null,false],["Manette",null,"Nintendo","Joy-con Switch","Changement de coque","20",null,false],["Manette",null,"Nintendo","Joy-con Switch","Rail de fixation","20",null,false],["Manette",null,"Nintendo","Joy-con Switch","Boutons SR, SL, synchro et LED","15",null,false],["Manette",null,"Nintendo","Joy-con gauche","Gâchette ZL","20",null,false],["Manette",null,"Nintendo","Joy-con droit","Gâchette ZR","20",null,false],["Manette",null,"Nintendo","Joy-con gauche","Gâchette L et bouton Moins","20",null,false],["Manette",null,"Nintendo","Joy-con gauche","Carte mère","35",null,false],["Manette",null,"Nintendo","Joy-con droit","Carte mère","35",null,false],["Manette",null,"Nintendo","Pro Switch","Joysticks externes","20",null,false],["Manette",null,"Nintendo","Pro Switch","Joystick interne","25",null,false],["Manette",null,"XBOX","360","Capuchons joysticks","10",null,false],["Manette",null,"XBOX","360","LB / RB","20",null,false],["Manette",null,"XBOX","One","Capuchons joysticks","10",null,false],["Manette",null,"XBOX","One","Suppression du drift",null,null,true],["Manette",null,"XBOX","One","Joystick Hall effect",null,null,true],["Manette",null,"XBOX","One","Joystick TMR","34.99",null,true],["Manette",null,"XBOX","One","LB / RB",null,null,false],["Manette",null,"XBOX","One","Vibreur",null,null,false],["Manette",null,"XBOX","One","Bouton",null,null,false],["Manette",null,"XBOX","One","Coque",null,null,false],["Manette",null,"XBOX","One S / X","Capuchons joysticks","10",null,false],["Manette",null,"XBOX","One S / X","Suppression du drift",null,null,true],["Manette",null,"XBOX","One S / X","Joystick Hall effect",null,null,true],["Manette",null,"XBOX","One S / X","Joystick TMR","34.99",null,true],["Manette",null,"XBOX","One S / X","LB / RB",null,null,false],["Manette",null,"XBOX","One S / X","Vibreur",null,null,false],["Manette",null,"XBOX","One S / X","Bouton",null,null,false],["Manette",null,"XBOX","One S / X","Coque",null,null,false],["Manette",null,"XBOX","Series X|S","Capuchons joysticks","10",null,false],["Manette",null,"XBOX","Series X|S","Suppression du drift",null,null,true],["Manette",null,"XBOX","Series X|S","Joystick Hall effect",null,null,true],["Manette",null,"XBOX","Series X|S","Joystick TMR","34.99",null,true],["Manette",null,"XBOX","Series X|S","LB / RB",null,null,false],["Manette",null,"XBOX","Series X|S","Vibreur",null,null,false],["Manette",null,"XBOX","Series X|S","Bouton",null,null,false],["Manette",null,"XBOX","Series X|S","Coque",null,null,false],["Manette",null,"XBOX","360","Ne s'allume plus","devis",null,false],["Manette",null,"PlayStation","DualShock 3 (PS3)","Capuchons joysticks","10",null,false],["Manette",null,"PlayStation","DualShock 3 (PS3)","Suppression du drift",null,null,true],["Manette",null,"PlayStation","DualShock 3 (PS3)","Joystick Hall effect",null,null,true],["Manette",null,"PlayStation","DualShock 3 (PS3)","Joystick TMR","34.99",null,true],["Manette",null,"PlayStation","DualShock 4 (PS4)","Capuchons joysticks","10",null,false],["Manette",null,"PlayStation","DualShock 4 (PS4)","Suppression du drift",null,null,true],["Manette",null,"PlayStation","DualShock 4 (PS4)","Joystick Hall effect",null,null,true],["Manette",null,"PlayStation","DualShock 4 (PS4)","Joystick TMR","34.99",null,true],["Manette",null,"PlayStation","DualSense (PS5)","Capuchons joysticks","10",null,false],["Manette",null,"PlayStation","DualSense (PS5)","Suppression du drift",null,null,true],["Manette",null,"PlayStation","DualSense (PS5)","Joystick Hall effect",null,null,true],["Manette",null,"PlayStation","DualSense (PS5)","Joystick TMR","34.99",null,true],["Téléphone",null,"Apple","iPhone 13","Écran","89","2 h",false],["Téléphone",null,"Apple","iPhone 13","Batterie","49","1 h",false],["Téléphone",null,"Samsung","Galaxy S22","Connecteur de charge","59","1 h 30",false],["Mods","Console","Nintendo","Switch","Puce","120","48 h",false],["Mods","Manette","PlayStation","DualSense","Coque personnalisée","35","1 h",false],["Mods","Manette","Nintendo","Joy-con Switch","Coques custom (paire)","35",null,false]];
+function srt(a){ return a.slice().sort(function(x,y){ return x.localeCompare(y,"fr") }); }
+function setCat(k,v){ CAT[k]=v; if (k==="app"){ CAT.cat=""; CAT.gam=""; CAT.mod=""; } if (k==="cat"){ CAT.gam=""; CAT.mod=""; } if (k==="gam") CAT.mod=""; render(); }
+function optList(arr,sel,ph){ return '<option value="">'+ph+'</option>'+arr.map(function(v){ return '<option'+(v===sel?' selected':'')+'>'+esc(v)+'</option>' }).join(""); }
+var BRANDS_BY_APP={Console:["PlayStation","XBOX","Nintendo","Sega"],Manette:["PlayStation","XBOX","Nintendo","Sega"],Mods:["PlayStation","XBOX","Nintendo","Sega"],"Téléphone":["Apple","Samsung","Xiaomi","Autre"],"PC portable":["HP","Dell","Lenovo","Apple","Asus","Autre"]};
+var MODELES_MANETTE={PlayStation:["DualShock 3 (PS3)","DualShock 4 (PS4)","DualSense (PS5)"],XBOX:["360","One","One S / X","Series X|S"],Nintendo:["GamePad Wii U"]};
+var STOCK_TAB = "pieces";
+function setStockTab(t){ STOCK_TAB = t; render(); }
+/* Couleur proposée seulement pour certaines manettes (Blanc ou Noir) */
+var COULEURS_MODELE = {"360":["Blanc","Noir"],"One":["Blanc","Noir"],"One S / X":["Blanc","Noir"],"Series X|S":["Blanc","Noir"],"DualShock 3 (PS3)":["Blanc","Noir"],"DualShock 4 (PS4)":["Blanc","Noir"],"DualSense (PS5)":["Blanc","Noir"],"GamePad Wii U":["Blanc","Noir"]};
+function couleursFor(app, mod){ return app === "Manette" && COULEURS_MODELE[mod] ? COULEURS_MODELE[mod] : null; }
+function coulOptsHtml(list){ return '<option value="">- Sélectionner -</option>' + list.map(c => '<option>' + c + '</option>').join(""); }
+function vCouleurRefresh(app, mod){
+  const list = couleursFor(app, mod);
+  $("vCouleurRow").style.display = list ? "block" : "none";
+  $("vCouleur").innerHTML = list ? coulOptsHtml(list) : "";
+}
+/* Choisir le modèle (et la couleur) sélectionne l’appareil de stock correspondant */
+function vAutoDev(){
+  const app = $("vAppId"); if (!app) return;
+  if (VT_COMPAT || !VT_SEL || !VT_SEL.mod) { app.value = ""; return; }
+  const coulOn = $("vCouleurRow").style.display !== "none";
+  const coul = coulOn ? $("vCouleur").value : "";
+  if (coulOn && !coul) { app.value = ""; return; }
+  const nom = [VT_SEL.app, VT_SEL.cat, VT_SEL.mod, coul].filter(Boolean).join(" · ");
+  const x = (S.stockApp || []).find(y => y.nom === nom);
+  app.value = x ? x.id : "";
+  if (app.value && $("vAchat")) $("vAchat").checked = false;
+}
+function vAchatChange(on){ if (on && $("vAppId")) $("vAppId").value = ""; }
+var lineKey = l => [l.appareil, l.categorie, l.modele, l.couleur].filter(Boolean).join("|");
+function aCouleurRefresh(app, mod){
+  const box = $("aCouleurBox"); if (!box) return;
+  const list = couleursFor(app, mod);
+  box.style.display = list ? "block" : "none";
+  $("aCouleur").innerHTML = list ? coulOptsHtml(list) : "";
+}
+var MODELES_CONSOLE={XBOX:["360","360 S","360 E","One","One S","One X","Series X","Series S"],PlayStation:["PS1","PS2","PS2 Slim","PS3 Rétrocompatible","PS3","PS3 Slim","PS3 Ultra Slim","PS4","PS4 Slim","PS4 Pro","PS5","PS5 Slim","PS5 Pro"],Nintendo:["DS Tank", "DS Lite", "DSi", "DSi XL", "2DS", "3DS", "3DS XL", "NEW 3DS", "NEW 2DS XL", "NEW 3DS XL", "SWITCH", "SWITCH LITE", "SWITCH OLED", "GAME BOY", "GAME BOY COLOR", "GAME BOY POCKET", "GAME BOY ADVANCED", "GAME BOY ADVANCED SP", "GAME BOY MICRO", "GAME CUBE", "WII", "WII U", "N64", "NES", "SUPER NES"]};
+/* Gammes des téléphones (tout sauf iPhone). Un modèle de gamme est enregistré sous « gamme · modèle ». */
+var GAMMES_TEL = {Samsung:["Galaxy S","Galaxy A","Galaxy M","Galaxy Z","Galaxy Note","Autre"], Xiaomi:["Xiaomi","Redmi","Redmi Note","MI","POCO","MI A","MI MAX","MI MIX","REDMI S","PAD"], Autre:["Autre"]};
+var MODELES_TEL = {Samsung:{"Galaxy S":["Galaxy S22"]}, Xiaomi:{"Redmi Note":["REDMI NOTE 5"]}};
+function hasGamme(app, cat){ return app === "Téléphone" && !!cat && cat !== "Apple"; }
+function gammesFor(app, cat){ return hasGamme(app, cat) ? (GAMMES_TEL[cat] || ["Autre"]) : []; }
+function modOpts(mods, gam, sel){
+  const cut = gam ? gam.length + 3 : 0;
+  return '<option value="">Modèle…</option>' + mods.map(m => '<option value="' + esc(m) + '"' + (m === sel ? ' selected' : '') + '>' + esc(cut ? m.slice(cut) : m) + '</option>').join("");
+}
+function catalogueView(){
+  const rows = S.catalogue;
+  if (!rows.length) return '<h1>Réparations &amp; Mods</h1><p class="m">Le catalogue est vide.</p><button class="btn" onclick="importCat()">Importer le catalogue de base</button>';
+  const inApp = r => !CAT.app || r.appareil === CAT.app || (r.appareil === "Mods" && r.cible === CAT.app);
+  const base = rows.filter(inApp);
+  const brands = BRANDS_BY_APP[CAT.app] || ["Autre"];
+  const src = CAT.app === "Console" ? MODELES_CONSOLE : CAT.app === "Manette" ? MODELES_MANETTE : {};
+  const stat = (CAT.cat && src[CAT.cat]) ? src[CAT.cat] : [];
+  const gams = gammesFor(CAT.app, CAT.cat);
+  const mods = gams.length ? (CAT.gam ? modelsFor(CAT.app, CAT.cat, CAT.gam) : []) : srt([...new Set(stat.concat(base.filter(r => !CAT.cat || r.categorie === CAT.cat).map(r => r.modele)))]);
+  const list = rows.filter(r => inApp(r) && (!CAT.cat || r.categorie === CAT.cat) && (!CAT.mod || r.modele === CAT.mod))
+    .sort((a,b) => a.reparation.localeCompare(b.reparation, "fr"));
+  let body;
+  if (CAT.mod) body = (list.map(catRow).join("") || '<p class="m">Aucune réparation pour ce modèle.</p>') + addCatForm();
+  else if (CAT.cat && gams.length && !CAT.gam) body = '<p class="m">Choisis la gamme pour voir les modèles.</p>';
+  else if (CAT.cat) body = '<div class="card"><div class="t">Nouveau modèle</div><label>Nom du modèle</label><input id="cNM" placeholder="Ex. Master System"><button class="btn" onclick="newModel()">Créer ce modèle</button></div>';
+  else body = '<p class="m">Choisis un type d’appareil, une marque et un modèle pour voir les réparations et leurs prix.</p>';
+  return '<h1>Réparations &amp; Mods</h1>'
+    + '<select onchange="setCat(\'app\',this.value)">' + optList(APPS, CAT.app, "Choisir un type d’appareil…") + '</select>'
+    + (CAT.app ? '<div class="two" style="margin-top:8px"><select onchange="setCat(\'cat\',this.value)">' + optList(brands, CAT.cat, "Marque…") + '</select>' + (gams.length ? '<select onchange="setCat(\'gam\',this.value)">' + optList(gams, CAT.gam || "", "Gamme…") + '</select>' : '<select onchange="setCat(\'mod\',this.value)">' + optList(mods, CAT.mod, "Modèle…") + '</select>') + '</div>' + (gams.length && CAT.gam ? '<div style="margin-top:8px"><select onchange="setCat(\'mod\',this.value)">' + modOpts(mods, CAT.gam, CAT.mod) + '</select></div>' : '') : '')
+    + '<div style="margin-top:10px">' + body + '</div>';
+}
+function newModel(){
+  const v = $("cNM").value.trim().replace(/[<>"]/g, "");
+  if (!v) { toast("Indique le nom du modèle"); return; }
+  CAT.mod = (gammesFor(CAT.app, CAT.cat).length && CAT.gam ? CAT.gam + " · " : "") + v; render();
+}
+function catRow(r){
+  const ok = r.prix != null && !isNaN(+r.prix);
+  return '<div class="card"><div class="row"><div><div class="t">' + esc(r.reparation) + '</div><div class="m">'
+    + (r.duree ? 'Durée : ' + esc(r.duree) : 'Durée à définir')
+    + (r.joy ? ' · joystick (1 ou 2)' + (ok ? ' · 2 joysticks : ' + (2 * r.prix - 5) + ' €' : '') : '')
+    + '</div></div>'
+    + '<div style="display:flex;gap:6px;align-items:center"><input inputmode="decimal" value="' + esc(r.prix == null ? "" : r.prix) + '" placeholder="à définir" style="width:90px;margin:0" onchange="setPrixCat(\'' + r.id + '\',this.value)"><span class="m">€</span></div></div>'
+    + '<button class="chip late" style="margin-top:6px" onclick="delCat(\'' + r.id + '\')">Supprimer</button></div>';
+}
+function addCatForm(){
+  return '<div class="card" style="margin-top:10px"><div class="t">Ajouter une réparation pour ce modèle</div>'
+    + '<label>Réparation *</label><input id="cR">'
+    + '<div class="two"><div><label>Prix (€)</label><input id="cP" inputmode="decimal" placeholder="à définir"></div><div><label>Durée de réparation</label><input id="cD" placeholder="Ex. 1h"></div></div>'
+    + '<button class="btn" onclick="addCat()">Ajouter</button><div class="err" id="cRErr"></div></div>';
+}
+async function addCat(){
+  const rep = $("cR").value.trim(), pr = $("cP").value.trim().replace(",", "."), du = $("cD").value.trim(), err = $("cRErr");
+  err.textContent = "";
+  if (!rep) { err.textContent = "Indique la réparation."; return; }
+  if (pr !== "" && pr !== "devis" && (isNaN(+pr) || +pr < 0)) { err.textContent = "Prix invalide."; return; }
+  const ref = S.catalogue.find(r => r.modele === CAT.mod);
+  const { error } = await SB.from("catalogue").insert({ appareil: CAT.app, categorie: ref ? ref.categorie : (CAT.cat || "Autre"), modele: CAT.mod, reparation: rep, prix: pr === "" ? null : pr, duree: durNorm(du), joy: false });
+  if (error) { err.textContent = msgErr(error); return; }
+  toast("Réparation ajoutée");
+  await reload();
+}
+async function setPrixCat(id, v){
+  v = String(v).trim().replace(",", "."); const p = v === "" ? null : v;
+  if (p !== null && p !== "devis" && (isNaN(+p) || +p < 0)) { toast("Prix invalide"); render(); return; }
+  const { error } = await SB.from("catalogue").update({ prix: p }).eq("id", id);
+  if (error) { toast(msgErr(error)); return; }
+  toast("Prix enregistré");
+  await reload();
+}
+async function delCat(id){
+  if (!confirm("Supprimer cette réparation du catalogue ?")) return;
+  const { error } = await SB.from("catalogue").delete().eq("id", id);
+  if (error) { toast(msgErr(error)); return; }
+  toast("Réparation supprimée");
+  await reload();
+}
+async function importCat(){
+  if (!confirm("Importer le catalogue de base (103 réparations) ?")) return;
+  const rows = CAT_SEED.map(r => ({appareil: r[0], cible: r[1], categorie: r[2], modele: r[3], reparation: r[4], prix: r[5], duree: r[6], joy: r[7]}));
+  for (let i = 0; i < rows.length; i += 50) {
+    const { error } = await SB.from("catalogue").insert(rows.slice(i, i + 50));
+    if (error) { toast(msgErr(error)); return; }
+  }
+  toast("Catalogue importé");
+  await reload();
+}
+function plus6m(dateStr){
+  const b = dateStr ? new Date(dateStr + "T00:00") : new Date();
+  b.setHours(0, 0, 0, 0); b.setMonth(b.getMonth() + 6);
+  return b.getFullYear() + "-" + String(b.getMonth() + 1).padStart(2, "0") + "-" + String(b.getDate()).padStart(2, "0");
+}
+function garantieHtml(d){
+  if (d.statut !== "Remis" || !d.echeance)
+    return '<div class="m" style="margin-top:6px">La garantie de 6 mois démarre à la remise de l’appareil.</div>';
+  const fin = plus6m(d.echeance);
+  const start = new Date(d.echeance + "T00:00"), end = new Date(fin + "T00:00");
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const pct = Math.min(100, Math.max(0, (today - start) / (end - start) * 100));
+  const rest = left(fin);
+  const col = rest < 0 ? "var(--bad)" : rest <= 30 ? "var(--warn)" : "var(--brand)";
+  return '<div style="margin-top:8px"><div class="t" style="font-size:14px">Garantie 6 mois</div>'
+    + '<div style="height:8px;border-radius:4px;background:var(--line);overflow:hidden;margin-top:6px"><div style="height:100%;width:' + pct.toFixed(1) + '%;background:' + col + '"></div></div>'
+    + '<div style="display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-weight:600;color:' + col + '"><span>Jusqu’au ' + fr(fin) + '</span><span>' + (rest < 0 ? "Garantie expirée" : jours(rest)) + '</span></div></div>';
+}
+var SAVD_OPEN=null;
+function toggleSavD(id){ SAVD_OPEN = SAVD_OPEN === id ? null : id; render(); }
+function repCardHtml(d, rep){
+  const c = d.clients ? fullName(d.clients) : "";
+  const manque = rep && infosManquantes(d) ? '<span title="Infos manquantes" style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;border:2px solid #dc2626;color:#dc2626;font-weight:800;font-size:14px;margin-right:6px">!</span>' : "";
+  const l = left(d.echeance);
+  const cls = l == null ? "" : l < 0 ? "late" : l <= 2 ? "warn" : "";
+  const date = d.statut === "Terminé" ? "" : d.statut === "Remis" ? '<span class="chip">' + (d.echeance ? "Remis le " + fr(d.echeance) : "Remis") + '</span>'
+    : '<span class="chip ' + cls + '">' + (l == null ? "Pas de date prévue" : "Prêt pour le " + fr(d.echeance) + " · " + jours(l)) + '</span>';
+  const open = SAVD_OPEN === d.id && d.statut === "Remis";
+  return '<div class="card" data-page="Réparation : ' + esc(d.panne) + '" style="margin:6px 0;' + (rep ? 'cursor:pointer;' : '') + '"' + (rep ? ' onclick="openD(\'' + d.id + '\')"' : '') + '>'
+    + '<div class="row" style="align-items:center"><div style="flex:1;min-width:0;text-align:left;align-self:flex-start"><div style="text-align:left"><span class="chip">' + esc(d.type) + '</span></div><div class="t" style="text-align:left;margin-top:4px">' + esc(d.appareil) + ' · ' + esc(c) + '</div><div class="m" style="text-align:left">' + esc(d.panne) + '</div></div>' + manque + '</div>'
+    + stepsHtml(d.statut)
+    + (date ? '<div class="row" style="margin-top:8px">' + date + '</div>' : '')
+    + '<div style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px"><div>' + pieceInner(d) + '</div>' + payChip(d) + '</div>'
+    + (d.statut === "Terminé" ? recupHtml(d) : '') + (d.statut === "Remis" ? garantieHtml(d) : '')
+    + (d.statut === "Remis" ? '<div style="margin-top:6px" onclick="event.stopPropagation()"><button class="chip" onclick="event.stopPropagation();toggleSavD(\'' + d.id + '\')">' + (open ? 'Fermer SAV' : 'SAV') + '</button></div>'
+      + (open ? '<div class="card" style="margin:6px 0;padding:10px" onclick="event.stopPropagation()">' + savHtml(d, rep ? "rep" : "cli") + '</div>' : '') : '')
+    + '</div>';
+}
+function devRepsHtml(devId){
+  const ds = S.dossiers.filter(x => x.device_id === devId);
+  if (!ds.length) return "";
+  const rep = ROLE === "rep";
+  return '<div class="m" style="margin-top:8px;font-weight:600">Réparations</div>' + ds.map(d => repCardHtml(d, rep)).join("");
+}
+function devLine(d, rep){
+  const tel = d.type === "Téléphone";
+  let codes = "";
+  if (tel && d.pin) codes += '<div class="m">Code PIN : <span class="code">' + esc(d.pin) + '</span></div>';
+  if (tel && d.schema_code) codes += '<div class="m">Schéma : <span class="code">' + esc(d.schema_code) + '</span></div>';
+  return '<div class="card" data-page="' + (ROLE === "rep" ? "Espace réparateur · Clients" : "Espace client") + '" style="margin:6px 0"><div class="t">' + esc(d.modele) + (d.couleur ? ' · ' + esc(d.couleur) : '') + '</div><div class="m">' + esc(d.type) + '</div>'
+    + '<div class="m" style="margin-top:4px">' + (tel ? 'IMEI' : 'N° de série') + ' : <span class="code">' + esc((tel ? d.imei : d.sn) || '–') + '</span></div>' + codes
+    + (d.etat ? '<div class="m">État : ' + esc(d.etat) + '</div>' : '')
+    + '<div style="margin-top:6px;display:flex;gap:6px"><button class="chip" title="Modifier" onclick="showDevForm(\'' + d.id + '\')">✏️</button>'
+    + (rep ? '<button class="chip late" onclick="delDev(\'' + d.id + '\')">Effacer</button>' : '')
+    + '</div>'
+    + devRepsHtml(d.id)
+    + '<div id="de-' + d.id + '"></div></div>';
+}
+function cliDevHtml(me){
+  const ds = S.devices.filter(d => d.client_id === me.id);
+  return (ds.map(d => devLine(d, false)).join("") || '<p class="m">Aucun appareil pour le moment.</p>')
+    + '<div id="devForm"></div><button class="btn ghost small" style="margin-top:6px" onclick="showDevForm(null,\'' + me.id + '\')">+ Ajouter un appareil</button>'
+    + '<p class="m" style="margin-top:6px">Tu peux modifier tes appareils. Pour en retirer un, contacte ton réparateur.</p>';
+}
+function devHtml(c){
+  const ds = S.devices.filter(d => d.client_id === c.id);
+  return '<h2 style="font-size:15px;margin:12px 0 6px">Appareils</h2>' + (ds.map(d => devLine(d, true)).join("") || '<p class="m">Aucun appareil.</p>')
+    + '<div id="devForm"></div><button class="btn ghost small" style="margin-top:6px" onclick="showDevForm(null,\'' + c.id + '\')">+ Ajouter un appareil</button>';
+}
+function showDevForm(devId, cid){
+  const d = devId ? S.devices.find(x => x.id === devId) : null;
+  const box = devId ? $("de-" + devId) : $("devForm");
+  if (!box) return;
+  const owner = cid || (d && d.client_id);
+  const tel = !d || d.type === "Téléphone";
+  const unk = !!d && (d.imei === "Non renseigné" || d.sn === "Non renseigné");
+  const idv = d ? (d.type === "Téléphone" ? d.imei : d.sn) : "";
+  const v = x => esc(x == null ? "" : x);
+  box.innerHTML = '<div class="card" style="margin:8px 0 0">'
+    + '<label>Type</label><select id="dvT" onchange="devIdLbl()">' + ["Téléphone","Console","Manette","Enceinte","PC portable","Autre"].map(t => '<option' + (d && d.type === t ? ' selected' : '') + '>' + t + '</option>').join("") + '</select>'
+    + '<label>Modèle *</label><input id="dvM" value="' + v(d && d.modele) + '" placeholder="Ex. iPhone 13">'
+    + '<label>Couleur</label><input id="dvC" value="' + v(d && d.couleur) + '" placeholder="Ex. Bleu">'
+    + '<label id="dvIdL">' + (tel ? 'IMEI *' : 'N° de série *') + '</label><input id="dvI" inputmode="numeric" value="' + (unk ? '' : v(idv)) + '"' + (unk ? ' disabled' : '') + '>'
+    + '<label style="font-weight:400;display:flex;gap:8px;align-items:center;margin-top:6px"><input type="checkbox" id="dvU" onchange="devUnk()" style="width:auto;margin:0"' + (unk ? ' checked' : '') + '> Je ne sais pas où le trouver</label>'
+    + '<div id="dvCode"></div>'
+    + '<label>État</label><input id="dvE" value="' + v(d && d.etat) + '" placeholder="Ex. rayure sur le dos">'
+    + '<button class="btn" onclick="saveDev(' + (devId ? "'" + devId + "'" : "null") + ',\'' + owner + '\')">' + (d ? 'Enregistrer les modifications' : 'Enregistrer l’appareil') + '</button>'
+    + '<button class="btn ghost" onclick="render()">Annuler</button><div class="err" id="dvErr"></div></div>';
+  devCodeFields(d);
+}
+function devCodeFields(d){
+  const box = $("dvCode"); if (!box) return;
+  if ($("dvT").value !== "Téléphone") { box.innerHTML = ""; return; }
+  const sch = !!(d && d.schema_code);
+  box.innerHTML = '<label>Déverrouillage</label><select id="dvK" onchange="devKLbl()"><option value="pin"' + (sch ? '' : ' selected') + '>Code PIN</option><option value="sch"' + (sch ? ' selected' : '') + '>Schéma</option></select>'
+    + '<label id="dvKL">' + (sch ? 'Schéma' : 'Code PIN') + '</label><input id="dvK2" value="' + esc(d ? ((sch ? d.schema_code : d.pin) || "") : "") + '">';
+}
+function devKLbl(){ $("dvKL").textContent = $("dvK").value === "sch" ? "Schéma" : "Code PIN"; }
+function devUnk(){ const u = $("dvU").checked; $("dvI").disabled = u; if (u) $("dvI").value = ""; }
+function devIdLbl(){
+  const tel = $("dvT").value === "Téléphone";
+  $("dvIdL").textContent = tel ? "IMEI *" : "N° de série *";
+  devCodeFields(null);
+}
+async function saveDev(devId, cid){
+  const v = x => $(x).value.trim(), err = $("dvErr"); err.textContent = "";
+  const t = $("dvT").value, unk = $("dvU").checked, id = unk ? "Non renseigné" : v("dvI").replace(/\s/g, "");
+  if (!v("dvM") || (!unk && !id)) { err.textContent = "Modèle et " + (t === "Téléphone" ? "IMEI" : "numéro de série") + " sont obligatoires."; return; }
+  if (t === "Téléphone" && !unk && !/^\d{15}$/.test(id)) { err.textContent = "L’IMEI doit comporter 15 chiffres."; return; }
+  const row = {type: t, modele: v("dvM"), couleur: v("dvC") || null, etat: v("dvE") || null, imei: null, sn: null, pin: null, schema_code: null};
+  if (t === "Téléphone") {
+    row.imei = id;
+    const k = v("dvK2") || null;
+    if ($("dvK").value === "sch") row.schema_code = k; else row.pin = k;
+  } else row.sn = id;
+  const res = devId
+    ? await SB.from("devices").update(row).eq("id", devId)
+    : await SB.from("devices").insert(Object.assign({client_id: cid}, row));
+  if (res.error) { err.textContent = msgErr(res.error); return; }
+  toast(devId ? "Appareil modifié" : "Appareil ajouté");
+  await reload();
+}
+async function delDev(id){
+  if (!confirm("Effacer cet appareil de la fiche client ?")) return;
+  const { error } = await SB.from("devices").delete().eq("id", id);
+  if (error) { toast(msgErr(error)); return; }
+  toast("Appareil effacé");
+  await reload();
+}
+function toggleCli(id){ CLI_OPEN = CLI_OPEN === id ? null : id; render(); }
+function editCli(id){
+  const c = S.clients.find(x => x.id === id);
+  $("cEd").innerHTML = '<div class="card" style="margin:8px 0 0"><div class="two"><div><label>Prénom *</label><input id="eP" value="' + esc(c.prenom) + '"></div><div><label>Nom *</label><input id="eN" value="' + esc(c.nom) + '"></div></div>'
+    + '<label>Téléphone *</label><input id="eT" value="' + esc(c.tel) + '"><label>Email *</label><input id="eM" value="' + esc(c.mail) + '"><label>Adresse</label><input id="eA" value="' + esc(c.adr) + '">'
+    + '<div class="two"><div><label>Code postal</label><input id="eCp" maxlength="5" value="' + esc(c.cp) + '"></div><div><label>Ville</label><input id="eV" value="' + esc(c.ville) + '"></div></div>'
+    + '<label>Notes</label><textarea id="eNo" rows="2">' + esc(c.notes || "") + '</textarea>'
+    + '<button class="btn" onclick="saveCli(\'' + id + '\')">Enregistrer les modifications</button><div class="err" id="eErr"></div></div>';
+}
+async function saveCli(id){
+  const v = x => $(x).value.trim(), err = $("eErr"); err.textContent = "";
+  const r = {prenom:v("eP") || null, nom:v("eN") || null, tel:v("eT") || null, mail:v("eM") || null, adr:v("eA") || null, cp:v("eCp") || null, ville:v("eV") || null, notes:v("eNo") || null};
+  if (r.cp && !/^\d{5}$/.test(r.cp)) { err.textContent = "Le code postal doit comporter 5 chiffres."; return; }
+  if (r.mail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(r.mail)) { err.textContent = "L’email n’est pas valide."; return; }
+  const dig = (r.tel || "").replace(/\D/g, ""), m = (r.mail || "").toLowerCase();
+  const dup = S.clients.find(c => c.id !== id && !c.deleted_at && ((dig && c.tel && c.tel.replace(/\D/g, "") === dig) || (m && c.mail && c.mail.toLowerCase() === m)));
+  if (dup) { showDup(fullName(dup)); return; }
+  const { error } = await SB.from("clients").update(r).eq("id", id);
+  if (error) { err.textContent = msgErr(error); return; }
+  toast("Client modifié");
+  await reload();
+}
+async function softDelCli(id){
+  if (!confirm("Mettre ce client dans la corbeille ? Tu pourras le restaurer.")) return;
+  const { error } = await SB.from("clients").update({ deleted_at: new Date().toISOString() }).eq("id", id);
+  if (error) { toast(msgErr(error)); return; }
+  CLI_OPEN = null; toast("Client mis dans la corbeille");
+  await reload();
+}
+async function restoreCli(id){
+  const { error } = await SB.from("clients").update({ deleted_at: null }).eq("id", id);
+  if (error) { toast(/duplicate|unique|23505/.test(error.message) ? "Impossible : un client actif a déjà ce téléphone ou cet email." : msgErr(error)); return; }
+  CLI_OPEN = null; toast("Client restauré");
+  await reload();
+}
+async function purgeCli(id){
+  if (!confirm("Supprimer DÉFINITIVEMENT ce client, ses appareils, ses dossiers et son accès ? Action irréversible.")) return;
+  const { error } = await SB.rpc("purge_client", { p_id: id });
+  if (error) { toast(msgErr(error)); return; }
+  CLI_OPEN = null; toast("Client supprimé définitivement");
+  await reload();
+}
+var MP={}, PKS={};
+function typeOf(mods){ return (mods[0] || "").split(" · ")[0] || null; }
+function modelsFor(app, cat, gam){
+  const base = S.catalogue.filter(r => r.appareil === app || (r.appareil === "Mods" && r.cible === app));
+  if (hasGamme(app, cat)) {
+    if (!gam) return [];
+    const pre = gam + " · ";
+    const seeds = ((MODELES_TEL[cat] || {})[gam] || []).map(m => pre + m);
+    return srt([...new Set(seeds.concat(base.filter(r => r.categorie === cat && String(r.modele || "").indexOf(pre) === 0).map(r => r.modele)))]);
+  }
+  const src = app === "Console" ? MODELES_CONSOLE : app === "Manette" ? MODELES_MANETTE : {};
+  const stat = (cat && src[cat]) ? src[cat] : [];
+  return srt([...new Set(stat.concat(base.filter(r => !cat || r.categorie === cat).map(r => r.modele)).filter(Boolean))]);
+}
+function pkHtml(key){
+  const st = PKS[key] = PKS[key] || {app:"", cat:""};
+  const brands = st.app ? (BRANDS_BY_APP[st.app] || ["Autre"]) : [];
+  const gams = st.app && st.cat ? gammesFor(st.app, st.cat) : [];
+  const showMod = !!st.app && !!st.cat && (!gams.length || !!st.gam);
+  const mods = showMod ? modelsFor(st.app, st.cat, st.gam) : [];
+  const modSel = '<select onchange="pkMod(\'' + key + '\',this.value)">' + modOpts(mods, gams.length ? st.gam : "", "") + '</select>';
+  const gamSel = '<select onchange="pkSet(\'' + key + '\',\'gam\',this.value)">' + optList(gams, st.gam || "", "Gamme…") + '</select>';
+  let h = '<select onchange="pkSet(\'' + key + '\',\'app\',this.value)">' + optList(APPS, st.app, "Type d’appareil…") + '</select>';
+  if (st.app) {
+    h += '<div class="two" style="margin-top:6px"><select onchange="pkSet(\'' + key + '\',\'cat\',this.value)">' + optList(brands, st.cat, "Marque…") + '</select>'
+      + (gams.length ? gamSel : (key === "v" && VT_COMPAT ? '' : modSel)) + '</div>';
+    if (gams.length && showMod && !(key === "v" && VT_COMPAT)) h += '<div style="margin-top:6px">' + modSel + '</div>';
+  }
+  return h;
+}
+function pkSet(key, k, v){ const st = PKS[key] = PKS[key] || {app:"", cat:""}; st[k] = v; if (k === "app") { st.cat = ""; st.gam = ""; } if (k === "cat") st.gam = ""; if (key === "a") { DEV_SEL = null; MP.a = []; aCouleurRefresh("", ""); } mpDraw(key); }
+function pkMod(key, mod){
+  const st = PKS[key] || {}; if (!mod || !st.app || !st.cat) return;
+  if (key === "v") { VT_SEL = {app: st.app, cat: st.cat, mod}; MP.v = [[st.app, st.cat, mod].join(" · ")]; vCouleurRefresh(st.app, mod); vAutoDev(); mpDraw("v"); return; }
+  if (key === "a") { DEV_SEL = {app: st.app, cat: st.cat, mod}; MP.a = [[st.app, st.cat, mod].join(" · ")]; DEV_PK_OPEN = false; aCouleurRefresh(st.app, mod); mpDraw("a"); return; }
+  mpAdd(key, [st.app, st.cat, mod].join(" · "));
+}
+var DEV_PK_OPEN = false;
+function devPkEdit(){ DEV_PK_OPEN = true; DEV_SEL = null; MP.a = []; PKS.a = {app: (PKS.a && PKS.a.app) || "", cat: (PKS.a && PKS.a.cat) || "", gam: ""}; aCouleurRefresh("", ""); mpDraw("a"); }
+function mpDraw(key){
+  const box = $("mp-" + key); if (!box) return;
+  MP[key] = MP[key] || [];
+  if (key === "a" && MP.a.length && !DEV_PK_OPEN) {
+    box.innerHTML = '<div class="row" style="align-items:center;gap:6px"><span class="chip ok">' + esc(MP.a[0]) + '</span><button class="chip" title="Modifier le modèle" onclick="devPkEdit()">✎</button></div>';
+    return;
+  }
+  box.innerHTML = MP[key].map(m => '<span class="chip ok" style="margin:2px 4px 2px 0">' + esc(m) + ' <button style="border:0;background:none;cursor:pointer;font-weight:700" onclick="mpDel(\'' + key + '\',\'' + esc(m) + '\')">×</button></span>').join("")
+    + '<div style="margin-top:6px">' + pkHtml(key) + '</div>';
+}
+function mpAdd(key, v){ MP[key] = MP[key] || []; if (v && MP[key].indexOf(v) < 0) MP[key].push(v); mpDraw(key); }
+function mpDel(key, v){ MP[key] = MP[key].filter(x => x !== v); mpDraw(key); }
+function editPiece(sku){
+  const x = S.stock.find(y => y.sku === sku);
+  MP.e = (x.modeles && x.modeles.length) ? x.modeles.slice() : (x.modele ? [x.modele] : []);
+  $("pe-" + sku).innerHTML = '<div class="card" style="margin:8px 0 0"><label>SKU</label><input id="ep-s" value="' + esc(x.sku) + '">' + '<label>Nom</label><input id="ep-n" value="' + esc(x.nom) + '">'
+    + '<label>Modèles</label><div id="mp-e"></div>'
+    + '<p class="m">La quantité se règle avec + / −.</p>'
+    + '<button class="btn" onclick="savePiece2(\'' + sku + '\')">Enregistrer</button><div class="err" id="ep-err"></div></div>';
+  mpDraw("e");
+}
+async function deleteStock(sku){
+  const x = S.stock.find(y => y.sku === sku);
+  if (!x) return;
+  if (x.res > 0) { toast("Impossible : cette pièce est réservée dans un dossier."); return; }
+  if (!confirm("Supprimer « " + x.nom + " » du stock ?")) return;
+  const { error } = await SB.from("stock").delete().eq("sku", sku);
+  if (error) { toast(msgErr(error)); return; }
+  toast("Pièce supprimée");
+  await reload();
+}
+async function savePiece2(sku){
+  const nom = $("ep-n").value.trim(), err = $("ep-err");
+  const newSku = $("ep-s").value.trim().toUpperCase();
+  err.textContent = "";
+  if (!nom) { err.textContent = "Le nom est obligatoire."; return; }
+  if (!newSku || /\s/.test(newSku)) { err.textContent = "Le SKU ne peut pas être vide ni contenir d’espaces."; return; }
+  const modeles = MP.e || [];
+  const { error } = await SB.from("stock").update({ nom, type: typeOf(modeles), modeles, modele: modeles.join(", ") || null }).eq("sku", sku);
+  if (error) { err.textContent = msgErr(error); return; }
+  if (newSku !== sku) {
+    const { error: e2 } = await SB.rpc("change_sku", { p_old: sku, p_new: newSku });
+    if (e2) { err.textContent = /sku_existe/.test(e2.message) ? "Ce SKU existe déjà." : msgErr(e2); return; }
+  }
+  toast("Pièce modifiée");
+  await reload();
+}
+function genCode(){
+  let c; do { c = String(Math.floor(100000 + Math.random() * 900000)); } while (S.inv.some(i => i.code === c));
+  return c;
+}
+async function newInvitation(clientId){
+  const code = genCode();
+  const { error } = await SB.from("invitations").insert({ code, client_id: clientId });
+  if (error) { toast(msgErr(error)); return null; }
+  return code;
+}
+async function newCode(clientId){
+  const code = await newInvitation(clientId);
+  await reload();
+  if (code) showModal(`<div class="t">Nouveau code</div><p style="font-size:28px;letter-spacing:.2em;text-align:center" class="t">${code}</p><button class="btn" onclick="closeModal()">OK</button>`);
+}
+async function addClient(){
+  const v = id => $(id).value.trim();
+  const err = $("cErr"); err.textContent = "";
+  const req = {cP:v("cP"), cN:v("cN"), cT:v("cT"), cM:v("cM"), cA:v("cA"), cCp:v("cCp"), cV:v("cV")};
+  if (req.cCp && !/^\d{5}$/.test(req.cCp)) { err.textContent = "Le code postal doit comporter 5 chiffres."; return; }
+  if (req.cM && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(req.cM)) { err.textContent = "L’email n’est pas valide."; return; }
+  const digits = req.cT.replace(/\D/g, ""), mail = req.cM.toLowerCase();
+  const dup = S.clients.find(c => !c.deleted_at && ((digits && c.tel && c.tel.replace(/\D/g, "") === digits) || (mail && c.mail && c.mail.toLowerCase() === mail)));
+  if (dup) { showDup(fullName(dup)); return; }
+  const { data, error } = await SB.from("clients").insert({
+    prenom: req.cP || null, nom: req.cN || null, tel: req.cT || null, mail: req.cM || null, adr: req.cA || null, cp: req.cCp || null, ville: req.cV || null, notes: v("cNo") || null
+  }).select().single();
+  if (error) { if (/clients_(mail|tel)_uq/.test(error.message) || error.code === "23505") showDup(req.cP + " " + req.cN); else err.textContent = msgErr(error); return; }
+  const code = await newInvitation(data.id);
+  await loadAll();
+  showModal(`<div class="t" style="font-size:18px">Client créé</div>
+    <p>Code d’invitation à donner à ${esc(req.cP)} :</p>
+    <p style="font-size:28px;letter-spacing:.2em;text-align:center" class="t">${code}</p>
+    <p class="m">Il crée son espace avec son email, un mot de passe et ce code.</p>
+    <button class="btn" onclick="closeModal();render()">OK</button>`);
+}
+async function createD(){
+  const err = $("nErr"); err.textContent = "";
+  if (!$("nC").value) { err.textContent = "Choisis un client."; return; }
+  const dv = S.devices.find(d => d.id === $("nD").value), W = $("nW").value.trim();
+  if (!dv) { err.textContent = "Choisis un appareil. Ajoute-le d’abord dans la fiche du client."; return; }
+  if (!W) { err.textContent = "Indique la panne."; return; }
+  const px = $("nP").value.trim().replace(",", ".");
+  if (px !== "" && isNaN(parseFloat(px))) { err.textContent = "Prix invalide."; return; }
+  const { data, error } = await SB.from("dossiers").insert({
+    client_id: $("nC").value, type: $("nT").value,
+    appareil: dv.modele + (dv.couleur ? " " + dv.couleur : ""), device_id: dv.id, panne: W,
+    statut: "Devis en cours", prix: px === "" ? null : parseFloat(px),
+    duree: durNorm($("nDu").value), echeance: $("nE").value || null
+  }).select().single();
+  if (error) { err.textContent = msgErr(error); return; }
+  await loadAll();
+  DOSSIER = data.id; VIEW = "dossiers"; render();
+}
+async function deleteD(){
+  const d = S.dossiers.find(x => x.id === DOSSIER);
+  if (!d) return;
+  if (!confirm("Supprimer définitivement cette réparation et ses pièces ? Action irréversible.")) return;
+  for (const p of pcs(d.id)) {
+    if (p.statut === "Réservée" && p.sku) {
+      const st = S.stock.find(x => x.sku === p.sku);
+      if (st) {
+        const { error: e0 } = await SB.from("stock").update({ qte: st.qte + p.qte, res: st.res - p.qte }).eq("sku", st.sku);
+        if (e0) { toast(msgErr(e0)); return; }
+      }
+    }
+  }
+  const { error } = await SB.from("dossiers").delete().eq("id", d.id);
+  if (error) { toast(msgErr(error)); return; }
+  DOSSIER = null;
+  toast("Réparation supprimée");
+  await reload();
+}
+/* ---------- Fiche réparation : enregistrement automatique ---------- */
+function devisOk(d){ return d.prix != null && !!d.duree; }
+function detailView(){
+  const d = S.dossiers.find(x => x.id === DOSSIER);
+  if (!d) { DOSSIER = null; return REP.dossiers(); }
+  const devis = d.statut === "Devis en cours", termine = d.statut === "Terminé", remis = d.statut === "Remis";
+  const c = d.clients ? fullName(d.clients) : "";
+  const pi = payInfo(d);
+  return `<button class="btn ghost small" onclick="closeD()">← Retour</button>
+  <h2>${esc(d.appareil)}</h2>
+  <div class="card">
+    <div class="t">${esc(c)}</div>
+    ${devis ? `<label id="lbl-panne">Nom de la réparation *</label>
+    <input id="dNom" value="${esc(d.panne || "")}" placeholder="Ex. Remplacement écran" onchange="fSave('panne', this.value)">` : `<div class="m">${esc(d.type)} · ${esc(d.panne)}</div>`}
+    ${stepsHtml(d.statut)}
+    <div class="m" style="margin-top:4px">* champs obligatoires · les modifications s’enregistrent automatiquement</div>
+    <label>Statut</label>
+    <select id="dSt" onchange="setStatut(this.value)">${STEPS.map(s => `<option value="${s}" ${s === d.statut ? "selected" : ""}>${lblS(s)}</option>`).join("")}</select>
+    ${devis ? `
+    <label id="lbl-prix">Prix (€) *</label><input id="dPx" inputmode="decimal" value="${d.prix ?? ""}" placeholder="à définir" oninput="numOnly(this);updateReste()" onchange="fSave('prix', this.value)">
+    <label id="lbl-duree">Durée de réparation *</label><input id="dDu" value="${esc(d.duree || "")}" placeholder="Ex. 2h" onchange="fSave('duree', this.value)">`
+    : `<div class="m" style="font-size:15px;margin-bottom:6px">Prix : ${d.prix == null ? "à définir" : d.prix + " €"}</div>
+    <div class="m" style="font-size:15px;margin-bottom:6px">Durée de réparation : ${esc(d.duree || "à définir")}</div>`}
+    <div class="row" style="align-items:center;margin-top:6px"><span id="lbl-recup">Date de dépôt : <b>${d.date_recup ? fr(d.date_recup) : "à définir"}</b></span>${devis ? "" : '<button class="chip" id="rcPen" onclick="rcEdit()" title="Modifier">✏️</button>'}</div>
+    <div id="rcBox" style="display:${devis ? "block" : "none"}"><input id="dRecup" type="date" value="${d.date_recup || ""}" onchange="fSave('date_recup', this.value)"></div>
+    ${termine ? "" : `<label id="dEcLbl">${remis ? "Remis le *" : "L’appareil sera prêt pour le"}</label><input id="dEc" type="date" value="${d.echeance || ""}" onchange="fSave('echeance', this.value)">`}
+    ${termine ? `<label>Date de fin de réparation (le client a 30 jours pour venir le chercher)</label><input id="dTer" type="date" value="${d.date_termine || todayIso()}" onchange="fSave('date_termine', this.value)">${recupHtml(d)}` : ""}
+    ${garantieHtml(d)}
+    <label>Acompte (€)</label><input id="dAco" inputmode="decimal" value="${d.acompte || ""}" placeholder="0" oninput="numOnly(this);updateReste()" onchange="fSave('acompte', this.value)">
+    ${termine ? `
+    <div class="t" style="margin-top:10px">Paiement</div>
+    <div class="two"><div><label>Virement reçu (€)</label><input id="pV" inputmode="decimal" value="${d.paye_virement || ""}" placeholder="0" oninput="numOnly(this);updateReste()" onchange="fSave('paye_virement', this.value)"></div><div><label>Espèces reçues (€)</label><input id="pE" inputmode="decimal" value="${d.paye_especes || ""}" placeholder="0" oninput="numOnly(this);updateReste()" onchange="fSave('paye_especes', this.value)"></div></div>
+    ` : ""}
+    <div id="resteBox" style="text-align:center;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:19px;font-weight:400;letter-spacing:.03em;margin:12px 0"></div>
+  </div>
+  <h2>Pièces</h2>
+  ${pcs(d.id).map(p => `<div class="card"><div class="t">${esc(p.nom)}</div>
+    <div class="m">Qté ${p.qte} ${p.sku ? "· <span class='code'>" + esc(p.sku) + "</span>" : "· sans SKU"}</div>
+    <select onchange="setPst('${p.id}',this.value)" style="margin-top:6px">${pstOpts(p)}</select>
+    <div class="two" style="margin-top:6px"><div><label>Prix HT (€)</label><input id="pht-${p.id}" inputmode="decimal" value="${p.prix_ht ?? ""}" placeholder="0" oninput="numOnly(this);pieceCalc('${p.id}','ht')" onchange="savePrixPiece('${p.id}')"></div><div><label>Prix TTC (€) · TVA 20 %</label><input id="pttc-${p.id}" inputmode="decimal" value="${p.prix_ttc ?? ""}" placeholder="0" oninput="numOnly(this);pieceCalc('${p.id}','ttc')" onchange="savePrixPiece('${p.id}')"></div></div>
+    <button class="chip late" style="margin-top:6px" onclick="delPieceD('${p.id}')">Retirer</button></div>`).join("")
+    || '<p class="m">Aucune pièce pour ce dossier.</p>'}
+  <div class="card"><div class="t">Ajouter une pièce utilisée</div>
+    <label>Recherche (SKU ou nom, une partie du mot suffit)</label>
+    <input id="pQ" oninput="hits('${d.id}')" autocomplete="off">
+    <label>Quantité</label><input id="pN" inputmode="numeric" value="1">
+    <div id="pHits"></div>
+    <div class="err" id="pErr"></div>
+  </div>
+  <button class="btn ghost" style="color:var(--bad);border-color:var(--bad);margin-top:14px" onclick="deleteD()">Supprimer cette réparation</button>`;
+}
+function valNum(id, fallback){
+  const el = $(id); if (!el) return fallback;
+  const t = parseFloat(String(el.value).replace(",", "."));
+  return isNaN(t) ? 0 : t;
+}
+function updateReste(){
+  const d = S.dossiers.find(x => x.id === DOSSIER), box = $("resteBox");
+  if (!d || !box) return;
+  const pEl = $("dPx");
+  const prix = pEl ? (pEl.value.trim() === "" ? null : valNum("dPx", 0)) : d.prix;
+  if (prix == null) { box.textContent = "Prix à définir"; box.style.color = ""; return; }
+  const paye = valNum("pV", +d.paye_virement || 0) + valNum("pE", +d.paye_especes || 0) + valNum("dAco", +d.acompte || 0);
+  const reste = Math.max(0, prix - paye);
+  box.textContent = "Prix : " + prix + " € · Reste : " + reste + " €";
+  box.style.color = reste === 0 ? "#1f8a4c" : "";
+}
+function paintDetail(){
+  const d = S.dossiers.find(x => x.id === DOSSIER);
+  if (!d) return;
+  updateReste();
+  const mark = (id, empty) => { const el = $(id); if (el) el.style.color = empty ? "var(--bad)" : ""; };
+  const line = (id, empty) => { const el = $(id); if (el) el.style.borderColor = empty ? "var(--bad)" : ""; };
+  const nomVide = !(d.panne || "").trim();
+  mark("lbl-panne", nomVide); line("dNom", nomVide);
+  mark("lbl-prix", d.prix == null); line("dPx", d.prix == null);
+  mark("lbl-duree", !d.duree); line("dDu", !d.duree);
+  mark("dEcLbl", d.statut === "Remis" && !d.echeance); line("dEc", d.statut === "Remis" && !d.echeance);
+  const sel = $("dSt");
+  if (sel) { const gate = d.statut === "Devis en cours" && !devisOk(d); [...sel.options].forEach(o => { if (o.value !== "Devis en cours") o.disabled = gate; }); }
+}
+async function fSave(field, value){
+  const d = S.dossiers.find(x => x.id === DOSSIER);
+  if (!d) return;
+  let v = value;
+  if (field === "panne") {
+    v = String(value).trim();
+    if (!v) { toast("Donne un nom à la réparation."); $("dNom").value = d.panne || ""; return; }
+  } else if (field === "prix") {
+    const t = String(value).trim().replace(",", ".");
+    if (t !== "" && isNaN(parseFloat(t))) { toast("Prix invalide."); return; }
+    v = t === "" ? null : parseFloat(t);
+  } else if (field === "duree") {
+    v = durNorm(value);
+  } else if (["acompte", "paye_virement", "paye_especes"].includes(field)) {
+    const t = parseFloat(String(value || "0").replace(",", "."));
+    if (isNaN(t) || t < 0) { toast("Montant invalide."); return; }
+    v = t;
+  } else {
+    v = value || null;
+  }
+  const upd = {[field]: v};
+  if (field === "date_termine") upd.date_retour = v ? plus30(v) : null;
+  const tmp = Object.assign({}, d, upd);
+  if (["prix", "acompte", "paye_virement", "paye_especes"].includes(field)) upd.paye = tmp.prix != null && payInfo(tmp).reste === 0;
+  const { error } = await SB.from("dossiers").update(upd).eq("id", d.id);
+  if (error) { toast(msgErr(error)); return; }
+  Object.assign(d, upd);
+  paintDetail();
+  flash("Enregistré ✓");
+}
+async function setStatut(st){
+  const d = S.dossiers.find(x => x.id === DOSSIER), sel = $("dSt");
+  const fail = msg => { sel.value = d.statut; toast(msg); };
+  if (st === d.statut) return;
+  if (st !== "Devis en cours") {
+    if (d.statut === "Devis en cours" && !devisOk(d)) return fail("Renseigne la date de dépôt, le prix et la durée avant de quitter le devis.");
+    if (pcs(d.id).some(p => p.statut !== "Réservée")) return fail("Impossible : toutes les pièces doivent être réservées.");
+  }
+  if (st === "Remis") {
+    if (!d.echeance) return fail("Renseigne la date « Remis le » avant de passer en Remis.");
+    if (payInfo(d).reste !== 0) return fail("Le paiement doit être complet avant de passer en Remis.");
+  }
+  const date_termine = st === "Terminé" ? (d.date_termine || todayIso()) : null;
+  const date_retour = date_termine ? plus30(date_termine) : null;
+  const { error } = await SB.from("dossiers").update({statut: st, date_termine, date_retour}).eq("id", d.id);
+  if (error) return fail(msgErr(error));
+  // pièces réservées : retirées de la réservation quand la réparation est Terminé/Remis (le stock n'est pas rendu)
+  const wasFinal = ["Terminé", "Remis"].includes(d.statut), isFinal = ["Terminé", "Remis"].includes(st);
+  if (wasFinal !== isFinal) {
+    for (const p of pcs(d.id)) {
+      if (p.statut !== "Réservée" || !p.sku) continue;
+      const s2 = S.stock.find(x => x.sku === p.sku); if (!s2) continue;
+      const r = await SB.from("stock").update({ res: Math.max(0, s2.res + (isFinal ? -p.qte : p.qte)) }).eq("sku", s2.sku);
+      if (r.error) toast(msgErr(r.error));
+    }
+  }
+  flash("Enregistré ✓");
+  await reload();
+}
+async function setPst(pid, v){
+  const p = S.pieces.find(x => x.id === pid);
+  const e = await applyPst(p, v);
+  if (e) toast(e); else flash("Enregistré ✓");
+  await reload();
+}
+async function delPieceD(pid){
+  const p = S.pieces.find(x => x.id === pid); if (!p) return;
+  if (!confirm("Retirer « " + p.nom + " » de cette réparation ?")) return;
+  if (p.statut === "Réservée") { const e = await applyPst(p, "À commander"); if (e) { toast(e); return; } }
+  const { error } = await SB.from("pieces_dossier").delete().eq("id", pid);
+  if (error) { toast(msgErr(error)); return; }
+  flash("Pièce retirée");
+  await reload();
+}
+function numOnly(el){ el.value = el.value.replace(/[^0-9.,]/g, ""); }
+function rcEdit(){ $("rcBox").style.display = "block"; $("rcPen").style.display = "none"; }
+function openD(id){ DOSSIER = id; render(); }
+function closeD(){ DOSSIER = null; render(); }
+async function applyPst(p, v){
+  const st = p.sku ? S.stock.find(x => x.sku === p.sku) : null;
+  if (v === "Réservée" && p.statut !== "Réservée") {
+    if (!st) return "Cette pièce n’a pas de SKU en stock : réservation impossible.";
+    if (st.qte < p.qte) return "Stock insuffisant : " + st.qte + " disponible(s), " + p.qte + " nécessaire(s).";
+    const r = await SB.from("stock").update({ qte: st.qte - p.qte, res: st.res + p.qte }).eq("sku", st.sku);
+    if (r.error) return msgErr(r.error);
+  } else if (p.statut === "Réservée" && v !== "Réservée" && st) {
+    const r = await SB.from("stock").update({ qte: st.qte + p.qte, res: st.res - p.qte }).eq("sku", st.sku);
+    if (r.error) return msgErr(r.error);
+  }
+  const { error } = await SB.from("pieces_dossier").update({ statut: v }).eq("id", p.id);
+  return error ? msgErr(error) : null;
+}
+function hits(did){
+  const q = nz($("pQ").value.trim()), box = $("pHits");
+  if (!q) { box.innerHTML = ""; return; }
+  const found = S.stock.filter(s => [s.sku, s.nom, s.type, s.modele].some(v => nz(v).indexOf(q) > -1)).slice(0, 8);
+  box.innerHTML = found.length
+    ? found.map(s => `<div class="card" style="margin:6px 0"><div class="row"><div><div class="t">${esc(s.nom)}</div>
+        <div class="m"><span class="code">${esc(s.sku)}</span> · ${esc(s.modele)} · ${s.qte} dispo</div></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap"><button class="chip ok" onclick="addPiece('${did}','${esc(s.sku)}')">Ajouter</button><button class="chip" onclick="addPieceCmd('${did}','${esc(s.sku)}')">À commander</button></div></div></div>`).join("")
+    : `<p class="m">Aucune pièce en stock ne correspond.</p>
+       <button class="btn ghost" onclick="newPiece('${did}')">${$("pQ").value.trim().toLowerCase() === "autre" ? "Autre : écrire le nom de la pièce" : "Créer la pièce « " + esc($("pQ").value.trim()) + " » dans le stock"}</button>`;
+}
+function newPiece(did){
+  const q = $("pQ").value.trim();
+  const nom = q.toLowerCase() === "autre" ? "" : q.replace(/[<>"]/g, "");
+  $("pHits").innerHTML = '<div class="card" style="margin:6px 0"><div class="t">Nouvelle pièce</div>'
+    + '<label>Nom de la pièce</label><input id="npN" placeholder="Ex. Vis de charnière" value="' + esc(nom) + '">'
+    + '<label>Modèles (optionnel)</label><div id="mp-np"></div>'
+    + '<label>Quantité en stock</label><input id="npQ" inputmode="numeric" value="0">'
+    + '<p class="m">La pièce est ajoutée au dossier « À commander ». Quand tu l’as en stock, règle la quantité avec + / − dans l’onglet Stock.</p>'
+    + '<button class="btn" onclick="savePiece(\'' + did + '\')">Créer et ajouter au dossier</button></div>';
+  MP.np = []; PKS.np = {app:"", cat:""}; mpDraw("np");
+}
+async function savePiece(did){
+  const nom = $("npN").value.trim(), modeles = MP.np || [], typ = typeOf(modeles), mod = modeles.join(", ") || null;
+  const qs = parseInt($("npQ").value, 10), n = qty();
+  if (!nom || isNaN(qs) || qs < 0 || !n) { $("pErr").textContent = "Le nom, la quantité en stock et la quantité du dossier sont obligatoires."; return; }
+  const max = S.stock.reduce((t, s) => Math.max(t, parseInt(String(s.sku).replace(/\D/g, ""), 10) || 0), 1000);
+  const sku = "PC-" + (max + 1);
+  const { error: e1 } = await SB.from("stock").insert({ sku, nom, type: typ, modeles, modele: mod, qte: qs, res: 0 });
+  if (e1) { $("pErr").textContent = msgErr(e1); return; }
+  const { error: e2 } = await SB.from("pieces_dossier").insert({ dossier_id: did, nom, qte: n, statut: "À commander", sku });
+  if (e2) { $("pErr").textContent = msgErr(e2); return; }
+  toast("Pièce créée au stock et ajoutée au dossier");
+  await reload();
+}
+function qty(){ const n = parseInt($("pN").value, 10); return isNaN(n) || n < 1 ? null : n; }
+async function addPiece(did, sku){
+  const s = S.stock.find(x => x.sku === sku), n = qty();
+  if (!s || !n) { $("pErr").textContent = "Quantité invalide."; return; }
+  if (s.qte < n) { $("pErr").textContent = "Stock insuffisant : " + s.qte + " disponible(s), " + n + " nécessaire(s)."; return; }
+  const r = await SB.from("stock").update({ qte: s.qte - n, res: s.res + n }).eq("sku", s.sku);
+  if (r.error) { $("pErr").textContent = msgErr(r.error); return; }
+  const { error } = await SB.from("pieces_dossier").insert({ dossier_id: did, nom: s.nom, qte: n, statut: "Réservée", sku: s.sku });
+  if (error) { $("pErr").textContent = msgErr(error); return; }
+  toast("Pièce ajoutée et réservée");
+  await reload();
+}
+/* Prix HT / TTC d’une pièce de réparation. TTC = HT × 1,20 */
+const PIECE_TVA = 1.2;
+const pnumP = x => { const v = parseFloat(String(x).replace(",", ".")); return isNaN(v) ? null : v; };
+const roundP = v => Math.round(v * 100) / 100;
+function pieceCalc(pid, src){
+  const h = $("pht-" + pid), t = $("pttc-" + pid);
+  if (src === "ht") { const v = pnumP(h.value); t.value = v == null ? "" : roundP(v * PIECE_TVA); }
+  else { const v = pnumP(t.value); h.value = v == null ? "" : roundP(v / PIECE_TVA); }
+}
+async function savePrixPiece(pid){
+  const ht = pnumP($("pht-" + pid).value), ttc = pnumP($("pttc-" + pid).value);
+  const { error } = await SB.from("pieces_dossier").update({ prix_ht: ht, prix_ttc: ttc }).eq("id", pid);
+  if (error) { toast(msgErr(error)); return; }
+  const p = S.pieces.find(x => x.id === pid); if (p) { p.prix_ht = ht; p.prix_ttc = ttc; }
+  flash("Prix enregistré");
+}
+async function addPieceCmd(did, sku){
+  const s = S.stock.find(x => x.sku === sku), n = qty();
+  if (!s || !n) { $("pErr").textContent = "Quantité invalide."; return; }
+  const { error } = await SB.from("pieces_dossier").insert({ dossier_id: did, nom: s.nom, qte: n, statut: "À commander", sku: s.sku });
+  if (error) { $("pErr").textContent = msgErr(error); return; }
+  toast("Pièce ajoutée à commander");
+  await reload();
+}
+var STK_Q = "", STK_SORT = "nom", STK_TYPE = "", STK_ST = "";
+var ASORT = "nom", ATYPE = "", AST = "";
+function selOpts(pairs, cur){ return pairs.map(p => '<option value="' + esc(p[0]) + '"' + (String(p[0]) === String(cur) ? ' selected' : '') + '>' + esc(p[1]) + '</option>').join(""); }
+function stkControls(){
+  const types = [...new Set(S.stock.map(x => x.type).filter(Boolean))].sort().map(t => [t, t]);
+  return '<div class="row" style="gap:6px;flex-wrap:wrap;margin:0 0 8px">'
+    + '<select onchange="STK_SORT=this.value;render()">' + selOpts([["nom", "Trier : nom"], ["type", "Trier : type"], ["qte", "Trier : quantité dispo"], ["res", "Trier : réservé"]], STK_SORT) + '</select>'
+    + '<select onchange="STK_TYPE=this.value;render()">' + selOpts([["", "Tous les types"]].concat(types), STK_TYPE) + '</select>'
+    + '<select onchange="STK_ST=this.value;render()">' + selOpts([["", "Tous"], ["dispo", "En stock"], ["rupture", "Rupture"]], STK_ST) + '</select></div>';
+}
+function stkHtml(q){
+  const term = nz(q).trim();
+  const cmp = {
+    type: (a, b) => String(a.type || "").localeCompare(String(b.type || "")) || String(a.nom).localeCompare(String(b.nom)),
+    qte: (a, b) => (b.qte || 0) - (a.qte || 0),
+    res: (a, b) => (b.res || 0) - (a.res || 0)
+  }[STK_SORT] || ((a, b) => String(a.nom).localeCompare(String(b.nom)));
+  const list = S.stock
+    .filter(s => !term || [s.sku, s.nom, s.type, s.modele].some(v => nz(v).indexOf(term) > -1))
+    .filter(s => !STK_TYPE || s.type === STK_TYPE)
+    .filter(s => !STK_ST || (STK_ST === "dispo" ? s.qte > 0 : !(s.qte > 0)))
+    .sort(cmp);
+  return list.map(s => `<div class="card">
+    <div class="row"><div><div class="t">${esc(s.nom)}</div><div class="m">${esc(s.type)} · ${esc(s.modele)}</div>
+    <div class="m"><span class="code">${esc(s.sku)}</span> · Réservé : ${s.res}</div></div>
+    <div style="display:flex;align-items:center;gap:6px"><button class="chip" onclick="adjStock('${esc(s.sku)}',-1)">−</button><span class="chip ${s.qte > 0 ? "ok" : "late"}">${s.qte > 0 ? s.qte + " dispo" : "Rupture"}</span><button class="chip" onclick="adjStock('${esc(s.sku)}',1)">+</button></div></div>
+    <div style="margin-top:6px;display:flex;gap:6px"><button class="chip" onclick="editPiece('${esc(s.sku)}')">Modifier</button><button class="chip late" onclick="deleteStock('${esc(s.sku)}')">Supprimer</button></div>
+    <div id="pe-${esc(s.sku)}"></div></div>`).join("")
+    || '<p class="m">Aucune pièce trouvée.</p>';
+}
+async function addStock(){
+  const err = $("sErr"); err.textContent = "";
+  const nom = $("sN").value.trim(), q = parseInt($("sQt").value, 10), modeles = MP.n || [];
+  if (!nom || !modeles.length || isNaN(q) || q < 0) { err.textContent = "Nom, au moins un modèle et quantité sont obligatoires."; return; }
+  const max = S.stock.reduce((t, s) => Math.max(t, parseInt(String(s.sku).replace(/\D/g, ""), 10) || 0), 1000);
+  const { error } = await SB.from("stock").insert({ sku: "PC-" + (max + 1), nom, type: typeOf(modeles), modeles, modele: modeles.join(", "), qte: q, res: 0 });
+  if (error) { err.textContent = msgErr(error); return; }
+  MP.n = [];
+  await reload();
+}
+async function adjStock(sku, d){
+  const s = S.stock.find(x => x.sku === sku);
+  if (!s || s.qte + d < 0) return;
+  const { error } = await SB.from("stock").update({ qte: s.qte + d }).eq("sku", sku);
+  if (error) toast(msgErr(error));
+  await reload();
+}
+async function seedPuces(){
+  const rows = [];
+  let max = S.stock.reduce((t, s) => Math.max(t, parseInt(String(s.sku).replace(/\D/g, ""), 10) || 0), 5000);
+  PUCES.forEach(([nom, modele]) => {
+    if (!S.stock.some(s => s.nom === nom)) rows.push({ sku: "PC-" + (++max), nom, type: "Console", modele, qte: 0, res: 0 });
+  });
+  if (!rows.length) return toast("Les puces sont déjà au stock.");
+  const { error } = await SB.from("stock").insert(rows);
+  if (error) return toast(msgErr(error));
+  toast("Puces ajoutées (quantité 0 : règle-les avec + / −).");
+  await reload();
+}
+
+/* ---------- Client ---------- */
+var PROF_EDIT=false;
+function profForm(c, label, fn){
+  const f = (id, lbl, val, extra) => '<label>' + lbl + '</label><input id="' + id + '" value="' + esc(val || "") + '"' + (extra || "") + '>';
+  return '<div class="card" style="margin:8px 0 0">'
+    + '<div class="two"><div>' + f("pfP","Prénom *",c.prenom).replace("<label>","<label>") + '</div><div>' + f("pfN","Nom *",c.nom) + '</div></div>'
+    + f("pfT","Téléphone *",c.tel,' inputmode="tel" maxlength="20"')
+    + f("pfM","Email (identifiant de connexion)",c.mail,' disabled')
+    + '<p class="m" style="margin:4px 0 0">Pour changer ton email de connexion, contacte ton réparateur.</p>'
+    + f("pfA","Adresse *",c.adr)
+    + '<div class="two"><div>' + f("pfC","Code postal *",c.cp,' inputmode="numeric" maxlength="5"') + '</div><div>' + f("pfV","Ville *",c.ville) + '</div></div>'
+    + '<button class="btn" onclick="' + fn + '()">' + label + '</button>'
+    + (PROF_EDIT && fn === "saveProfile" ? '<button class="btn ghost" onclick="PROF_EDIT=false;render()">Annuler</button>' : '')
+    + '<div class="err" id="pfErr"></div></div>';
+}
+async function saveProfile(){ await writeProfile(false); }
+async function confirmProfile(){ await writeProfile(true); }
+async function writeProfile(confirmNow){
+  const v = x => $(x).value.trim(), err = $("pfErr"); err.textContent = "";
+  const r = {prenom:v("pfP"), nom:v("pfN"), tel:v("pfT"), adr:v("pfA"), cp:v("pfC"), ville:v("pfV")};
+  if (!r.prenom || !r.nom || !r.tel || !r.adr || !r.cp || !r.ville) { err.textContent = "Les champs marqués * sont obligatoires."; return; }
+  if (!/^[0-9+ .\-]{6,20}$/.test(r.tel)) { err.textContent = "Le téléphone ne doit contenir que des chiffres."; return; }
+  if (!/^\d{5}$/.test(r.cp)) { err.textContent = "Le code postal doit comporter 5 chiffres."; return; }
+  if (confirmNow) r.infos_verifiees_at = new Date().toISOString();
+  const { data, error } = await SB.from("clients").update(r).eq("auth_user_id", ME.id).select();
+  if (error) { err.textContent = error.code === "23505" ? "Ce téléphone est déjà utilisé par un autre compte. Contacte ton réparateur." : msgErr(error); return; }
+  if (!data || !data.length) { err.textContent = "Enregistrement impossible : la mise à jour n’est pas autorisée. Contacte ton réparateur."; return; }
+  PROF_EDIT = false;
+  toast(confirmNow ? "Informations confirmées" : "Informations enregistrées");
+  await reload();
+}
+var PARAM_OPEN=false;
+function toggleParam(){ PARAM_OPEN = !PARAM_OPEN; render(); }
+function cliView(){
+  const me = S.clients[0];
+  if (!me) return `<h1>Bienvenue</h1>
+    <div class="card"><p class="m">Ton compte est créé. Entre le code d’invitation donné par ton réparateur pour accéder à tes dossiers.</p>
+    <label>Code d’invitation</label><input id="cCode" inputmode="numeric" maxlength="6" placeholder="000000">
+    <button class="btn" onclick="claimNow()">Valider</button><div class="err" id="cErr2"></div></div>
+    <button class="btn ghost" onclick="logout()">Se déconnecter</button>`;
+  const head = `<div class="row" style="align-items:center;margin:4px 0 8px"><img src="logo.png" alt="Seconde Vie" style="height:44px"><button class="btn small ghost" onclick="toggleParam()">Paramètres</button></div>`;
+  if (!me.infos_verifiees_at) return head + `<h2 data-page="Vérification des informations">Vérifie tes informations</h2>
+    <p class="m">Relis tes informations, corrige-les si besoin, puis confirme. Tes dossiers s’afficheront ensuite.</p>
+    ${profForm(me, "Confirmer mes informations", "confirmProfile")}`;
+  const info = PROF_EDIT ? profForm(me, "Enregistrer", "saveProfile")
+    : `<div class="card" style="position:relative"><button class="chip" style="position:absolute;top:10px;right:12px;padding:4px 10px" title="Modifier mes informations" onclick="PROF_EDIT=true;render()">✏️</button>
+       <div class="t">${esc(fullName(me))}</div>
+       <div class="m">${esc(me.tel)} · ${esc(me.mail)}</div>
+       <div class="m">${esc(me.adr)}, ${esc(me.cp)} ${esc(me.ville)}</div></div>`;
+  return head + (PARAM_OPEN ? `<div class="card"><div class="t">Paramètres</div><button class="btn ghost small" style="margin-top:8px" onclick="PROF_EDIT=true;PARAM_OPEN=false;render()">Modifier mes informations</button><button class="btn ghost small" style="margin-top:8px" onclick="logout()">Déconnexion</button></div>` : "") + `<h1>Bonjour ${esc(me.prenom)}</h1>
+  <h2 data-page="Mes informations">Mes informations</h2>${info}
+  <h2 data-page="Mes appareils">Mes appareils</h2>${cliDevHtml(me)}
+  `;
+}
+async function claimNow(){
+  const code = $("cCode").value.trim(), err = $("cErr2");
+  if (!/^\d{6}$/.test(code)) { err.textContent = "Le code doit comporter 6 chiffres."; return; }
+  const { error } = await SB.rpc("claim_invitation", { p_code: code });
+  if (error) { err.textContent = /code_invalide/.test(error.message) ? "Code invalide ou déjà utilisé." : "Erreur : " + error.message; return; }
+  await boot();
+}
+
+boot();
+</script>
+</body>
+</html>
