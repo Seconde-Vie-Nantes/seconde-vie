@@ -129,6 +129,7 @@ async function loadAll(){
   if (ROLE === "rep") { const sa = await SB.from("stock_appareils").select("*").order("nom"); if (sa.error) toast("Appareils à vendre : " + msgErr(sa.error)); else S.stockApp = sa.data || []; }
   const sv = await SB.from("sav").select("*").order("created_at", {ascending:false});
   if (sv.error) toast("SAV : " + msgErr(sv.error)); else S.sav = sv.data || [];
+  if (ROLE === "rep") { const idr = await SB.from("idees").select("*").order("created_at", {ascending:false}); if (idr.error) toast("Idées : " + msgErr(idr.error)); else S.idees = idr.data || []; }
   if (ROLE === "rep") {
     const fb = await SB.from("feedback").select("*").order("created_at", {ascending:false});
     if (fb.error) toast("Suggestions : " + msgErr(fb.error)); else S.feedback = fb.data || [];
@@ -417,18 +418,21 @@ const REP = {
       <button class="btn" onclick="addClient()">Enregistrer le client</button>
       <div class="err" id="cErr"></div>
     </div>
-    <input id="cliQ" placeholder="Rechercher un client" oninput="$('cliL').innerHTML=cliHtml(nz(this.value))" style="margin-top:10px">
+    <div class="row" style="gap:6px;margin-top:10px"><select onchange="CLI_SORT=this.value;render()">${selOpts([["nom", "Trier : nom"], ["prenom", "Trier : prénom"], ["ville", "Trier : ville"]], CLI_SORT)}</select></div>
+    <input id="cliQ" placeholder="Rechercher un client" oninput="$('cliL').innerHTML=cliHtml(nz(this.value))" style="margin-top:8px">
     <button class="btn ghost small" style="margin-top:8px" onclick="CLI_TRASH=!CLI_TRASH;render()">${CLI_TRASH ? "Voir les clients actifs" : "Corbeille (" + S.clients.filter(c => c.deleted_at).length + ")"}</button><div id="cliL">${cliHtml("")}</div>`;
   },
   new(){
-    if (!S.clients.filter(c => !c.deleted_at).length) return `<h1>Nouvelle prestation</h1><p class="m">Crée d’abord un client dans l’onglet Clients.</p>`;
-    return `<h1>Nouvelle prestation</h1><div class="card">
+    if (NEW_TAB === "idees") return `<h1>Nouvelle prestation</h1>` + newTabs() + ideasHtml();
+    if (!S.clients.filter(c => !c.deleted_at).length) return `<h1>Nouvelle prestation</h1>` + newTabs() + `<p class="m">Crée d’abord un client dans l’onglet Clients.</p>`;
+    return `<h1>Nouvelle prestation</h1>` + newTabs() + `<div class="card">
       <label>Client</label><select id="nC" onchange="$('nD').innerHTML=this.value?devOpts(this.value):'<option value=&quot;&quot;>- choisis d’abord un client -</option>'"><option value="">- sélectionner un client -</option>${S.clients.filter(c => !c.deleted_at).map(c => `<option value="${c.id}">${esc(fullName(c))}</option>`).join("")}</select>
       <label>Type</label><select id="nT"><option>Réparation</option><option>Mod</option><option>SAV</option></select>
       <label>Appareil du client</label><select id="nD"><option value="">- choisis d’abord un client -</option></select>
       <label>Panne / prestation</label><input id="nW" placeholder="Ex. Joystick Hall effect">
       <div class="two"><div><label>Prix (€)</label><input id="nP" inputmode="decimal" placeholder="à définir"></div><div><label>Durée de réparation</label><input id="nDu" placeholder="Ex. 1h"></div></div>
       <label>Retour prévu</label><input id="nE" type="date">
+      <label>Notes</label><textarea id="nNo" rows="2"></textarea>
       <button class="btn" onclick="createD()">Créer le dossier</button>
       <div class="err" id="nErr"></div>
     </div>`;
@@ -1212,9 +1216,18 @@ function dossierCard(d){
 }
 
 var CLI_OPEN=null, CLI_TRASH=false;
+var CLI_SORT = "nom";
+function cliCmp(a, b){
+  const k = {
+    nom: c => (c.nom || "") + " " + (c.prenom || ""),
+    prenom: c => (c.prenom || "") + " " + (c.nom || ""),
+    ville: c => (c.ville || "") + " " + (c.nom || "")
+  }[CLI_SORT] || (c => c.nom || "");
+  return k(a).localeCompare(k(b), "fr");
+}
 function cliHtml(q){
   const list = S.clients.filter(c => (CLI_TRASH ? !!c.deleted_at : !c.deleted_at) && (!q || nz(fullName(c)).indexOf(q) > -1))
-    .sort((a,b) => ((a.nom || "") + (a.prenom || "")).localeCompare((b.nom || "") + (b.prenom || ""), "fr"));
+    .sort((a,b) => cliCmp(a, b));
   return list.map(c => {
     const inv = S.inv.find(i => i.client_id === c.id && !i.used_at);
     const acc = c.auth_user_id ? '<span class="chip ok">Compte créé</span> ' + (c.infos_verifiees_at ? '<span class="chip ok">Infos vérifiées</span>' : '<span class="chip warn">Infos à vérifier</span>')
@@ -1657,6 +1670,32 @@ async function addClient(){
     <p class="m">Il crée son espace avec son email, un mot de passe et ce code.</p>
     <button class="btn" onclick="closeModal();render()">OK</button>`);
 }
+var NEW_TAB = "prest";
+function setNewTab(t){ NEW_TAB = t; render(); }
+function newTabs(){
+  return '<div class="row" style="gap:6px;margin:8px 0 12px"><button class="chip ' + (NEW_TAB === "prest" ? "ok" : "") + '" style="flex:1;text-align:center;padding:8px" onclick="setNewTab(\'prest\')">Prestation</button><button class="chip ' + (NEW_TAB === "idees" ? "ok" : "") + '" style="flex:1;text-align:center;padding:8px" onclick="setNewTab(\'idees\')">Idées</button></div>';
+}
+function ideasHtml(){
+  const list = (S.idees || []).map(x => '<div class="card" style="padding:8px 10px"><div class="t" style="font-size:14px;white-space:pre-wrap;font-weight:400">' + esc(x.texte) + '</div><div class="m">' + fr(String(x.created_at).slice(0, 10)) + ' · <button class="chip late" onclick="deleteIdee(\'' + x.id + '\')">Supprimer</button></div></div>').join("");
+  return '<div class="card"><label>Nouvelle idée</label><textarea id="ideaTxt" rows="3" placeholder="Écris ton idée"></textarea>'
+    + '<button class="btn" onclick="addIdee()">Ajouter l’idée</button></div>'
+    + (list || '<p class="m">Aucune idée pour le moment.</p>');
+}
+async function addIdee(){
+  const t = $("ideaTxt").value.trim();
+  if (!t) { toast("Écris une idée d’abord."); return; }
+  const { error } = await SB.from("idees").insert({ texte: t });
+  if (error) { toast(msgErr(error)); return; }
+  flash("Idée ajoutée");
+  await reload();
+}
+async function deleteIdee(id){
+  if (!confirm("Supprimer cette idée ?")) return;
+  const { error } = await SB.from("idees").delete().eq("id", id);
+  if (error) { toast(msgErr(error)); return; }
+  await reload();
+}
+
 async function createD(){
   const err = $("nErr"); err.textContent = "";
   if (!$("nC").value) { err.textContent = "Choisis un client."; return; }
@@ -1669,7 +1708,8 @@ async function createD(){
     client_id: $("nC").value, type: $("nT").value,
     appareil: dv.modele + (dv.couleur ? " " + dv.couleur : ""), device_id: dv.id, panne: W,
     statut: "Devis en cours", prix: px === "" ? null : parseFloat(px),
-    duree: durNorm($("nDu").value), echeance: $("nE").value || null
+    duree: durNorm($("nDu").value), echeance: $("nE").value || null,
+    notes: $("nNo").value.trim() || null
   }).select().single();
   if (error) { err.textContent = msgErr(error); return; }
   await loadAll();
@@ -1709,7 +1749,10 @@ function detailView(){
     ${devis ? `<label id="lbl-panne">Nom de la réparation *</label>
     <input id="dNom" value="${esc(d.panne || "")}" placeholder="Ex. Remplacement écran" onchange="fSave('panne', this.value)">` : `<div class="m">${esc(d.type)} · ${esc(d.panne)}</div>`}
     ${stepsHtml(d.statut)}
+    ${dateBarHtml(d)}
     <div class="m" style="margin-top:4px">* champs obligatoires · les modifications s’enregistrent automatiquement</div>
+    <label>Notes</label>
+    <textarea id="dNo" rows="2" onchange="fSave('notes', this.value)">${esc(d.notes || "")}</textarea>
     <label>Statut</label>
     <select id="dSt" onchange="setStatut(this.value)">${STEPS.map(s => `<option value="${s}" ${s === d.statut ? "selected" : ""}>${lblS(s)}</option>`).join("")}</select>
     ${devis ? `
@@ -1774,6 +1817,17 @@ function paintDetail(){
   mark("dEcLbl", d.statut === "Remis" && !d.echeance); line("dEc", d.statut === "Remis" && !d.echeance);
   const sel = $("dSt");
   if (sel) { const gate = d.statut === "Devis en cours" && !devisOk(d); [...sel.options].forEach(o => { if (o.value !== "Devis en cours") o.disabled = gate; }); }
+}
+/* Barre entre le dépôt et la date de remise : vert = jours passés, gris = jours restants */
+function dateBarHtml(d){
+  if (!d.echeance || !d.created_at) return "";
+  const start = new Date(String(d.created_at).slice(0, 10) + "T00:00");
+  const end = new Date(d.echeance + "T00:00"), now = new Date(todayIso() + "T00:00");
+  const total = Math.max(1, Math.round((end - start) / 86400000));
+  const passed = Math.min(total, Math.max(0, Math.round((now - start) / 86400000)));
+  const pct = Math.round(passed / total * 100);
+  return '<div style="margin-top:10px"><div class="m">' + fr(String(d.created_at).slice(0, 10)) + ' → ' + fr(d.echeance) + ' · ' + passed + ' j passés · ' + Math.max(0, total - passed) + ' j restants</div>'
+    + '<div style="height:8px;border-radius:4px;background:var(--line);overflow:hidden;margin-top:4px"><div style="height:100%;width:' + pct + '%;background:#1f8a4c"></div></div></div>';
 }
 async function fSave(field, value){
   const d = S.dossiers.find(x => x.id === DOSSIER);
