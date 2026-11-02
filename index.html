@@ -62,6 +62,7 @@ nav button.on{color:var(--brand)}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+const RECOVERY_LINK = /type=recovery/.test(location.hash);
 const SB = supabase.createClient("https://bagucelglclcssoclyaw.supabase.co", "sb_publishable_AMjguQV7hN0iXFLhhUhIiw_kgsK9B3O");
 const MAIL = "seconde.vie.nantes.44@gmail.com";
 const STEPS = ["Devis en cours", "En cours", "Terminé", "Remis"];
@@ -86,7 +87,7 @@ function jours(n){ return n == null ? "" : n < 0 ? "Délai dépassé" : n == 0 ?
 function pcs(id){ return S.pieces.filter(p => p.dossier_id === id); }
 
 let S = {dossiers:[], pieces:[], clients:[], stock:[], inv:[], devices:[], catalogue:[], sav:[], feedback:[], ventes:[], stockApp:[]};
-let ME = null, ROLE = null, VIEW = "dossiers", DOSSIER = null, CM = "login";
+let ME = null, ROLE = null, VIEW = "dossiers", DOSSIER = null, CM = "login", RECOVERY = RECOVERY_LINK;
 
 function toast(msg){
   const t = document.createElement("div"); t.className = "toast"; t.textContent = msg;
@@ -137,6 +138,7 @@ async function reload(){ try { await loadAll(); } catch(e){ toast("Erreur : " + 
 
 /* ---------- Connexion ---------- */
 function loginView(){
+  if (CM === "forgot") return forgotView();
   const isNew = CM === "code" || CM === "data";
   const perso = CM === "data" ? `<div class="two"><div><label>Prénom *</label><input id="nP"></div><div><label>Nom *</label><input id="nN"></div></div>
     <label>Téléphone *</label><input id="nT" inputmode="tel" maxlength="20">
@@ -160,10 +162,55 @@ function loginView(){
     ${code}
     <div class="err" id="lErr"></div>
     <button class="btn" onclick="doLogin()">${isNew ? "Créer mon espace" : "Se connecter"}</button>
-    ${isNew ? '<button class="btn ghost" onclick="setCM(\'login\')">Retour à la connexion</button>' : '<button class="btn ghost" onclick="setCM(\'pick\')">Créer mon espace</button>'}
+    ${isNew ? '<button class="btn ghost" onclick="setCM(\'login\')">Retour à la connexion</button>' : '<button class="btn ghost" onclick="setCM(\'pick\')">Créer mon espace</button><button class="btn ghost" onclick="setCM(\'forgot\')">Mot de passe oublié ?</button>'}
   </div>`;
 }
 function setCM(v){ CM = v; render(); }
+
+function forgotView(){
+  return `<img src="logo.png" alt="Seconde Vie" style="display:block;width:180px;max-width:70%;margin:10px auto 14px">
+  <div class="card"><div class="t">Mot de passe oublié</div>
+    <p class="m">Indique ton email : on t’envoie un lien pour choisir un nouveau mot de passe.</p>
+    <label>Email *</label><input id="fE" type="email" autocomplete="username">
+    <div class="err" id="fErr"></div>
+    <button class="btn" onclick="doForgot()">Envoyer le lien</button>
+    <button class="btn ghost" onclick="setCM('login')">Retour à la connexion</button>
+  </div>`;
+}
+async function doForgot(){
+  const e = $("fE").value.trim(), err = $("fErr"); err.textContent = "";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) { err.textContent = "L’email n’est pas valide."; return; }
+  const { error } = await SB.auth.resetPasswordForEmail(e, { redirectTo: location.origin + location.pathname });
+  if (error) { err.textContent = msgErr(error); return; }
+  CM = "login";
+  render();
+  toast("Si un compte existe pour cet email, un lien vient d’être envoyé.");
+}
+
+/* Écran affiché quand l’utilisateur revient du lien reçu par email */
+function recoveryView(){
+  return `<img src="logo.png" alt="Seconde Vie" style="display:block;width:180px;max-width:70%;margin:10px auto 14px">
+  <div class="card"><div class="t">Nouveau mot de passe</div>
+    <label>Nouveau mot de passe *</label><input id="rP1" type="password" autocomplete="new-password">
+    <label>Confirmer le mot de passe *</label><input id="rP2" type="password" autocomplete="new-password">
+    <div class="err" id="rErr"></div>
+    <button class="btn" onclick="doRecovery()">Enregistrer le mot de passe</button>
+  </div>`;
+}
+async function doRecovery(){
+  const p1 = $("rP1").value, p2 = $("rP2").value, err = $("rErr"); err.textContent = "";
+  if (p1.length < 6) { err.textContent = "Le mot de passe doit contenir au moins 6 caractères."; return; }
+  if (p1 !== p2) { err.textContent = "Les deux mots de passe ne sont pas identiques."; return; }
+  const { error } = await SB.auth.updateUser({ password: p1 });
+  if (error) { err.textContent = msgErr(error); return; }
+  RECOVERY = false;
+  history.replaceState(null, "", location.pathname);
+  await SB.auth.signOut();
+  ME = null; ROLE = null;
+  CM = "login";
+  render();
+  toast("Mot de passe modifié. Reconnecte-toi avec ton nouveau mot de passe.");
+}
 
 async function doLogin(){
   const e = $("lE").value.trim(), p = $("lP").value, err = $("lErr");
@@ -222,6 +269,7 @@ async function logout(){ await SB.auth.signOut(); ME = null; ROLE = null; DOSSIE
 function render(){
   const app = $("app"), nav = $("nav");
   saveNav();
+  if (RECOVERY) { nav.classList.add("hide"); app.innerHTML = recoveryView(); return; }
   if (!ME) { nav.classList.add("hide"); app.innerHTML = loginView(); return; }
   if (ROLE === "rep") {
     nav.classList.remove("hide");
