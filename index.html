@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Seconde Vie – Atelier</title>
-<link rel="icon" href="logo.png">
+<link rel="icon" href="favicon.png">
 <style>
 :root{--bg:#f2f4f1;--surf:#fff;--ink:#17261f;--mut:#5d6b64;--line:#dfe4e0;--brand:#1f4d3f;--bad:#b3261e;--ok:#22703f;--warn:#b86e00}
 *{box-sizing:border-box}
@@ -41,29 +41,215 @@ nav button.on{color:var(--brand)}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}
 .modal .card{max-width:360px;width:100%;margin:0}
 .fb-wrap{position:fixed;left:14px;bottom:14px;z-index:15}
+.fb-wrap.edge{left:0}
+.notif-wrap{position:fixed;top:12px;right:14px;z-index:16}
+.notif-btn{position:relative;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--ink);display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;box-shadow:0 2px 8px rgba(23,38,31,.08)}
+.notif-btn svg{width:20px;height:20px}
+.notif-badge{position:absolute;top:-3px;right:-3px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--bad);color:#fff;font-size:11px;font-weight:700;line-height:18px;text-align:center;box-sizing:border-box}
+.notif-banner{position:fixed;top:62px;right:14px;z-index:17;width:min(340px,calc(100vw - 28px));background:#fff;border:1px solid #e3e9e5;border-radius:14px;box-shadow:0 12px 32px rgba(23,38,31,.16);padding:12px 14px;cursor:pointer}
+.notif-panel{position:fixed;top:62px;right:14px;z-index:17;width:min(360px,calc(100vw - 28px));max-height:70vh;overflow:auto;background:#fff;border:1px solid #e3e9e5;border-radius:14px;box-shadow:0 12px 32px rgba(23,38,31,.16);padding:12px 14px}
+.nb-head,.np-head{display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
+.nb-x{border:0;background:none;font-size:18px;line-height:1;color:var(--mut);cursor:pointer;padding:0 2px}
+.nb-t,.np-t{font-weight:700;font-size:14px;margin:4px 0}
+.notif-banner ul,.notif-panel ul{margin:0;padding-left:18px;font-size:13px;color:var(--ink)}
+.np-head{font-size:13px;margin-bottom:6px}
+.np-item{padding:10px 0;border-top:1px solid var(--line)}
+.np-d{font-size:11px;color:var(--mut);font-weight:600}
+.acc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:8px 0 6px}
+@media (min-width:900px){ .acc-grid{grid-template-columns:repeat(4,minmax(0,1fr))} }
+.acc-stat,.acc-nav{display:block;width:100%;text-align:left;cursor:pointer;border:0;font-family:inherit;padding:14px 16px;min-width:0;color:var(--ink)}
+.acc-stat:hover,.acc-nav:hover{box-shadow:0 6px 18px rgba(23,38,31,.12)}
+.acc-l{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--mut)}
+.acc-v{font-size:28px;font-weight:700;margin-top:6px;color:var(--ink)}
+.acc-v.alert{color:var(--bad)}
+.acc-nav{min-height:64px;font-size:15px;font-weight:700;color:var(--brand);display:flex;align-items:center}
+@media (max-width:899px){ .app > .row:first-child{padding-right:44px} }
+
 .fb-wrap.rep{bottom:72px}
 .fb-panel{position:fixed;left:14px;bottom:80px;width:300px;max-width:calc(100% - 28px);background:var(--surf);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:25}
 .fb-head{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line);cursor:move;user-select:none;touch-action:none;font-weight:600}
 .fb-body{padding:12px}
 .fb-close{border:0;background:none;font-size:20px;line-height:1;cursor:pointer;color:var(--mut);padding:0 4px}
-.fb-btn{width:52px;height:52px;border-radius:50%;border:0;background:var(--brand);color:#fff;font-size:22px;box-shadow:0 4px 14px rgba(0,0,0,.2);cursor:pointer}
+.fb-btn{width:48px;height:48px;border-radius:50%;border:0;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;padding:0;box-shadow:0 6px 18px rgba(23,38,31,.18);cursor:pointer;transition:transform .15s ease,box-shadow .15s ease}
+.fb-btn:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(23,38,31,.24)}
+.fb-btn svg{width:22px;height:22px}
 .fb-x{position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;border:0;background:var(--ink);color:#fff;font-size:13px;line-height:22px;padding:0;cursor:pointer}
 .fb-edge{border:0;background:var(--brand);color:#fff;width:22px;height:44px;border-radius:0 10px 10px 0;font-size:20px;line-height:1;padding:0;cursor:pointer;box-shadow:2px 2px 8px rgba(0,0,0,.2)}
-.fb-pill{border:0;background:var(--brand);color:#fff;font-family:inherit;font-weight:600;font-size:12px;padding:6px 12px;border-radius:99px;box-shadow:0 2px 8px rgba(0,0,0,.2);cursor:pointer}
 .flash{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;z-index:40;font-weight:600;font-size:15px;box-shadow:0 8px 24px rgba(0,0,0,.25);pointer-events:none}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:90px;background:var(--ink);color:#fff;padding:10px 14px;border-radius:10px;z-index:30;max-width:90%;font-size:14px}
+/* ---------- Tableau de bord : cases carrées ---------- */
+.dash-page h1{margin:0 0 4px}
+body.lg .dash-page h1{margin:0 0 4px}
+body.lg .dash-page > h2:first-of-type{margin-top:6px}
+.dash-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:8px 0 6px}
+.dash-tile{aspect-ratio:1/1;display:flex;flex-direction:column;margin:0;padding:14px 16px;cursor:pointer;min-width:0;overflow:hidden}
+.dash-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.dash-lbl{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);line-height:1.3;flex:1 1 0;min-width:0}
+.dash-val{font-size:34px;font-weight:700;line-height:1;color:var(--ink);flex:none;white-space:nowrap}
+.dash-val.alert{color:var(--bad)}
+.dash-list{list-style:none;margin:12px 0 0;padding:10px 0 0;border-top:1px solid var(--line);flex:1;min-height:0;overflow:hidden}
+.dash-list li{font-size:13px;line-height:1.35;padding:4px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dash-list .more{color:var(--mut);font-weight:600}
+.dash-list .empty{color:var(--mut)}
+@media (min-width:900px){ .dash-grid{grid-template-columns:repeat(5,minmax(0,1fr))} }
+@media (min-width:900px){ body.lg nav button.nav-copy{margin-top:16px;border:1px dashed #b9c9bf;color:var(--brand);background:#fff} }
+@media (max-width:899px){ nav button.nav-copy,nav button.nav-logout,nav button.nav-style{display:none} }
+nav button.nav-style{display:none}
+@media (min-width:900px){ body.lg nav button.nav-style{display:block;margin-top:8px;border:1px solid #d9e1dc;color:var(--brand);background:#fff} body.lg.rep-nav .style-btn{display:none} }
+.vue-client{border:1px dashed #cdd8d1;border-radius:16px;padding:12px;margin:8px 0 6px;background:rgba(255,255,255,.5)}
+.vue-note{font-size:13px;color:var(--mut);margin:6px 0 0}
+@media (min-width:900px){ body.lg .hdr-logout{display:none} body.lg nav button.nav-logout{margin-top:auto;color:var(--mut)} }
+
+/* ---------- Tableau de bord : détails, graphiques, cibles ---------- */
+.dash-list li{cursor:pointer}
+.dash-list li:hover{color:var(--brand);text-decoration:underline}
+.dash-list .more{color:var(--mut);font-weight:600}
+.dash-charts{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin:14px 0 6px}
+.chart-card{margin:0;padding:16px}
+.chart-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);margin-bottom:8px}
+.bar-row{display:grid;grid-template-columns:96px minmax(0,1fr) 40px;gap:10px;align-items:center;margin:9px 0;cursor:pointer}
+.bar-row.static{cursor:default}
+.bar-l{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;background:var(--brand);border-radius:4px}
+.bar-v{font-size:13px;font-weight:700;text-align:right}
+.bar-row:not(.static):hover .bar-fill{opacity:.7}
+.vbars{display:flex;align-items:flex-end;gap:8px;height:190px;padding-top:6px}
+.vcol{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;cursor:pointer;min-width:0}
+.vbar{width:100%;max-width:40px;background:var(--brand);border-radius:6px 6px 2px 2px}
+.vval{font-size:12px;font-weight:700;margin-bottom:4px;white-space:nowrap}
+.vlbl{font-size:12px;color:var(--mut);margin-top:6px;text-transform:capitalize}
+.vcol:hover .vbar{opacity:.7}
+@media (min-width:900px){ .dash-charts{grid-template-columns:repeat(2,minmax(0,1fr))} }
+.focus-hl{box-shadow:0 0 0 3px rgba(31,77,63,.4)!important;transition:box-shadow .3s}
+
+/* ---------- Réparations et ventes : deux cartes par ligne sur ordinateur ---------- */
+.card-grid{display:block}
+@media (min-width:900px){
+  .card-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;grid-auto-rows:1fr}
+  .card-grid > .card{margin:0;padding:12px 14px;height:100%}
+}
+
+/* ---------- Bouton de style (toujours visible) ---------- */
+.style-btn{position:fixed;right:14px;bottom:76px;z-index:6;border:0;border-radius:99px;padding:8px 13px;font:600 13px/1 system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--brand);color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.2);cursor:pointer}
+.style-btn:hover{transform:translateY(-1px)}
+
+/* ---------- Logo d'en-tête ---------- */
+.logo-h{display:block;width:180px;height:auto;flex:none}
+/* ---------- Nouveau style : épuré, clair (body.lg) ---------- */
+body.lg{background:#f4f6f5;color:#17261f;min-height:100vh}
+body.lg h1{font-size:24px;font-weight:700;letter-spacing:-.02em;margin:6px 0 16px}
+body.lg h2{font-size:15px;font-weight:600;margin:18px 0 8px}
+body.lg .card{background:rgba(255,255,255,.78);border:1px solid rgba(255,255,255,.95);border-radius:16px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 2px rgba(23,38,31,.04),0 6px 22px rgba(23,38,31,.06);-webkit-backdrop-filter:blur(16px) saturate(160%);backdrop-filter:blur(16px) saturate(160%)}
+body.lg .card[onclick]:hover{box-shadow:0 2px 4px rgba(23,38,31,.05),0 10px 28px rgba(23,38,31,.10)}
+body.lg input,body.lg select,body.lg textarea{background:rgba(255,255,255,.9);border:1px solid #d9e1dc;border-radius:10px;padding:9px 12px;font-size:14px;box-shadow:none}
+body.lg input:focus,body.lg select:focus,body.lg textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(31,77,63,.12)}
+body.lg .btn{background:var(--brand);border-radius:10px;box-shadow:none;font-weight:600}
+body.lg .btn.ghost{background:transparent;color:var(--ink);border:1px solid #c9d6cf;box-shadow:none}
+body.lg .chip{-webkit-backdrop-filter:none;backdrop-filter:none;border-radius:6px;padding:3px 8px;background:#eef2ef;color:var(--mut)}
+body.lg .late{background:#fde4e1;color:var(--bad)}
+body.lg .ok{background:#def3e5;color:var(--ok)}
+body.lg .warn{background:#fff1d6;color:var(--warn)}
+body.lg .modal{background:rgba(23,38,31,.32);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+body.lg .modal .card{background:#fff;backdrop-filter:none;-webkit-backdrop-filter:none}
+body.lg .fb-panel{background:#fff;border:1px solid #e3e9e5;border-radius:14px;box-shadow:0 12px 32px rgba(23,38,31,.14);-webkit-backdrop-filter:none;backdrop-filter:none}
+body.lg .toast,body.lg .flash{background:#17261f;border-radius:10px;-webkit-backdrop-filter:none;backdrop-filter:none}
+body.lg .style-btn{background:#fff;color:var(--brand);border:1px solid #d9e1dc;border-radius:10px;padding:8px 12px;box-shadow:0 2px 8px rgba(23,38,31,.08);-webkit-backdrop-filter:none;backdrop-filter:none}
+/* Navigation : barre flottante claire sur téléphone */
+body.lg nav{left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));top:auto;width:auto;max-width:none;transform:none;padding:4px;border:1px solid #e3e9e5;border-radius:16px;background:rgba(255,255,255,.94);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:0 8px 24px rgba(23,38,31,.10);overflow-x:auto;scrollbar-width:none}
+body.lg nav::-webkit-scrollbar{display:none}
+body.lg nav button{flex:0 0 auto;min-width:76px;font-size:11px;border-radius:12px;padding:9px 4px;color:var(--mut)}
+body.lg nav button.on{background:#eef4f1;color:var(--brand)}
+body.lg .app{padding-bottom:110px}
+
+/* Ordinateur : navigation en colonne à gauche, contenu élargi */
+@media (min-width:900px){
+  body.lg nav{top:0;bottom:0;left:0;right:auto;width:232px;flex-direction:column;justify-content:flex-start;padding:22px 14px;border:0;border-right:1px solid #e3e9e5;border-radius:0;background:#fff;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain}
+  body.lg nav button{flex:none;min-width:0;text-align:left;padding:10px 12px;font-size:14px;border-radius:8px;margin-bottom:2px;color:var(--mut)}
+  body.lg nav button.on{background:#eef4f1;color:var(--brand);box-shadow:none}
+  body.lg .app{width:auto;max-width:none;margin:0 0 0 232px;padding:10px max(40px,calc((100vw - 232px - 1100px) / 2)) 60px}
+  body.lg .app > .row:first-child{margin-top:0!important}
+  body.lg .app > .row > select, body.lg .app > div > .row > select{width:auto;flex:1 1 200px;min-width:0}
+  body.lg .fb-wrap,body.lg .fb-panel{left:256px}
+  body.lg .fb-wrap.edge{left:232px}
+  body.lg .fb-wrap.rep{bottom:14px}
+  body.lg .style-btn{bottom:18px;right:18px}
+}
+/* ---------- Bouton d'affichage de la navigation ---------- */
+.sb-toggle{display:none;position:fixed;left:12px;top:12px;z-index:7;width:34px;height:34px;align-items:center;justify-content:center;padding:0;border:1px solid #e6e1d6;border-radius:8px;background:#fff;color:#4f544b;cursor:pointer}
+.sb-toggle svg{width:18px;height:18px}
+.sb-toggle:hover{background:#f4f1ea;color:#1d211e}
+@media (min-width:900px){
+  body.lg .sb-toggle{display:flex}
+  body.lg nav{transition:transform .2s ease}
+  body.lg .app{transition:margin-left .2s ease,padding-left .2s ease}
+  body.lg nav{padding-top:58px}
+  body.lg.sb-off nav{transform:translateX(-100%)}
+  body.lg.sb-off .app{margin-left:0;padding:10px max(40px,calc((100vw - 1100px) / 2)) 60px;padding-left:max(64px,calc((100vw - 1100px) / 2))}
+  body.lg.sb-off .fb-wrap,body.lg.sb-off .fb-panel{left:14px}
+  body.lg.sb-off .fb-wrap.edge{left:0}
+}
+
+.demo-bar{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;background:#fff4d6;color:#5b4300;border:1px solid #efd58a;border-radius:12px;padding:8px 12px;margin:0 0 10px;font-size:13px;font-weight:600}
+@media (min-width:900px){ body.lg nav::-webkit-scrollbar{display:block;width:6px} body.lg nav::-webkit-scrollbar-thumb{background:#c9d6cf;border-radius:3px} body.lg nav{scrollbar-width:thin} }
+/* Connexion : une seule mise en page à toute taille. La photo se coupe par la gauche ; le formulaire garde sa taille. */
+body.lg:has(.lg-login),body:has(.lg-login){background:#FAF8F3}
+body:has(.lg-login) .style-btn{display:none !important}
+body .app:has(.lg-login),body.lg .app:has(.lg-login){max-width:none;margin:0;padding:0;width:100%;min-height:100vh}
+.lg-login{display:grid;grid-template-columns:minmax(0,min(50%,max(0px,calc(100vw - 496px))))minmax(0,1fr);grid-template-rows:84px auto;min-height:100vh;font-family:Inter,system-ui,sans-serif;color:#1F2A24}
+.lg-login.is-login .req,.lg-mobonly{display:none !important}
+.lg-head{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding:0 32px;border-bottom:1px solid #E6E1D6;background:#FAF8F3}
+.lg-logo{display:block;height:44px;width:auto;max-width:none;margin:0}
+.lg-back{display:inline-block;font-size:14px;font-weight:600;color:#1F2A24;text-decoration:none;border:1px solid #DCD7CB;border-radius:999px;padding:9px 16px;background:#fff;white-space:nowrap}
+.lg-photo{display:block;position:relative;overflow:hidden;background:linear-gradient(180deg,#EEF3EC,#E3ECE4);min-height:calc(100vh - 84px)}
+.lg-photo > img{position:absolute;top:0;right:0;width:100%;min-width:640px;height:auto;display:block;max-width:none}
+.lg-form{display:flex;flex-direction:column;justify-content:center;padding:48px 32px;box-sizing:border-box;background:#FAF8F3;min-width:0}
+.lg-login .card{background:none;border:0;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;padding:0;margin:0 auto;width:100%;max-width:400px}
+.lg-h1{display:block;font-family:Manrope,Inter,system-ui,sans-serif;font-weight:500;font-size:40px;line-height:1.1;letter-spacing:-.01em;margin:0 0 8px;color:#1F2A24}
+.lg-sub{display:block;font-size:15px;color:#5B6660;margin:0 0 28px}
+.lg-login .card > label{display:block;margin:18px 0 8px;font-size:14px;font-weight:500;color:#1F2A24}
+.lg-login .card input{display:block;width:100%;height:50px;box-sizing:border-box;border:1px solid #DCD7CB;border-radius:12px;background:#fff;padding:0 14px;font:inherit;font-size:15px;color:#1F2A24;box-shadow:none;margin:0;outline:0}
+.lg-login .card input:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(31,77,63,.12)}
+.lg-pwd{position:relative}
+.lg-login .card .lg-pwd input{padding-right:44px}
+
+/* Second œil : le navigateur (Edge) ajoute son propre bouton « révéler » dans les champs mot de passe */
+.lg-login input::-ms-reveal,.lg-login input::-ms-clear{display:none !important;width:0;height:0}
+.lg-login input::-webkit-textfield-decoration-container{display:none !important}
+/* Œil : le site ajoute ses propres styles de bouton, d'où les !important */
+.lg-show{display:flex;align-items:center;justify-content:center;position:absolute;right:3px;top:0;bottom:0;margin:auto 0;height:34px;width:32px;padding:0;cursor:pointer;color:var(--brand)}
+.lg-show,.lg-show:hover,.lg-show:focus,.lg-show:active{background:transparent !important;border:0 !important;box-shadow:none !important;outline:none !important;border-radius:0 !important;transform:none !important;-webkit-appearance:none;appearance:none}
+.lg-show:focus-visible{color:#17382e !important}
+
+.lg-forgot-d{display:block;text-align:right;font-size:13px;font-weight:500;color:var(--brand);margin-top:10px;text-decoration:none}
+.lg-login .card > .btn{width:100%;height:52px;margin:24px 0 0;border:0;border-radius:12px;background:var(--brand);color:#fff;font-size:16px;font-weight:600;box-shadow:none}
+.lg-login .card .btn.ghost{background:transparent;color:#1F2A24;border:1px solid #1F2A24;box-shadow:none}
+.lg-sep{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:32px;padding-top:24px;border-top:1px solid #E6E1D6}
+.lg-sep span{font-size:14px;color:#5B6660;white-space:nowrap}
+.lg-login .card .btn.lg-create-d{display:inline-block;width:auto;height:auto;margin:0;padding:12px 18px;font-size:14px;font-weight:600;border-radius:12px;white-space:nowrap}
+
+@media (max-width:600px){
+  .lg-head{padding:0 16px}
+  .lg-logo{height:34px}
+  .lg-back{font-size:13px;padding:7px 12px}
+  .lg-sep{flex-wrap:wrap;row-gap:12px}
+}
 </style>
-</head>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600&display=swap" rel="stylesheet"></head>
 <body>
 <div class="app" id="app"></div>
 <nav id="nav" class="hide"></nav>
 <div id="modal" class="modal hide"></div>
 <div id="fbWrap" class="fb-wrap"></div>
+<div id="notifWrap" class="notif-wrap"></div>
+<button id="styleBtn" class="style-btn" onclick="toggleStyle()">✨ Nouveau style</button>
+<button id="sbToggle" class="sb-toggle" title="Afficher ou masquer la navigation (Ctrl+B)" aria-label="Afficher ou masquer la navigation" onclick="toggleSidebar()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><line x1="9" y1="4" x2="9" y2="20"/></svg></button>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>if(!window.supabase){document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\/script>')}</script>
 <script>
 const RECOVERY_LINK = /type=recovery/.test(location.hash);
-const SB = supabase.createClient("https://bagucelglclcssoclyaw.supabase.co", "sb_publishable_AMjguQV7hN0iXFLhhUhIiw_kgsK9B3O");
+let SB = supabase.createClient("https://bagucelglclcssoclyaw.supabase.co", "sb_publishable_AMjguQV7hN0iXFLhhUhIiw_kgsK9B3O");
 const MAIL = "seconde.vie.nantes.44@gmail.com";
 const STEPS = ["Devis en cours", "En cours", "Terminé", "Remis"];
 const lblS = s => s === "Devis en cours" ? "Devis" : s;
@@ -75,7 +261,7 @@ function pstOpts(p){
 const PUCES = [["Puce Switch V1","Switch V1"],["Puce Switch V2","Switch V2"],["Puce Switch Lite","Switch Lite"],["Puce Switch OLED","Switch OLED"]];
 // Clé API Google Maps (Places). Vide = pas d’autocomplétion, seul le bouton « Chercher sur Google Maps » reste.
 const GMAPS_KEY = "";
-const REP_NAV = [["dossiers","Réparations et ventes"],["clients","Clients"],["new","Nouvelle prestation"],["newvente","Nouvelle vente"],["ventes","Ventes"],["avis","Suggestions & Bugs"],["stock","Stock"],["catalogue","Réparations & Mods"]];
+const REP_NAV = [["accueil","Accueil"],["dashboard","Tableau de bord"],["dossiers","Réparations et ventes"],["clients","Clients"],["vueclient","Vue client"],["new","Nouvelle prestation"],["newvente","Nouvelle vente"],["ventes","Ventes"],["avis","Suggestions & Bugs"],["stock","Stock"],["catalogue","Réparations & Mods"],["dbadmin","Bases de données"]];
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -86,7 +272,7 @@ function left(d){ if(!d) return null; const e = new Date(d + "T00:00"), t = new 
 function jours(n){ return n == null ? "" : n < 0 ? "Délai dépassé" : n == 0 ? "aujourd’hui" : n + (n > 1 ? " jours restants" : " jour restant"); }
 function pcs(id){ return S.pieces.filter(p => p.dossier_id === id); }
 
-let S = {dossiers:[], pieces:[], clients:[], stock:[], inv:[], devices:[], catalogue:[], sav:[], feedback:[], ventes:[], stockApp:[]};
+let S = {dossiers:[], pieces:[], clients:[], stock:[], inv:[], devices:[], catalogue:[], sav:[], feedback:[], ventes:[], stockApp:[], depenses:[]};
 let ME = null, ROLE = null, VIEW = "dossiers", DOSSIER = null, CM = "login", RECOVERY = RECOVERY_LINK;
 
 function toast(msg){
@@ -125,22 +311,25 @@ async function loadAll(){
   if (dv.error) throw dv.error;
   S.devices = dv.data;
   if (ROLE === "rep") { const cg = await SB.from("catalogue").select("*"); S.catalogue = cg.data || []; if (cg.error) toast("Catalogue : " + msgErr(cg.error)); }
-  if (ROLE === "rep") { const vt = await SB.from("ventes").select("*"); S.ventes = vt.data || []; }
+  const vt = await SB.from("ventes").select("*");
+  if (vt.error) { S.ventes = []; if (ROLE === "rep") toast("Ventes : " + msgErr(vt.error)); } else S.ventes = vt.data || [];
   if (ROLE === "rep") { const sa = await SB.from("stock_appareils").select("*").order("nom"); if (sa.error) toast("Appareils à vendre : " + msgErr(sa.error)); else S.stockApp = sa.data || []; }
   const sv = await SB.from("sav").select("*").order("created_at", {ascending:false});
   if (sv.error) toast("SAV : " + msgErr(sv.error)); else S.sav = sv.data || [];
+  if (ROLE === "rep") { const dp = await SB.from("depenses").select("*").order("date", {ascending:false}); if (dp.error) { S.depenses = []; toast("Dépenses : " + msgErr(dp.error)); } else S.depenses = dp.data || []; }
   if (ROLE === "rep") { const idr = await SB.from("idees").select("*").order("created_at", {ascending:false}); if (idr.error) toast("Idées : " + msgErr(idr.error)); else S.idees = idr.data || []; }
   if (ROLE === "rep") {
     const fb = await SB.from("feedback").select("*").order("created_at", {ascending:false});
     if (fb.error) toast("Suggestions : " + msgErr(fb.error)); else S.feedback = fb.data || [];
   }
 }
-async function reload(){ try { await loadAll(); } catch(e){ toast("Erreur : " + msgErr(e)); } render(); }
+async function reload(){ if (DEMO) return render(); try { await loadAll(); } catch(e){ toast("Erreur : " + msgErr(e)); } render(); }
 
 /* ---------- Connexion ---------- */
 function loginView(){
   if (CM === "forgot") return forgotView();
   const isNew = CM === "code" || CM === "data";
+  const login = !isNew && CM !== "pick";
   const perso = CM === "data" ? `<div class="two"><div><label>Prénom *</label><input id="nP"></div><div><label>Nom *</label><input id="nN"></div></div>
     <label>Téléphone *</label><input id="nT" inputmode="tel" maxlength="20">
     <label>Adresse *</label><input id="nA">
@@ -153,19 +342,32 @@ function loginView(){
     <button class="btn" onclick="setCM('code')">Oui, j’ai un code</button>
     <button class="btn ghost" onclick="setCM('data')">Non, je rentre mes données</button>
   </div></div>` : "";
-  return `<img src="logo.png" alt="Seconde Vie" style="display:block;width:180px;max-width:70%;margin:10px auto 14px">
-  ${pick}
-  <div class="card">
-    ${perso}
-    <label>Email *</label><input id="lE" type="email" autocomplete="username">
-    <label>Mot de passe *</label><input id="lP" type="password" autocomplete="${isNew ? "new-password" : "current-password"}">
-    <label style="font-weight:400;display:flex;gap:8px;align-items:center;margin-top:6px"><input type="checkbox" onchange="$('lP').type=this.checked?'text':'password'" style="width:auto;margin:0"> Afficher le mot de passe</label>
-    ${code}
-    <div class="err" id="lErr"></div>
-    <button class="btn" onclick="doLogin()">${isNew ? "Créer mon espace" : "Se connecter"}</button>
-    ${isNew ? '<button class="btn ghost" onclick="setCM(\'login\')">Retour à la connexion</button>' : '<button class="btn ghost" onclick="setCM(\'pick\')">Créer mon espace</button><button class="btn ghost" onclick="setCM(\'forgot\')">Mot de passe oublié ?</button>'}
+  const req = '<span class="req"> *</span>';
+  return `<div class="lg-login${login ? " is-login" : ""}">
+    <div class="lg-head">
+      <img class="lg-logo" src="logo.png" alt="Seconde Vie">
+      <a class="lg-back" href="#" onclick="return false">← Retour à la boutique</a>
+    </div>
+    <div class="lg-photo" aria-hidden="true"><img src="hero-connexion.jpg" alt=""></div>
+    <div class="lg-form">
+      ${pick}
+      <div class="card">
+        ${login ? '<h1 class="lg-h1">Connexion</h1><p class="lg-sub">Accédez à vos achats et à vos réparations.</p>' : ""}
+        ${perso}
+        <label>Email${req}</label><input id="lE" type="email" autocomplete="username" onkeydown="if(event.key==='Enter'){event.preventDefault();doLogin()}">
+        <label>Mot de passe${req}</label>
+        <div class="lg-pwd"><input id="lP" type="password" autocomplete="${isNew ? "new-password" : "current-password"}" onkeydown="if(event.key==='Enter'){event.preventDefault();doLogin()}"><button type="button" class="lg-show" aria-label="Afficher le mot de passe" onclick="togglePwdBtn(this)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a19.8 19.8 0 0 1 5.06-5.94M9.9 4.24A10.9 10.9 0 0 1 12 4c7 0 11 7 11 7a19.8 19.8 0 0 1-3.17 4.19M14.12 14.12a3 3 0 1 1-4.24-4.24"></path><path d="M1 1l22 22"></path></svg></button></div>
+        <label class="lg-mobonly" style="font-weight:400;display:flex;gap:8px;align-items:center;margin-top:6px"><input type="checkbox" onchange="$('lP').type=this.checked?'text':'password'" style="width:auto;margin:0"> Afficher le mot de passe</label>
+        ${login ? '<a href="#" class="lg-forgot-d" onclick="setCM(\'forgot\');return false">Mot de passe oublié ?</a>' : ""}
+        ${code}
+        <div class="err" id="lErr"></div>
+        <button class="btn" onclick="doLogin()">${isNew ? "Créer mon espace" : "Se connecter"}</button>
+        ${isNew ? '<button class="btn ghost" onclick="setCM(\'login\')">Retour à la connexion</button>' : '<div class="lg-sep"><span>Pas encore de compte ?</span><button class="btn ghost lg-create-d" onclick="setCM(\'pick\')">Créer mon espace</button></div><button class="btn ghost lg-mobonly" onclick="setCM(\'pick\')">Créer mon espace</button><button class="btn ghost lg-mobonly" onclick="setCM(\'forgot\')">Mot de passe oublié ?</button>'}
+      </div>
+    </div>
   </div>`;
 }
+function togglePwdBtn(b){ const p = $('lP'); const eye = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"></path><circle cx="12" cy="12" r="3"></circle></svg>', off = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a19.8 19.8 0 0 1 5.06-5.94M9.9 4.24A10.9 10.9 0 0 1 12 4c7 0 11 7 11 7a19.8 19.8 0 0 1-3.17 4.19M14.12 14.12a3 3 0 1 1-4.24-4.24"></path><path d="M1 1l22 22"></path></svg>'; p.type = p.type === "password" ? "text" : "password"; const shown = p.type === "text"; b.innerHTML = shown ? eye : off; b.setAttribute("aria-label", shown ? "Masquer le mot de passe" : "Afficher le mot de passe"); }
 function setCM(v){ CM = v; render(); }
 
 function forgotView(){
@@ -264,28 +466,64 @@ async function boot(){
   if (ROLE === "rep") await syncReservations();
   render();
 }
-async function logout(){ await SB.auth.signOut(); ME = null; ROLE = null; DOSSIER = null; render(); }
+async function logout(){ if (DEMO) return endDemo(); await SB.auth.signOut(); ME = null; ROLE = null; DOSSIER = null; render(); }
+
+/* ---------- Navigation latérale masquable (ordinateur, nouveau style) ---------- */
+function applySidebar(){
+  let off = false;
+  try { off = localStorage.getItem("sv_sb") === "off"; } catch(e) {}
+  document.body.classList.toggle("sb-off", off);
+}
+function toggleSidebar(){
+  const off = !document.body.classList.contains("sb-off");
+  try { localStorage.setItem("sv_sb", off ? "off" : "on"); } catch(e) {}
+  applySidebar();
+  setTimeout(() => { if (VIEW === "dashboard" && !DOSSIER) fitDashVals(); }, 230);
+}
+document.addEventListener("keydown", e => {
+  if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === "b") { e.preventDefault(); toggleSidebar(); }
+});
+
+/* ---------- Choix du style (mémorisé sur cet appareil) ---------- */
+function applyStyle(){
+  let lg = false;
+  try { lg = localStorage.getItem("sv_style") === "lg"; } catch(e) {}
+  document.body.classList.toggle("lg", lg);
+  const b = $("styleBtn");
+  if (b) b.textContent = lg ? "↩ Style actuel" : "✨ Nouveau style";
+}
+function toggleStyle(){
+  const lg = !document.body.classList.contains("lg");
+  try { localStorage.setItem("sv_style", lg ? "lg" : "std"); } catch(e) {}
+  applyStyle();
+}
 
 /* ---------- Affichage ---------- */
 function render(){
   const app = $("app"), nav = $("nav");
+  applyStyle();
+  applySidebar();
+  document.body.classList.toggle("rep-nav", ROLE === "rep" && !!ME);
   saveNav();
-  if (RECOVERY) { nav.classList.add("hide"); app.innerHTML = recoveryView(); return; }
-  if (!ME) { nav.classList.add("hide"); app.innerHTML = loginView(); return; }
+  if (RECOVERY) { nav.classList.add("hide"); $("fbWrap").innerHTML = ""; $("notifWrap").innerHTML = ""; closeNotifPanel(); app.innerHTML = recoveryView(); return; }
+  if (!ME) { nav.classList.add("hide"); $("fbWrap").innerHTML = ""; $("notifWrap").innerHTML = ""; closeNotifPanel(); app.innerHTML = loginView(); return; }
   if (ROLE === "rep") {
     nav.classList.remove("hide");
-    nav.innerHTML = REP_NAV.map(([v,l]) => `<button class="${VIEW===v?"on":""}" onclick="go('${v}')">${l}</button>`).join("");
-    app.innerHTML = '<div class="row" style="align-items:center;margin:4px 0 8px"><img src="logo.png" alt="Seconde Vie" style="height:44px"><button class="btn small ghost" onclick="logout()">Déconnexion</button></div>' + (DOSSIER ? detailView() : REP[VIEW]());
+    nav.innerHTML = REP_NAV.map(([v,l]) => `<button class="${VIEW===v?"on":""}" onclick="go('${v}')">${l}</button>`).join("") + '<button class="nav-copy" title="Copie les suggestions ajoutées depuis la dernière copie" onclick="copierNouvellesSuggestions()">Copier le récap</button><button class="nav-style" onclick="toggleStyle()">↩ Style actuel</button><button class="nav-logout" onclick="logout()">Déconnexion</button>';
+    app.innerHTML = '<div class="row" style="align-items:center;margin:4px 0 8px"><img class="logo-h" src="logo.png" alt="Seconde Vie"><button class="btn small ghost hdr-logout" onclick="logout()">Déconnexion</button></div>' + (DOSSIER ? detailView() : REP[VIEW]());
     if (VIEW === "stock" && !DOSSIER) { mpDraw("n"); mpDraw("a"); }
     if (VIEW === "newvente") mpDraw("v");
     if (VENTE_OPEN && VIEW === "dossiers" && !DOSSIER) mpDraw("v");
     if (VIEW === "newvente" || (VENTE_OPEN && VIEW === "dossiers" && !DOSSIER)) attachPlaces();
     if (DOSSIER) paintDetail();
+    if (VIEW === "dashboard" && !DOSSIER) { fitDashVals(); setTimeout(() => { if (VIEW === "dashboard" && !DOSSIER) fitDashVals(); }, 250); }
   } else {
     nav.classList.add("hide");
-    app.innerHTML = cliView();
+    app.innerHTML = (DEMO ? '<div class="demo-bar"><span>Aperçu · données fictives, rien n’est enregistré</span><button class="btn small ghost" onclick="endDemo()">Quitter l’aperçu</button></div>' : "") + cliView();
   }
   renderFb();
+  renderNotif();
+  if (FOCUS_ID) { const el = document.getElementById(FOCUS_ID); if (el) { if (el.scrollIntoView) el.scrollIntoView({behavior: "smooth", block: "center"}); el.classList.add("focus-hl"); setTimeout(() => el.classList.remove("focus-hl"), 1800); } }
 }
 async function syncReservations(){
   const actif = id => { const d = S.dossiers.find(x => x.id === id); return !!d && !["Terminé", "Remis"].includes(d.statut); };
@@ -304,6 +542,7 @@ async function syncReservations(){
 async function go(v){
   if (v === "out") return logout();
   VIEW = v; DOSSIER = null;
+  if (v === "dbadmin") { DBA.lock = true; DBA.edit = null; DBA.err = ""; if (DBA.table) { DBA.rows = null; dbaLoad(); } }
   if (v === "newvente") { VENTE_OPEN = false; VENTE_EDIT = null; VENTE_LIGNES = []; VT_COMPAT = false; MP.v = []; PKS.v = {app:"", cat:""}; VT_SEL = null; }
   if (v === "stock" && ROLE === "rep") await syncReservations();
   if (v === "avis" && ROLE === "rep") {
@@ -335,15 +574,286 @@ function filtersRow(items){
   return '<div class="row" style="gap:6px;flex-wrap:wrap;margin:0 0 8px">' + items.map(i => '<select onchange="' + i.js + '">' + selOpts([["", i.all]].concat(i.opts), i.cur) + '</select>').join("") + '</div>';
 }
 function setSortRep(v){ SORT_REP = v; render(); }
+var SORT_DIR = 1;
+function toggleSortDir(){ SORT_DIR = -SORT_DIR; render(); }
 function setSortVente(v){ SORT_VENTE = v; render(); }
 function sortSelect(val, opts, fn){
   return '<div class="row" style="align-items:center;gap:6px;margin:0 0 8px"><span class="m">Trier par</span><select onchange="' + fn + '(this.value)">'
     + opts.map(o => '<option value="' + o[0] + '"' + (o[0] === val ? ' selected' : '') + '>' + o[1] + '</option>').join("") + '</select></div>';
 }
+/* ---------- Tableau de bord ---------- */
+var DASH_ACT = [], FOCUS_ID = null;
+function dashReg(f){ DASH_ACT.push(f); return DASH_ACT.length - 1; }
+function dashRun(i){ const f = DASH_ACT[i]; if (f) f(); }
+function dashGo(view, opt){
+  opt = opt || {};
+  if (view === "dossiers") { DOSS_TAB = opt.tab || "rep"; DOSS_F = {statut: opt.statut || "", app: opt.app || ""}; if (opt.sort) SORT_REP = opt.sort; }
+  if (view === "ventes") VMOIS = opt.mois || null;
+  if (view === "stock") { STOCK_TAB = "pieces"; STK_Q = ""; STK_TYPE = ""; STK_ST = ""; }
+  FOCUS_ID = opt.focus || null;
+  if (FOCUS_ID) setTimeout(() => { FOCUS_ID = null; }, 1500);
+  go(view);
+}
+/* Réduit la taille du chiffre jusqu'à ce qu'il tienne sur la même ligne que le libellé */
+function fitDashVals(){
+  document.querySelectorAll(".dash-tile").forEach(t => {
+    const v = t.querySelector(".dash-val"), l = t.querySelector(".dash-lbl");
+    if (!v || !l) return;
+    v.style.fontSize = "";
+    const h = t.querySelector(".dash-head");
+    const ok = () => {
+      const hr = h.getBoundingClientRect(), vr = v.getBoundingClientRect(), lr = l.getBoundingClientRect();
+      return vr.right <= hr.right + 0.5 && lr.right <= vr.left - 4 && l.scrollWidth <= l.clientWidth + 1;
+    };
+    let size = 34;
+    while (!ok() && size > 14) { size -= 1; v.style.fontSize = size + "px"; }
+  });
+}
+function dashTile(label, value, items, fn, alert){
+  const shown = items.slice(0, 4).map(x => '<li onclick="event.stopPropagation();dashRun(' + dashReg(x.f) + ')">' + x.t + '</li>').join("");
+  const more = items.length > 4 ? '<li class="more" onclick="event.stopPropagation();dashRun(' + dashReg(fn) + ')">+ ' + (items.length - 4) + ' de plus</li>' : "";
+  return '<div class="card dash-tile" onclick="dashRun(' + dashReg(fn) + ')"><div class="dash-head"><div class="dash-lbl">' + label + '</div><div class="dash-val' + (alert ? ' alert' : '') + '">' + value + '</div></div><ul class="dash-list">' + shown + more + '</ul></div>';
+}
+function barRow(label, value, pct, fn){
+  const on = fn ? ' onclick="dashRun(' + dashReg(fn) + ')"' : "";
+  return '<div class="bar-row' + (fn ? '' : ' static') + '"' + on + '><div class="bar-l">' + esc(label) + '</div><div class="bar-track"><div class="bar-fill" style="width:' + (value ? Math.max(3, Math.round(pct)) : 0) + '%"></div></div><div class="bar-v">' + value + '</div></div>';
+}
+function eur(n){ return (Math.round((+n || 0) * 100) / 100).toLocaleString("fr-FR", {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " €"; }
+/* Listes partagées par le tableau de bord et ses pages */
+function achatLignes(){
+  const out = [];
+  (S.ventes || []).filter(v => !v.archivee).forEach(v => venteLignes(v).forEach((l, i) => { if (l.acheter) out.push({v, l, i}); }));
+  return out;
+}
+function dashData(){
+  const today = todayIso(), cur = today.slice(0, 7);
+  const act = S.dossiers.filter(d => d.statut !== "Remis");
+  const ouv = (S.ventes || []).filter(v => !v.archivee);
+  const achatL = achatLignes();
+  const appResL = (S.stockApp || []).filter(x => (+x.res || 0) > 0);
+  const pieceResL = S.pieces.filter(p => p.statut === "Réservée");
+  return {
+    today, cur, act, ouv, achatL, appResL, pieceResL,
+    aDeposer: act.filter(d => !d.date_recup),
+    enRetard: act.filter(d => d.echeance && d.echeance < today),
+    pret: S.dossiers.filter(d => d.statut === "Terminé"),
+    aCmd: S.pieces.filter(p => p.statut === "À commander"),
+    mois: (S.ventes || []).filter(v => v.archivee && moisOf(v) === cur),
+    stockBasL: (S.stock || []).filter(s => (+s.qte || 0) <= 1),
+    depMois: (S.depenses || []).filter(x => String(x.date || "").slice(0, 7) === cur),
+    achatQ: achatL.reduce((t, x) => t + (+x.l.quantite || 1), 0),
+    appResQ: appResL.reduce((t, x) => t + (+x.res || 0), 0),
+    pieceResQ: pieceResL.reduce((t, p) => t + (+p.qte || 0), 0)
+  };
+}
+/* Menu : copie les suggestions ajoutées depuis la dernière copie */
+async function copierNouvellesSuggestions(){
+  const fb = await SB.from("feedback").select("*").order("created_at", {ascending:false});
+  if (fb.error) { toast("Suggestions : " + msgErr(fb.error)); return; }
+  S.feedback = fb.data || [];
+  let last = null;
+  try { last = localStorage.getItem("sv_avis_copie"); } catch(e) {}
+  const seuil = last ? new Date(last) : null;
+  const list = (S.feedback || []).filter(x => !x.archive && (!seuil || new Date(x.created_at) > seuil));
+  if (!list.length) { flash("Aucune nouvelle suggestion depuis la dernière copie"); return; }
+  const txt = recapText(list);
+  const plusRecent = list.reduce((m, x) => new Date(x.created_at) > m ? new Date(x.created_at) : m, new Date(0));
+  const enregistrer = () => {
+    try { localStorage.setItem("sv_avis_copie", plusRecent.toISOString()); } catch(e) {}
+    flash("Récap copié ✓ (" + list.length + ")");
+  };
+  const repli = () => {
+    const ta = document.createElement("textarea");
+    ta.value = txt; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    let ok = false; try { ok = document.execCommand("copy"); } catch(e) {}
+    ta.remove();
+    if (ok) enregistrer(); else flash("Copie impossible sur ce navigateur");
+  };
+  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(txt).then(enregistrer, repli);
+  else repli();
+}
+function dashboardView(){
+  DASH_ACT = [];
+  const {today, cur, act, aDeposer, enRetard, pret, aCmd, ouv, mois, stockBasL, depMois, achatL, achatQ, appResL, appResQ, pieceResL, pieceResQ} = dashData();
+  const dLabel = d => esc(d.appareil || "Réparation") + (d.clients ? " · " + esc(fullName(d.clients)) : "");
+  const dItem = d => ({t: dLabel(d), f: () => openD(d.id)});
+  const T = [
+    dashTile("Réparations en cours", act.length, act.map(dItem), () => dashPage("act")),
+    dashTile("À déposer", aDeposer.length, aDeposer.map(dItem), () => dashPage("depot")),
+    dashTile("En retard", enRetard.length, enRetard.map(d => ({t: dLabel(d) + " · remise le " + fr(d.echeance), f: () => openD(d.id)})), () => dashPage("retard"), enRetard.length > 0),
+    dashTile("Prêts à récupérer", pret.length, pret.map(dItem), () => dashPage("pret")),
+    dashTile("Pièces à commander", aCmd.length, aCmd.map(p => ({t: esc(p.qte + " × " + p.nom), f: () => openD(p.dossier_id)})), () => dashPage("piece")),
+    dashTile("Ventes en cours", ouv.length, ouv.map(v => ({t: esc(venteTitre(v)) + " · " + esc(venteClient(v)), f: () => dashGo("dossiers", {tab: "ventes", focus: "vc-" + v.id})})), () => dashPage("vente")),
+    dashTile("Ventes du mois", mois.length, mois.map(v => ({t: esc(venteTitre(v)) + " · " + (v.prix == null ? "prix à définir" : eur(v.prix)), f: () => dashGo("ventes", {mois: cur, focus: "vb-" + v.id})})), () => dashPage("venteMois")),
+    dashTile("Stock bas", stockBasL.length, stockBasL.map(x => ({t: esc(x.nom + (x.modele ? " · " + x.modele : "")) + " · " + (+x.qte || 0) + " en stock", f: () => dashGo("stock", {focus: "s-" + x.sku})})), () => dashPage("stockBas"), stockBasL.length > 0),
+    dashTile("Dépenses", eur(depMois.reduce((t, x) => t + (+x.montant || 0), 0)), depMois.map(x => ({t: eur(x.montant) + " · " + esc(x.libelle), f: () => dashPage("depenses")})), () => dashPage("depenses")),
+    dashTile("Appareils à commander", achatQ, achatL.map(x => ({t: esc(x.l.quantite + " × " + [x.l.appareil, x.l.categorie, x.l.modele, x.l.couleur].filter(Boolean).join(" · ")), f: () => dashPage("achat")})), () => dashPage("achat")),
+    dashTile("Appareils réservés", appResQ, appResL.map(x => ({t: esc(x.res + " × " + x.nom), f: () => dashPage("appRes")})), () => dashPage("appRes")),
+    dashTile("Pièces réservées", pieceResQ, pieceResL.map(p => ({t: esc(p.qte + " × " + p.nom), f: () => dashPage("pieceRes")})), () => dashPage("pieceRes"))
+  ];
+  const grp = idx => idx.map(i => T[i]).join("");
+
+  // Graphique 1 : répartition par statut
+  const stCounts = STEPS.map(st => ({st, lbl: st === "Remis" ? "Remis ce mois" : lblS(st), n: st === "Remis" ? S.dossiers.filter(d => d.statut === "Remis" && String(d.echeance || "").slice(0, 7) === cur).length : S.dossiers.filter(d => d.statut === st).length}));
+  const stMax = Math.max(1, ...stCounts.map(x => x.n));
+  const statutHtml = stCounts.map(x => barRow(x.lbl, x.n, x.n / stMax * 100, x.st === "Remis" ? null : () => dashGo("dossiers", {tab: "rep", statut: x.st}))).join("");
+
+  // Graphique 2 : chiffre des ventes sur 6 mois
+  const [cy, cm] = cur.split("-").map(Number);
+  const months = [];
+  for (let i = 5; i >= 0; i--) {
+    const dt = new Date(cy, cm - 1 - i, 1);
+    months.push({key: dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0"), lbl: dt.toLocaleDateString("fr-FR", {month: "short"}).replace(".", "")});
+  }
+  const archV = (S.ventes || []).filter(v => v.archivee);
+  const soldCount = {};
+  archV.forEach(v => venteLignes(v).forEach(l => { if (l.appareil) soldCount[l.appareil] = (soldCount[l.appareil] || 0) + (+l.quantite || 1); }));
+  const topSold = Object.entries(soldCount).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const sMax = Math.max(1, ...topSold.map(x => x[1]));
+  const soldHtml = topSold.map(([name, n]) => barRow(name, n, n / sMax * 100, () => dashGo("ventes", {mois: cur}))).join("");
+  months.forEach(m => m.sum = archV.filter(v => moisOf(v) === m.key).reduce((t, v) => t + (+v.prix || 0), 0));
+  const mMax = Math.max(1, ...months.map(m => m.sum));
+  const moisHtml = months.map(m => '<div class="vcol" onclick="dashRun(' + dashReg(() => dashGo("ventes", {mois: m.key})) + ')"><div class="vval">' + eur(m.sum) + '</div><div class="vbar" style="height:' + Math.max(2, Math.round(m.sum / mMax * 130)) + 'px"></div><div class="vlbl">' + esc(m.lbl) + '</div></div>').join("");
+
+  // Graphique 3 : appareils les plus réparés
+  const countApp = {};
+  S.dossiers.forEach(d => { if (d.appareil) countApp[d.appareil] = (countApp[d.appareil] || 0) + 1; });
+  const top = Object.entries(countApp).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const tMax = Math.max(1, ...top.map(x => x[1]));
+  const appHtml = top.map(([name, n]) => barRow(name, n, n / tMax * 100, () => dashGo("dossiers", {tab: "rep", app: name}))).join("");
+
+  const charts = '<div class="dash-charts">'
+    + '<div class="card chart-card"><div class="chart-title">Réparations en cours</div>' + statutHtml + '</div>'
+    + '<div class="card chart-card"><div class="chart-title">Chiffre des ventes · 6 mois</div><div class="vbars">' + moisHtml + '</div></div>'
+    + '<div class="card chart-card"><div class="chart-title">Appareils les plus réparés</div>' + appHtml + '</div>'
+    + '<div class="card chart-card"><div class="chart-title">Appareils les plus vendus</div>' + soldHtml + '</div>'
+    + '</div>';
+
+  const next = act.filter(d => d.echeance).sort((x, y) => x.echeance < y.echeance ? -1 : x.echeance > y.echeance ? 1 : 0).slice(0, 6);
+  const rows = next.map(d => '<div class="card" style="cursor:pointer" onclick="openD(\'' + d.id + '\')"><div class="row" style="align-items:center"><div><div class="t">' + esc(d.appareil || "Réparation") + '</div><div class="m">' + esc(d.clients ? fullName(d.clients) : "") + '</div></div><span class="chip' + (d.echeance < today ? " late" : "") + '">' + fr(d.echeance) + '</span></div></div>').join("");
+  const section = (titre, cartes) => '<h2>' + titre + '</h2><div class="dash-grid">' + cartes + '</div>';
+  return '<div class="dash-page"><h1>Tableau de bord</h1>' + section("Réparations", grp([0, 1, 2, 3])) + section("Ventes", grp([5, 6, 8, 9, 10])) + section("Stock", grp([4, 11, 7])) + '<h2>Statistiques</h2>' + charts + '<h2>Prochaines remises</h2>' + rows + '</div>';
+}
+var DASH_PAGE = null;
+function dashPage(key){ DASH_PAGE = key; go("dashpage"); }
+const TVA = 0.2;
+function htOf(ttc){ return Math.round((+ttc || 0) / (1 + TVA) * 100) / 100; }
+function depCalc(from){
+  const h = $("depHT"), t = $("depTTC");
+  const v = parseFloat(String(from === "ht" ? h.value : t.value).replace(",", "."));
+  if (from === "ht") t.value = isNaN(v) ? "" : String(Math.round(v * (1 + TVA) * 100) / 100);
+  else h.value = isNaN(v) ? "" : String(htOf(v));
+}
+function depensesPage(){
+  const cur = todayIso().slice(0, 7);
+  const cats = ["Pièces", "Outillage", "Loyer", "Transport", "Fournitures", "Autre"];
+  const list = (S.depenses || []).slice().sort((a, b) => String(b.date).localeCompare(String(a.date)));
+  const sumT = arr => arr.reduce((t, x) => t + (+x.montant || 0), 0);
+  const moisList = list.filter(x => String(x.date).slice(0, 7) === cur);
+  const bloc = (label, ttc) => '<div class="card"><div class="m">' + label + '</div><div class="t" style="font-size:22px">' + eur(ttc) + ' TTC</div><div class="m">' + eur(htOf(ttc)) + ' HT</div></div>';
+  const rows = list.length
+    ? list.map(x => '<div class="card"><div class="row" style="align-items:center"><div><div class="t">' + esc(x.libelle) + '</div><div class="m">' + fr(x.date) + (x.categorie ? " · " + esc(x.categorie) : "") + '</div></div><div style="display:flex;align-items:center;gap:10px"><div style="text-align:right"><div class="t">' + eur(x.montant) + ' TTC</div><div class="m">' + eur(htOf(x.montant)) + ' HT</div></div><button class="chip late" onclick="deleteDepense(\'' + x.id + '\')">Supprimer</button></div></div></div>').join("")
+    : '<p class="m">Aucune dépense enregistrée.</p>';
+  return '<div style="margin:4px 0 10px"><button class="btn small ghost" onclick="go(\'dashboard\')">← Tableau de bord</button></div>'
+    + '<h1>Dépenses</h1>'
+    + '<div class="two" style="margin-bottom:10px">' + bloc("Ce mois", sumT(moisList)) + bloc("Total", sumT(list)) + '</div>'
+    + '<div class="card"><h2 style="margin-top:0">Nouvelle dépense</h2>'
+    + '<label>Date</label><input id="depDate" type="date" value="' + todayIso() + '">'
+    + '<div class="two"><div><label>Montant HT (€)</label><input id="depHT" inputmode="decimal" placeholder="0" oninput="depCalc(\'ht\')"></div><div><label>Montant TTC (€) · TVA 20 %</label><input id="depTTC" inputmode="decimal" placeholder="0" oninput="depCalc(\'ttc\')"></div></div>'
+    + '<label>Libellé</label><input id="depLib" placeholder="Ex. Écran PS5 fournisseur">'
+    + '<label>Catégorie</label><select id="depCat">' + cats.map(c => '<option>' + c + '</option>').join("") + '</select>'
+    + '<div id="depErr" class="err"></div><button class="btn" onclick="addDepense()">Ajouter la dépense</button></div>'
+    + '<h2>Historique</h2>' + rows;
+}
+async function addDepense(){
+  const err = $("depErr"); err.textContent = "";
+  const date = $("depDate").value, lib = $("depLib").value.trim();
+  const ttc = parseFloat(String($("depTTC").value).replace(",", "."));
+  if (!date) { err.textContent = "Choisis une date."; return; }
+  if (!lib) { err.textContent = "Écris un libellé."; return; }
+  if (isNaN(ttc) || ttc < 0) { err.textContent = "Montant invalide : saisis le montant HT ou TTC."; return; }
+  const { error } = await SB.from("depenses").insert({ date, libelle: lib, montant: Math.round(ttc * 100) / 100, categorie: $("depCat").value });
+  if (error) { err.textContent = msgErr(error); return; }
+  flash("Dépense ajoutée");
+  await reload();
+}
+async function deleteDepense(id){
+  if (!confirm("Supprimer cette dépense ?")) return;
+  const { error } = await SB.from("depenses").delete().eq("id", id);
+  if (error) { toast(msgErr(error)); return; }
+  await reload();
+}
+function dashPageView(){
+  if (DASH_PAGE === "depenses") return depensesPage();
+  const D = dashData();
+  const byEch = (x, y) => (x.echeance || "9999") < (y.echeance || "9999") ? -1 : (x.echeance || "9999") > (y.echeance || "9999") ? 1 : 0;
+  const srt = arr => arr.slice().sort(byEch);
+  const act = srt(D.act), aDeposer = srt(D.aDeposer), enRetard = srt(D.enRetard), pret = srt(D.pret);
+  const aCmd = D.aCmd, ouv = D.ouv, mois = D.mois, stockBasL = D.stockBasL;
+  const achatL = D.achatL, appResL = D.appResL, pieceResL = D.pieceResL;
+  const pieceCard = p => {
+    const d = S.dossiers.find(x => x.id === p.dossier_id);
+    return '<div class="card"><div class="t">' + esc(p.qte + " × " + p.nom) + '</div><div class="m">' + esc(d ? (d.appareil || "Réparation") + (d.clients ? " · " + fullName(d.clients) : "") : "Réparation supprimée") + '</div>'
+      + (d ? '<div style="margin-top:8px"><button class="chip" onclick="openD(\'' + d.id + '\')">Ouvrir la réparation</button></div>' : '') + '</div>';
+  };
+  const venteBilanCard = v => '<div class="card"><div class="t">' + esc(venteTitre(v)) + '</div><div class="m">' + esc(v.client_affiche || venteClient(v)) + '</div><div class="m">Effectué le ' + fr(v.date_effectue || v.date_rdv) + '</div><div style="margin-top:6px"><span class="chip">' + (v.prix == null ? "Prix à définir" : eur(v.prix)) + '</span></div></div>';
+  const stockCard = x => '<div class="card"><div class="t">' + esc(x.nom) + '</div><div class="m">' + esc(x.type || "") + (x.modele ? " · " + esc(x.modele) : "") + '</div><div class="m"><span class="code">' + esc(x.sku) + '</span></div><div style="margin-top:6px"><span class="chip ' + ((+x.qte || 0) > 0 ? "ok" : "late") + '">' + ((+x.qte || 0) > 0 ? x.qte + " dispo" : "Rupture") + '</span></div></div>';
+  const PAGES = {
+    act: {t: "Réparations en cours", items: act, r: dossierCard},
+    depot: {t: "À déposer", items: aDeposer, r: dossierCard},
+    retard: {t: "En retard", items: enRetard, r: dossierCard},
+    pret: {t: "Prêts à récupérer", items: pret, r: dossierCard},
+    piece: {t: "Pièces à commander", items: aCmd, r: pieceCard},
+    vente: {t: "Ventes en cours", items: ouv, r: venteCard},
+    venteMois: {t: "Ventes du mois", items: mois, r: venteBilanCard},
+    stockBas: {t: "Stock bas", items: stockBasL, r: stockCard}
+  };
+  const achatCardH = x => '<div class="card"><div class="t">' + esc(x.l.quantite + " × " + [x.l.appareil, x.l.categorie, x.l.modele, x.l.couleur].filter(Boolean).join(" · ")) + '</div><div class="m">' + esc(venteClient(x.v)) + ' · ' + esc(venteTitre(x.v)) + '</div><div style="margin-top:8px"><button class="chip" onclick="acheterReserver(\'' + x.v.id + '\',' + x.i + ')">Réserver si en stock</button></div></div>';
+  const appResCardH = x => '<div class="card"><div class="t">' + esc(x.nom) + '</div><div class="m">' + esc([x.appareil, x.modele].filter(Boolean).join(" · ")) + '</div><div class="m">Réservé : ' + (+x.res || 0) + ' · Disponible : ' + (+x.qte || 0) + '</div></div>';
+  PAGES.achat = {t: "Appareils à commander", items: achatL, r: achatCardH};
+  PAGES.appRes = {t: "Appareils réservés", items: appResL, r: appResCardH};
+  PAGES.pieceRes = {t: "Pièces réservées", items: pieceResL, r: pieceCard};
+  const pg = PAGES[PAGES[DASH_PAGE] ? DASH_PAGE : "act"];
+  const body = pg.items.length ? '<div class="card-grid">' + pg.items.map(x => pg.r(x)).join("") + '</div>' : '<p class="m">Aucun élément pour le moment.</p>';
+  return '<div style="margin:4px 0 10px"><button class="btn small ghost" onclick="go(\'dashboard\')">← Tableau de bord</button></div><h1>' + pg.t + ' <span class="m" style="font-size:16px">· ' + pg.items.length + '</span></h1>' + body;
+}
 const REP = {
+  dbadmin: () => dbaHtml(),
+  vueclient: () => '<h1>Vue client</h1>'
+    + '<p class="m">Ouvre un aperçu de l’espace client avec des données fictives. Tu peux cliquer et modifier comme le ferait un client : rien n’est enregistré, et « Quitter l’aperçu » te ramène ici.</p>'
+    + '<button class="btn" onclick="startDemo()">Ouvrir l’aperçu</button>'
+    + '<h2>Ce que le client voit</h2>'
+    + '<ul class="vue-note" style="padding-left:18px">'
+    + '<li>Ses informations, qu’il peut corriger.</li>'
+    + '<li>Ses appareils, qu’il peut ajouter ou modifier.</li>'
+    + '<li>Ses réparations : étapes, remise prévue, prix et reste à régler.</li>'
+    + '<li>Ses achats : rendez-vous ou envoi avec numéro de suivi, et les appareils achetés dans « Mes appareils ».</li>'
+    + '<li>Une suggestion ou un bug depuis la bulle en bas à gauche.</li>'
+    + '</ul>'
+    + '<p class="vue-note">Il ne peut pas retirer un appareil ni modifier une réparation : il contacte son réparateur.</p>',
+  accueil: () => {
+    const D = dashData();
+    const depTotal = D.depMois.reduce((t, x) => t + (+x.montant || 0), 0);
+    const stats = [
+      ["act", "Réparations en cours", D.act.length, false],
+      ["depot", "À déposer", D.aDeposer.length, false],
+      ["retard", "En retard", D.enRetard.length, D.enRetard.length > 0],
+      ["pret", "Prêts à récupérer", D.pret.length, false],
+      ["vente", "Ventes en cours", D.ouv.length, false],
+      ["depenses", "Dépenses du mois", eur(depTotal), false],
+      ["stockBas", "Stock bas", D.stockBasL.length, D.stockBasL.length > 0],
+      ["piece", "Pièces à commander", D.aCmd.length, false]
+    ];
+    const statH = stats.map(([k, l, v, alert]) => '<button class="card acc-stat" onclick="dashPage(\'' + k + '\')"><div class="acc-l">' + l + '</div><div class="acc-v' + (alert ? " alert" : "") + '">' + v + '</div></button>').join("");
+    const navH = REP_NAV.filter(([v]) => v !== "accueil").map(([v, l]) => '<button class="card acc-nav" onclick="go(\'' + v + '\')">' + esc(l) + ' →</button>').join("");
+    return '<h1>Accueil</h1><h2>Les plus importants</h2><div class="acc-grid">' + statH + '</div><h2>Accès rapide</h2><div class="acc-grid">' + navH + '</div>';
+  },
+  dashboard: () => dashboardView(),
+  dashpage: () => dashPageView(),
   dossiers(){
     const cmpRep = {
-      ech: (a, b) => (a.echeance || "9999") < (b.echeance || "9999") ? -1 : 1,
+      ech: (a, b) => (a.echeance || "9999") < (b.echeance || "9999") ? -1 : (a.echeance || "9999") > (b.echeance || "9999") ? 1 : 0,
       statut: (a, b) => STEPS.indexOf(a.statut) - STEPS.indexOf(b.statut),
       appareil: (a, b) => ((a.appareil || "") + " " + (a.modele || "")).localeCompare((b.appareil || "") + " " + (b.modele || ""))
     }[SORT_REP] || ((a, b) => 0);
@@ -351,14 +861,13 @@ const REP = {
     const list = baseList
       .filter(d => !DOSS_F.statut || d.statut === DOSS_F.statut)
       .filter(d => !DOSS_F.app || d.appareil === DOSS_F.app)
-      .sort(cmpRep);
+      .sort((a, b) => cmpRep(a, b) * SORT_DIR);
     const repApps = [...new Set(baseList.map(d => d.appareil).filter(Boolean))].sort().map(x => [x, x]);
     const aCommander = S.pieces.filter(p => p.statut === "À commander"), enRoute = S.pieces.filter(p => p.statut === "Commandé");
     const lignes = arr => arr.map(p => '<div class="card" style="padding:8px 10px"><div class="t" style="font-size:14px">' + p.qte + ' × ' + esc(p.nom) + '</div></div>').join("");
     const piecesHtml = (aCommander.length ? '<h2 style="color:#c2410c">Pièces à commander</h2>' + lignes(aCommander) : "")
       + (enRoute.length ? '<h2 style="color:#1f8a4c">Pièces en route</h2>' + lignes(enRoute) : "");
-    const aAch = [];
-    (S.ventes || []).filter(v => !v.archivee).forEach(v => venteLignes(v).forEach((l, i) => { if (l.acheter) aAch.push({v, l, i}); }));
+    const aAch = achatLignes();
     const achatHtml = aAch.length ? '<h2 style="color:#7c3aed">Appareils à acheter</h2>' + aAch.map(x => '<div class="card" style="padding:8px 10px"><div class="t" style="font-size:14px">' + x.l.quantite + ' × ' + esc([x.l.appareil, x.l.categorie, x.l.modele, x.l.couleur].filter(Boolean).join(" · ")) + '</div><div class="m">' + esc(venteClient(x.v)) + '</div><div style="margin-top:6px"><button class="chip" onclick="acheterReserver(\'' + x.v.id + '\',' + x.i + ')">Réserver si en stock</button></div></div>').join("") : "";
     const savSec = (S.sav || []).length ? '<h2>SAV</h2>' + savTabHtml("rep") : "";
     const nVentes = (S.ventes || []).filter(v => !v.archivee).length;
@@ -370,11 +879,11 @@ const REP = {
       ? agendaBody()
       : DOSS_TAB === "ventes"
         ? ventesHtml()
-        : savSec + sortSelect(SORT_REP, [["ech", "Échéance"], ["statut", "Statut"], ["appareil", "Appareil"]], "setSortRep")
+        : savSec + sortSelect(SORT_REP, [["ech", "Urgence (plus proche en premier)"], ["statut", "Avancement"], ["appareil", "Appareil"]], "setSortRep") + '<button class="chip" style="margin:-2px 0 8px" onclick="toggleSortDir()">' + (SORT_DIR === 1 ? "↑ Croissant" : "↓ Décroissant") + '</button>'
           + filtersRow([
               {all: "Tous les statuts", opts: STEPS.filter(x => x !== "Remis").map(x => [x, x]), cur: DOSS_F.statut, js: "DOSS_F.statut=this.value;render()"},
               {all: "Tous les appareils", opts: repApps, cur: DOSS_F.app, js: "DOSS_F.app=this.value;render()"}
-            ]) + (list.map(dossierCard).join("") || '<p class="m">Aucune réparation pour le moment.</p>');
+            ]) + (list.length ? '<div class="card-grid">' + list.map(dossierCard).join("") + '</div>' : '<p class="m">Aucune réparation pour le moment.</p>');
     return `<h1>Réparations et ventes</h1>` + piecesHtml + achatHtml + appResHtml() + tabs + body;
   },
   newvente(){
@@ -394,6 +903,7 @@ const REP = {
       <div class="m" style="margin-top:6px;white-space:pre-wrap;color:var(--ink)">${esc(x.message)}</div>
       <div class="row" style="margin-top:8px;flex-wrap:wrap;gap:6px">
         ${x.archive ? `<button class="chip" onclick="avisUpd('${x.id}',{archive:false})">Désarchiver</button>` : `<button class="chip" onclick="avisUpd('${x.id}',{archive:true,resolu:true})">Archiver</button>`}
+        <button class="chip" onclick="copierSuggestion('${x.id}')">Copier</button>
         <button class="chip late" onclick="avisDel('${x.id}')">Supprimer</button>
       </div>
     </div>`;
@@ -461,6 +971,7 @@ const REP = {
       <label>Type / marque / modèle</label><div id="mp-a"></div>
       <div id="aCouleurBox" style="display:none"><label>Couleur</label><select id="aCouleur"></select></div>
       <label>Quantité</label><input id="aQt" inputmode="numeric" value="1">
+      <label>Grade</label><select id="aGrade"><option value="">- Aucun -</option><option>A</option><option>B</option><option>C</option><option>HS</option></select>
       <button class="btn" onclick="addAppareil()">Ajouter au stock</button>
       <div class="err" id="aErr"></div>
     </div></details>`}`;
@@ -471,7 +982,10 @@ const REP = {
 function appResHtml(){
   const res = (S.stockApp || []).filter(x => (x.res || 0) > 0);
   if (!res.length) return "";
-  return '<div style="margin-bottom:22px"><h2 style="color:#2563eb">Appareils réservés</h2>' + res.map(x => '<div class="card" style="padding:8px 10px"><div class="t" style="font-size:14px">' + x.res + ' × ' + esc(x.nom) + '</div></div>').join("") + '</div>';
+  const enCours = (S.ventes || []).filter(v => !v.archivee);
+  const total = Math.round(enCours.reduce((t, v) => t + (+v.prix || 0), 0) * 100) / 100;
+  const head = '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap"><h2 style="color:#2563eb">Appareils réservés</h2><span class="m"><b>Total des ventes en cours : ' + total + ' €</b></span></div>';
+  return '<div style="margin-bottom:22px">' + head + res.map(x => '<div class="card" style="padding:8px 10px"><div class="t" style="font-size:14px">' + x.res + ' × ' + esc(x.nom) + '</div></div>').join("") + '</div>';
 }
 function stepsHtml(statut){
   const i = STEPS.indexOf(statut);
@@ -555,15 +1069,107 @@ function detectPage(){
   return "Espace réparateur" + (DOSSIER ? " · Détail réparation" : nav ? " · " + nav[1] : "");
 }
 var FB_HIDDEN = (function(){ try { return localStorage.getItem("fbHidden") === "1"; } catch(e){ return false; } })();
-function setFbHidden(v){ FB_HIDDEN = v; try { localStorage.setItem("fbHidden", v ? "1" : "0"); } catch(e){} renderFb(); }
+function setFbHidden(v){ if (v) closeFeedback(); FB_HIDDEN = v; try { localStorage.setItem("fbHidden", v ? "1" : "0"); } catch(e){} renderFb(); }
+/* ---------- Mises à jour (cloche en haut à droite) ----------
+   Ajouter une entrée en haut de la liste à chaque mise en ligne. */
+var UPDATES = [
+  {id: "2026-11-03-t", date: "03/11/2026", time: "04:22", titre: "Bases de données", items: [
+    "Nouvel onglet « Bases de données » : voir, ajouter, modifier et supprimer les lignes des tables.",
+    "Lecture seule par défaut : il faut appuyer sur « Déverrouiller » pour modifier, ajouter ou supprimer. Le verrou se remet après chaque modification."]},
+  {id: "2026-11-03-s", date: "03/11/2026", time: "03:39", titre: "Aperçu client", items: [
+    "Dans l’aperçu client, envoyer une suggestion n’envoie rien : un message l’indique."]},
+  {id: "2026-11-03-r", date: "03/11/2026", time: "03:23", titre: "Mes achats", items: [
+    "Espace client : « Mes ventes » devient « Mes achats ».",
+    "Les appareils achetés apparaissent aussi dans « Mes appareils »."]},
+  {id: "2026-11-03-q", date: "03/11/2026", time: "03:02", titre: "Suggestions & Bugs", items: [
+    "Retour à l’ancien style de la page Suggestions & Bugs.",
+    "Bouton « Copier » sur chaque suggestion."]},
+  {id: "2026-11-03-p", date: "03/11/2026", time: "02:49", titre: "Barre latérale et réparations terminées", items: [
+    "Barre latérale : on peut la faire défiler sur ordinateur, pour voir tous les onglets.",
+    "Réparations en cours : une réparation terminée n’affiche plus la barre des jours restants."]},
+  {id: "2026-11-03-n", date: "03/11/2026", time: "02:36", titre: "Aperçu client, suggestions et notifications", items: [
+    "Vue client : aperçu interactif avec des données fictives. Rien n’est enregistré ; « Quitter l’aperçu » revient à ton espace.",
+    "Espace client : « Mes réparations » (étapes, remise prévue, prix et reste à régler) et « Mes ventes ».",
+    "Suggestions : Entrée envoie le message, Maj + Entrée passe à la ligne.",
+    "Les mises à jour affichent maintenant leur heure.",
+    "Suggestions & Bugs : style plus épuré et bouton « Copier » sur chaque suggestion."]},
+  {id: "2026-11-03-m", date: "03/11/2026", titre: "Accueil, vue client et mises à jour", items: [
+    "Accueil : les chiffres importants en haut, et des cases pour accéder à chaque onglet.",
+    "Nouvel onglet « Vue client » : aperçu de ce que voit un client, avec des données d’exemple.",
+    "« Style actuel » est dans le menu latéral en mode amélioré (ordinateur).",
+    "Cloche en haut à droite : la liste des mises à jour, et une bannière à la première ouverture d’une nouvelle version."]},
+  {id: "2026-11-03-k", date: "03/11/2026", titre: "Bulle de suggestion", items: [
+    "Icône plus propre pour la bulle de suggestion.",
+    "Fermer la bulle ferme aussi la fenêtre, et un message non envoyé est gardé.",
+    "La bulle masquée se colle à droite de la barre latérale."]},
+  {id: "2026-11-03-j", date: "03/11/2026", titre: "Menu et tableau de bord", items: [
+    "« Copier le récap » du menu copie les nouvelles suggestions depuis la dernière copie.",
+    "Déconnexion déplacé dans la barre latérale (ordinateur).",
+    "Logo collé en haut de la page (ordinateur).",
+    "Tableau de bord : 5 cases par ligne, chiffres adaptés pour rester sur la même ligne.",
+    "« Modifier / décaler » fonctionne depuis le tableau de bord."]},
+  {id: "2026-11-03-h", date: "03/11/2026", titre: "Réparations et montants", items: [
+    "La barre de délai disparaît quand la réparation est Terminée ou Remise, et revient si tu remets un statut antérieur.",
+    "Tous les montants affichent les centimes.",
+    "Filtres côte à côte sur ordinateur."]},
+  {id: "2026-11-03-g", date: "03/11/2026", titre: "Dépenses et stock", items: [
+    "Tuile Dépenses sans débordement, montant affiché en premier dans la liste.",
+    "Stock : « Réservé » sur sa propre ligne."]}
+];
+var UPD_BANNER_DONE = false;
+var UPD_BELL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>';
+function updSeenId(){ try { return localStorage.getItem("sv_upd_seen"); } catch(e) { return null; } }
+function updBannerId(){ try { return localStorage.getItem("sv_upd_banner"); } catch(e) { return null; } }
+function updUnseen(){
+  if (!UPDATES.length) return 0;
+  const seen = updSeenId();
+  if (!seen) return 1;
+  const i = UPDATES.findIndex(u => u.id === seen);
+  return i < 0 ? 1 : i;
+}
+function renderNotif(){
+  const w = $("notifWrap");
+  if (!w) return;
+  if (!ME || !ROLE || !UPDATES.length) { w.innerHTML = ""; closeNotifPanel(); return; }
+  const n = updUnseen();
+  w.innerHTML = '<button class="notif-btn" onclick="toggleNotifPanel()" title="Mises à jour" aria-label="Mises à jour">' + UPD_BELL + (n ? '<span class="notif-badge">' + n + '</span>' : '') + '</button>';
+  if (!UPD_BANNER_DONE && updBannerId() !== UPDATES[0].id) showUpdBanner();
+}
+function showUpdBanner(){
+  UPD_BANNER_DONE = true;
+  try { localStorage.setItem("sv_upd_banner", UPDATES[0].id); } catch(e) {}
+  const u = UPDATES[0];
+  const b = document.createElement("div");
+  b.id = "notifBanner"; b.className = "notif-banner";
+  b.innerHTML = '<div class="nb-head"><span>Mise à jour · ' + esc(u.date) + (u.time ? ' · ' + esc(u.time) : '') + '</span><button class="nb-x" aria-label="Fermer">×</button></div>'
+    + '<div class="nb-t">' + esc(u.titre) + '</div><ul>' + u.items.map(x => '<li>' + esc(x) + '</li>').join("") + '</ul>';
+  b.onclick = e => { const bn = $("notifBanner"); if (bn) bn.remove(); if (!e.target.closest(".nb-x")) openNotifPanel(); };
+  document.body.appendChild(b);
+  setTimeout(() => { const bn = $("notifBanner"); if (bn) bn.remove(); }, 9000);
+}
+function closeNotifPanel(){ const p = $("notifPanel"); if (p) p.remove(); }
+function openNotifPanel(){
+  closeNotifPanel();
+  try { localStorage.setItem("sv_upd_seen", UPDATES[0].id); } catch(e) {}
+  const p = document.createElement("div");
+  p.id = "notifPanel"; p.className = "notif-panel";
+  p.innerHTML = '<div class="np-head"><span>Mises à jour</span></div>' + UPDATES.map(u =>
+    '<div class="np-item"><div class="np-d">' + esc(u.date) + (u.time ? ' · ' + esc(u.time) : '') + '</div><div class="np-t">' + esc(u.titre) + '</div><ul>' + u.items.map(x => '<li>' + esc(x) + '</li>').join("") + '</ul></div>').join("");
+  document.body.appendChild(p);
+  renderNotif();
+}
+function toggleNotifPanel(){ if ($("notifPanel")) closeNotifPanel(); else openNotifPanel(); }
+document.addEventListener("click", e => {
+  const p = $("notifPanel");
+  if (p && !p.contains(e.target) && !e.target.closest(".notif-btn")) closeNotifPanel();
+});
 function renderFb(){
   const w = $("fbWrap");
   if (!ME || !ROLE) { w.innerHTML = ""; return; }
-  w.className = "fb-wrap" + (ROLE === "rep" ? " rep" : "");
-  w.style.left = FB_HIDDEN ? "0" : "";
+  w.className = "fb-wrap" + (ROLE === "rep" ? " rep" : "") + (FB_HIDDEN ? " edge" : "");
   w.innerHTML = FB_HIDDEN
     ? '<button class="fb-edge" onclick="setFbHidden(false)" title="Afficher le bouton Suggestions">›</button>'
-    : '<div style="position:relative"><button class="fb-btn" onclick="openFeedback()" title="Signaler un problème ou suggérer une amélioration">💬</button><button class="fb-x" onclick="setFbHidden(true)" title="Masquer le bouton">×</button></div>';
+    : '<div style="position:relative"><button class="fb-btn" onclick="openFeedback()" title="Signaler un problème ou suggérer une amélioration" aria-label="Suggestions et bugs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8.5 8.5 0 0 1-12.2 7.6L3.5 21l1.5-5A8.5 8.5 0 1 1 21 12z"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01"/></svg></button><button class="fb-x" onclick="setFbHidden(true)" title="Masquer le bouton">×</button></div>';
 }
 var DRAG = null;
 function dragStart(e, panel){
@@ -598,21 +1204,39 @@ function openFeedback(){
     <label>Type</label><select id="fbType" onchange="if(this.value)$('fbMsg').focus()"><option value="">- sélectionner -</option><option>Suggestion</option><option>Bug</option></select>
     <div class="m" style="margin:4px 0 6px">Page : <b>${esc(FB_PAGE)}</b></div>
     <label>Ton message</label><textarea id="fbMsg" placeholder="Décris le problème ou ton idée"></textarea>
+    <div class="m" style="margin:2px 0 6px;font-size:12px">Entrée envoie · Maj + Entrée pour aller à la ligne</div>
     <div class="err" id="fbErr"></div>
     <button class="btn" onclick="sendFeedback()">Envoyer</button>
     </div>`;
+  $("fbType").value = FB_DRAFT.type;
+  $("fbMsg").value = FB_DRAFT.msg;
   p.style.display = "block";
+  $("fbMsg").onkeydown = e => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); sendFeedback(); } };
   $("fbMsg").focus();
   const head = $("fbHead");
   head.onmousedown = e => dragStart(e, p);
   head.ontouchstart = e => dragStart(e, p);
 }
-function closeFeedback(){ const p = $("fbPanel"); if (p) p.style.display = "none"; }
+var FB_DRAFT = (function(){ try { return JSON.parse(sessionStorage.getItem("sv_fb_draft")) || {type: "", msg: ""}; } catch(e) { return {type: "", msg: ""}; } })();
+function saveFbDraft(){
+  const t = $("fbType"), m = $("fbMsg");
+  if (!t || !m) return;
+  FB_DRAFT = {type: t.value, msg: m.value};
+  try { sessionStorage.setItem("sv_fb_draft", JSON.stringify(FB_DRAFT)); } catch(e) {}
+}
+function clearFbDraft(){ FB_DRAFT = {type: "", msg: ""}; try { sessionStorage.removeItem("sv_fb_draft"); } catch(e) {} }
+function closeFeedback(){ saveFbDraft(); const p = $("fbPanel"); if (p) p.style.display = "none"; }
 async function sendFeedback(){
   const err = $("fbErr"), msg = $("fbMsg").value.trim();
   err.textContent = "";
   if (!$("fbType").value) { err.textContent = "Choisis un type."; return; }
   if (!msg) { err.textContent = "Écris ton message."; return; }
+  if (DEMO) {
+    clearFbDraft();
+    const pn = $("fbPanel"); if (pn) pn.style.display = "none";
+    toast("Aperçu : rien n’est envoyé, la suggestion n’apparaît pas dans Suggestions & Bugs");
+    return;
+  }
   const c = S.clients.find(x => x.auth_user_id === ME.id);
   const auteur = ROLE === "rep" ? "admin" : c ? fullName(c) : "Client";
   const { error } = await SB.from("feedback").insert({
@@ -620,7 +1244,8 @@ async function sendFeedback(){
     type: $("fbType").value, page: FB_PAGE, message: msg
   });
   if (error) { err.textContent = msgErr(error); return; }
-  closeFeedback();
+  clearFbDraft();
+  const pn = $("fbPanel"); if (pn) pn.style.display = "none";
   toast("Merci, ton message a bien été envoyé");
 }
 function savRow(x, who){
@@ -648,6 +1273,17 @@ function savTabHtml(who){
 var AVIS_ARCH = false, AVIS_RECAP = false;
 function toggleArch(){ AVIS_ARCH = !AVIS_ARCH; render(); }
 function toggleRecap(){ AVIS_RECAP = !AVIS_RECAP; render(); }
+async function copierSuggestion(id){
+  const x = (S.feedback || []).find(f => f.id === id); if (!x) return;
+  const txt = recapText([x]);
+  const ta = document.createElement("textarea");
+  ta.value = txt; document.body.appendChild(ta); ta.select();
+  let ok = false;
+  try { await navigator.clipboard.writeText(txt); ok = true; }
+  catch(e) { ok = document.execCommand("copy"); }
+  ta.remove();
+  flash(ok ? "Suggestion copiée ✓" : "Copie impossible");
+}
 function recapText(list){ return "Récapitulatif des suggestions et bugs\n\n" + list.map(x => "Page : " + x.page + "\nType : " + x.type + "\nMessage : " + x.message).join("\n\n"); }
 async function copyRecapNow(){
   const list = (S.feedback || []).filter(x => !x.archive);
@@ -710,10 +1346,6 @@ async function savSt(id, v){
   toast("SAV mis à jour");
   await reload();
 }
-function pieceBulle(d){
-  const h = pieceInner(d);
-  return h ? '<div style="margin-top:8px">' + h + '</div>' : "";
-}
 function pieceInner(d){
   if (d.statut === "Remis") return "";
   const ps = pcs(d.id), bulle = (t, vert) => '<span style="display:inline-block;background:' + (vert ? '#e7f6ec' : '#fff4e5') + ';color:' + (vert ? '#1f8a4c' : '#c2410c') + ';border:2px solid ' + (vert ? '#1f8a4c' : '#f97316') + ';border-radius:999px;padding:3px 12px;font-weight:700;font-size:13px;margin:0 6px 6px 0">' + t + '</span>';
@@ -736,7 +1368,6 @@ function venteClient(v){
 function mapsUrl(q){ return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(q); }
 function mapsLieu(){ const q = $("vLieu").value.trim() || "Nantes"; window.open(mapsUrl(q), "_blank", "noopener"); }
 function convHref(x){ return /^https?:\/\//i.test(x) ? x : "https://" + x; }
-function apNom(v){ const x = v.appareil_id ? (S.stockApp || []).find(s => s.id === v.appareil_id) : null; return x ? x.nom : ""; }
 async function devAdj(id, dq, dr){
   const s = (S.stockApp || []).find(x => x.id === id);
   if (!s) return "Appareil introuvable dans le stock.";
@@ -890,6 +1521,22 @@ function ventesFormHtml(ed){
       ${ed ? '<button class="btn ghost" type="button" style="color:var(--bad);border-color:var(--bad);margin-top:8px" onclick="deleteVente(\'' + ed.id + '\')">Supprimer cette vente</button>' : ''}
       <div class="err" id="vErr"></div></div>`;
 }
+function plus1an(dateStr){
+  const b = new Date(dateStr + "T00:00"); b.setFullYear(b.getFullYear() + 1);
+  return b.getFullYear() + "-" + String(b.getMonth() + 1).padStart(2, "0") + "-" + String(b.getDate()).padStart(2, "0");
+}
+function garVente(v){
+  if (!v.client_id) return '<div class="m" style="margin-top:6px">Pas de garantie (client de passage)</div>';
+  if (!v.archivee) return '<div class="m" style="margin-top:6px">Garantie 1 an · démarre à la validation de la vente</div>';
+  const debut = v.date_effectue || v.date_rdv, fin = plus1an(debut);
+  const start = new Date(debut + "T00:00"), end = new Date(fin + "T00:00"), today = new Date(); today.setHours(0, 0, 0, 0);
+  const pct = Math.min(100, Math.max(0, (today - start) / (end - start) * 100));
+  const rest = left(fin);
+  const col = rest < 0 ? "var(--bad)" : rest <= 30 ? "var(--warn)" : "var(--brand)";
+  return '<div style="margin-top:8px"><div class="t" style="font-size:14px">Garantie 1 an</div>'
+    + '<div style="height:8px;border-radius:4px;background:var(--line);overflow:hidden;margin-top:6px"><div style="height:100%;width:' + pct.toFixed(1) + '%;background:' + col + '"></div></div>'
+    + '<div style="display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-weight:600;color:' + col + '"><span>Jusqu’au ' + fr(fin) + '</span><span>' + (rest < 0 ? "Garantie expirée" : jours(rest)) + '</span></div></div>';
+}
 function venteCard(v){
   const ap = venteLignes(v).filter(l => l.appareil_id).map(l => {
     const x = (S.stockApp || []).find(s => s.id === l.appareil_id);
@@ -902,9 +1549,9 @@ function venteCard(v){
   const rdv = v.envoi ? "" : '<div class="m">Rendez-vous le ' + fr(v.date_rdv) + (v.heure_rdv ? " à " + esc(String(v.heure_rdv).slice(0, 5)) : "") + (v.lieu ? " · " + esc(v.lieu) + ' · <a href="' + mapsUrl(v.lieu) + '" target="_blank" rel="noopener">Carte</a>' : "") + '</div>';
   const conv = v.lien_conv ? '<div class="m"><a href="' + esc(convHref(v.lien_conv)) + '" target="_blank" rel="noopener">Ouvrir la conversation</a></div>' : "";
   const pause = v.probleme ? '<div class="m" style="color:var(--bad);font-weight:600">⚠ Problème · transaction en pause</div>' : "";
-  return '<div class="card"' + (v.probleme ? ' style="border:2px solid var(--bad)"' : '') + '><div class="t">' + esc(venteTitre(v)) + '</div>'
-    + pause + '<div class="m">' + (v.envoi ? 'Envoi ' : '') + esc(venteClient(v)) + '</div>' + rdv + conv + ap + envoi
-    + '<div class="row" style="margin-top:6px;align-items:center"><span class="chip">' + (v.prix == null ? "Prix à définir" : v.prix + " €") + '</span><span>'
+  return '<div class="card" id="vc-' + esc(v.id) + '"' + (v.probleme ? ' style="border:2px solid var(--bad)"' : '') + '><div class="t">' + esc(venteTitre(v)) + '</div>'
+    + pause + '<div class="m">' + (v.envoi ? 'Envoi ' : '') + esc(venteClient(v)) + '</div>' + rdv + conv + ap + envoi + garVente(v)
+    + '<div class="row" style="margin-top:6px;align-items:center"><span class="chip">' + (v.prix == null ? "Prix à définir" : eur(v.prix)) + '</span><span>'
     + '<button class="chip" onclick="editVente(\'' + v.id + '\')">Modifier / décaler</button> '
     + '<button class="chip ok" onclick="rdvFait(\'' + v.id + '\')">' + (v.envoi ? "Vente effectuée" : "RDV effectué") + '</button> '
     + (v.probleme ? '<button class="chip ok" onclick="setProbleme(\'' + v.id + '\',false)">Problème résolu</button> ' : '')
@@ -922,15 +1569,16 @@ function ventesHtml(){
     .sort((a, b) => (b.probleme ? 1 : 0) - (a.probleme ? 1 : 0) || cmpV(a, b));
   const ed = VENTE_EDIT ? (S.ventes || []).find(v => v.id === VENTE_EDIT) : null;
   const form = VENTE_OPEN ? ventesFormHtml(ed || null) : "";
-  return `<h2>Ventes</h2><button class="btn ghost small" onclick="toggleVente()">${VENTE_OPEN ? "Fermer" : "+ Nouvelle vente"}</button>${form}${sortSelect(SORT_VENTE, [["date", "Date RDV"], ["appareil", "Appareil"]], "setSortVente")}${filtersRow([
+  return `<h2>Ventes</h2><button class="btn ghost small" onclick="go('newvente')">+ Nouvelle vente</button>${form}${sortSelect(SORT_VENTE, [["date", "Date RDV"], ["appareil", "Appareil"]], "setSortVente")}${filtersRow([
     {all: "Tous les types", opts: [["rdv", "Rendez-vous"], ["envoi", "Envoi"]], cur: VENTE_F.kind, js: "VENTE_F.kind=this.value;render()"},
     {all: "Tous les appareils", opts: venteApps, cur: VENTE_F.app, js: "VENTE_F.app=this.value;render()"}
-  ])}${list.map(venteCard).join("")}`;
+  ])}<div class="card-grid">${list.map(venteCard).join("")}</div>`;
 }
-function toggleVente(){ VENTE_OPEN = !VENTE_OPEN; VENTE_EDIT = null; VENTE_LIGNES = []; VT_COMPAT = false; MP.v = []; PKS.v = {app:"", cat:""}; VT_SEL = null; render(); }
 function editVente(id){
   const v = (S.ventes || []).find(x => x.id === id); if (!v) return;
   VENTE_EDIT = id; VENTE_OPEN = true;
+  if (VIEW !== "dossiers" || DOSSIER) { VIEW = "dossiers"; DOSSIER = null; }
+  DOSS_TAB = "ventes";
   VENTE_LIGNES = venteLignes(v).map(l => Object.assign({}, l));
   VT_COMPAT = false; VT_SEL = null; MP.v = []; PKS.v = {app: "", cat: ""};
   render(); window.scrollTo(0, 0);
@@ -951,20 +1599,34 @@ function appStkHtml(){
   const list = all
     .filter(x => !q || nz(x.nom).includes(q))
     .filter(x => !ATYPE || x.appareil === ATYPE)
+    .filter(x => !AGRADE || (x.grade || "") === AGRADE)
     .filter(x => !AST || (AST === "dispo" ? x.qte > 0 : !(x.qte > 0)))
     .sort(acmp);
   if (!list.length) return '<p class="m">Aucun appareil trouvé.</p>';
-  return list.map(x => x.id === DEV_EDIT ? devEditHtml(x) : '<div class="card" style="cursor:pointer" onclick="editAppareil(\'' + x.id + '\')">'
-    + '<div class="t">' + esc(x.nom) + '</div>'
-    + '<div class="row" style="align-items:center;justify-content:flex-start;gap:4px;margin-top:4px;flex-wrap:wrap"><span class="chip ' + (x.qte > 0 ? "ok" : "late") + '">' + (x.qte > 0 ? x.qte + " en stock" : "Rupture") + '</span>'
-    + (x.res > 0 ? '<span class="chip">' + x.res + ' réservé' + (x.res > 1 ? "s" : "") + '</span>' : "") + '</div></div>').join("");
+  const groups = new Map();
+  list.forEach(x => { const k = x.modele ? [x.appareil, x.categorie, x.modele].join("|") : x.id; if (!groups.has(k)) groups.set(k, []); groups.get(k).push(x); });
+  const couleurOf = x => String(x.nom || "").split(" · ")[3] || "";
+  return [...groups.values()].map(items => {
+    if (items.some(x => x.id === DEV_EDIT)) return devEditHtml(items.find(x => x.id === DEV_EDIT));
+    const first = items[0];
+    const title = [first.appareil, first.categorie, first.modele].filter(Boolean).join(" · ") || first.nom;
+    const dispo = items.reduce((t, x) => t + (+x.qte || 0), 0), res = items.reduce((t, x) => t + (+x.res || 0), 0);
+    const lignes = items.slice().sort((a, b) => (couleurOf(a) + (a.grade || "")).localeCompare(couleurOf(b) + (b.grade || ""))).map(x =>
+      '<div onclick="editAppareil(\'' + x.id + '\')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line)">'
+      + '<div><div class="t" style="font-size:14px">' + esc(couleurOf(x) || "Sans couleur") + (x.grade ? ' · Grade ' + esc(x.grade) : '') + '</div>'
+      + (x.res > 0 ? '<div class="m">' + x.res + ' réservé' + (x.res > 1 ? "s" : "") + '</div>' : '') + '</div>'
+      + '<span class="chip ' + (x.qte > 0 ? "ok" : "late") + '">' + (x.qte > 0 ? x.qte + " en stock" : "Rupture") + '</span></div>').join("");
+    return '<div class="card"><div class="row" style="align-items:center"><div class="t">' + esc(title) + '</div><span class="chip ' + (dispo > 0 ? "ok" : "late") + '">' + (dispo > 0 ? dispo + " en stock" : "Rupture") + '</span></div>'
+      + (res > 0 ? '<div class="m">Réservé : ' + res + '</div>' : '') + lignes + '</div>';
+  }).join("");
 }
 function appControls(){
   const types = [...new Set((S.stockApp || []).map(x => x.appareil).filter(Boolean))].sort().map(t => [t, t]);
   return '<div class="row" style="gap:6px;flex-wrap:wrap;margin:0 0 8px">'
     + '<select onchange="ASORT=this.value;render()">' + selOpts([["nom", "Trier : nom"], ["dispo", "Trier : quantité dispo"], ["res", "Trier : réservé"]], ASORT) + '</select>'
     + '<select onchange="ATYPE=this.value;render()">' + selOpts([["", "Tous les types"]].concat(types), ATYPE) + '</select>'
-    + '<select onchange="AST=this.value;render()">' + selOpts([["", "Tous"], ["dispo", "En stock"], ["rupture", "Rupture"]], AST) + '</select></div>';
+    + '<select onchange="AST=this.value;render()">' + selOpts([["", "Tous"], ["dispo", "En stock"], ["rupture", "Rupture"]], AST) + '</select>'
+    + '<select onchange="AGRADE=this.value;render()">' + selOpts([["", "Tous les grades"], ["A", "Grade A"], ["B", "Grade B"], ["C", "Grade C"], ["HS", "Grade HS"]], AGRADE) + '</select></div>';
 }
 function devEditHtml(x){
   const list = couleursFor(x.appareil, x.modele);
@@ -975,6 +1637,7 @@ function devEditHtml(x){
     + '<label>Type / marque / modèle</label><div id="mp-a"></div>'
     + '<div id="aCouleurBox" style="display:' + (list ? "block" : "none") + '"><label>Couleur</label><select id="aCouleur">' + opts + '</select></div>'
     + '<label>Quantité disponible (hors réservés)</label><input id="aQt" inputmode="numeric" value="' + x.qte + '">'
+    + '<label>Grade</label><select id="aGrade">' + ["", "A", "B", "C", "HS"].map(g => '<option value="' + g + '"' + ((x.grade || "") === g ? " selected" : "") + '>' + (g || "- Aucun -") + '</option>').join("") + '</select>'
     + '<p class="m">Réservé : ' + (x.res || 0) + '</p>'
     + '<div class="row" style="gap:6px"><button class="btn" onclick="saveAppareil()">Enregistrer</button><button class="btn ghost" onclick="cancelAppEdit()">Annuler</button></div>'
     + '<div class="err" id="aErr"></div>'
@@ -1000,7 +1663,7 @@ async function saveAppareil(){
   if (couleursFor(DEV_SEL.app, DEV_SEL.mod) && !coul) { err.textContent = "Choisis la couleur."; return; }
   const nom = [DEV_SEL.app, DEV_SEL.cat, DEV_SEL.mod, coul].filter(Boolean).join(" · ");
   if ((S.stockApp || []).some(y => y.nom === nom && y.id !== x.id)) { err.textContent = "Cet appareil existe déjà dans le stock."; return; }
-  const { error } = await SB.from("stock_appareils").update({ nom, appareil: DEV_SEL.app, categorie: DEV_SEL.cat, modele: DEV_SEL.mod, qte: dispo }).eq("id", x.id);
+  const { error } = await SB.from("stock_appareils").update({ nom, appareil: DEV_SEL.app, categorie: DEV_SEL.cat, modele: DEV_SEL.mod, qte: dispo, grade: $("aGrade").value || null }).eq("id", x.id);
   if (error) { err.textContent = msgErr(error); return; }
   DEV_EDIT = null; DEV_SEL = null; MP.a = []; PKS.a = {app: "", cat: ""};
   flash("Appareil modifié");
@@ -1015,7 +1678,7 @@ async function addAppareil(){
   if (couleursFor(DEV_SEL.app, DEV_SEL.mod) && !coul) { err.textContent = "Choisis la couleur."; return; }
   const nom = [DEV_SEL.app, DEV_SEL.cat, DEV_SEL.mod, coul].filter(Boolean).join(" · ");
   if ((S.stockApp || []).some(x => x.nom === nom)) { err.textContent = "Cet appareil est déjà dans le stock : modifie sa quantité avec « Modifier » dans la liste."; return; }
-  const { error } = await SB.from("stock_appareils").insert({ nom, appareil: DEV_SEL.app, categorie: DEV_SEL.cat, modele: DEV_SEL.mod, qte: q });
+  const { error } = await SB.from("stock_appareils").insert({ nom, appareil: DEV_SEL.app, categorie: DEV_SEL.cat, modele: DEV_SEL.mod, qte: q, grade: $("aGrade").value || null });
   if (error) { err.textContent = msgErr(error); return; }
   DEV_SEL = null; MP.a = []; PKS.a = {app:"", cat:""};
   flash("Appareil ajouté au stock");
@@ -1063,8 +1726,17 @@ function agendaData(){
 }
 function agendaBody(){
   const a = agendaData();
-  const line = e => '<div class="m" style="margin-top:4px;' + (e.go ? 'cursor:pointer' : '') + '"' + (e.go ? ' onclick="' + e.go + '"' : '') + '>' + esc(e.txt) + '</div>';
-  const block = (title, arr, col) => '<div class="card" style="padding:8px 10px"><div class="t" style="font-size:14px;' + (col ? 'color:' + col : '') + '">' + esc(title) + '</div>' + arr.map(line).join("") + '</div>';
+  const KIND = {vente: ["Vente", "#7c3aed"], pret: ["Prêt", "#1f8a4c"], retrait: ["Retrait", "#2563eb"], depot: ["Dépôt", "#c2410c"], autre: ["À faire", "#6b7280"], late: ["En retard", "#dc2626"]};
+  const kindOf = t => /^Vente/.test(t) ? "vente" : /^Limite/.test(t) ? "retrait" : /^Prêt/.test(t) ? "pret" : /^Dépôt/.test(t) ? "depot" : "autre";
+  const clean = t => t.replace(/^(Vente|Limite de retrait|Prêt à rendre|Dépôt de l’appareil) · /, "");
+  const row = (e, late) => {
+    const k = late ? "late" : kindOf(e.txt), [lab, col] = KIND[k];
+    const detail = clean(e.txt) + (late && e.date ? " · " + fr(e.date) : "");
+    return '<div' + (e.go ? ' onclick="' + e.go + '"' : '') + ' style="' + (e.go ? 'cursor:pointer;' : '') + 'border:1px solid var(--line);border-left:5px solid ' + col + ';border-radius:8px;padding:8px 10px;margin:6px 0">'
+      + '<div style="font-size:11px;font-weight:700;color:' + col + ';text-transform:uppercase;letter-spacing:.04em">' + lab + '</div>'
+      + '<div style="font-size:14px;margin-top:2px">' + esc(detail) + '</div></div>';
+  };
+  const head = (title, n, col) => '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:14px 0 2px;padding-bottom:4px;border-bottom:2px solid ' + col + '"><b style="color:' + col + '">' + esc(title) + '</b><span class="m">' + n + '</span></div>';
   const dayTitle = k => {
     if (k === a.today) return "Aujourd’hui";
     const lbl = new Date(k + "T00:00").toLocaleDateString("fr-FR", {weekday: "long", day: "numeric", month: "long"});
@@ -1073,9 +1745,12 @@ function agendaBody(){
   const days = {};
   a.future.forEach(e => { (days[e.date] = days[e.date] || []).push(e); });
   let html = "";
-  if (a.late.length) html += block("En retard ou à clôturer", a.late.map(e => ({...e, txt: e.txt + " · " + fr(e.date)})), "var(--bad)");
-  Object.keys(days).sort().forEach(k => { html += block(dayTitle(k), days[k]); });
-  if (a.sans.length) html += block("Sans date", a.sans);
+  if (a.late.length) html += head("En retard ou à clôturer", a.late.length, "#dc2626") + a.late.map(e => row(e, true)).join("");
+  Object.keys(days).sort().forEach(k => {
+    const col = k === a.today ? "#1f8a4c" : "#374151";
+    html += head(dayTitle(k), days[k].length + (days[k].length > 1 ? " éléments" : " élément"), col) + days[k].map(e => row(e, false)).join("");
+  });
+  if (a.sans.length) html += head("Sans date", a.sans.length, "#6b7280") + a.sans.map(e => row(e, false)).join("");
   return '<div class="card" style="margin-bottom:10px">' + (html || '<p class="m">Rien à faire pour le moment.</p>') + '</div>';
 }
 function toggleVPasse(on){ $("vAcc").style.display = on ? "none" : "block"; $("vPas").style.display = on ? "block" : "none"; $("vTyp").value = ""; vTypChange(""); }
@@ -1174,10 +1849,10 @@ function ventesBilanHtml(){
   const total = doMois.reduce((t, v) => t + (+v.prix || 0), 0);
   const sansPrix = doMois.filter(v => v.prix == null).length;
   const sel = '<select onchange="setVMois(this.value)">' + keys.map(k => '<option value="' + k + '"' + (k === mois ? ' selected' : '') + '>' + esc(moisLabel(k)) + (k === cur ? ' (en cours)' : '') + '</option>').join("") + '</select>';
-  const cards = doMois.map(v => `<div class="card"><div class="t">${esc(venteTitre(v))}</div>
+  const cards = doMois.map(v => `<div class="card" id="vb-${esc(v.id)}"><div class="t">${esc(venteTitre(v))}</div>
       <div class="m">${esc(v.client_affiche || venteClient(v))}</div>
-      <div class="m">Effectué le ${fr(v.date_effectue || v.date_rdv)}${v.lieu ? " · " + esc(v.lieu) : ""}</div>
-      <div class="row" style="margin-top:6px"><span class="chip">${v.prix == null ? "Prix non renseigné" : v.prix + " €"}</span></div></div>`).join("");
+      <div class="m">Effectué le ${fr(v.date_effectue || v.date_rdv)}${v.lieu ? " · " + esc(v.lieu) : ""}</div>${garVente(v)}
+      <div class="row" style="margin-top:6px"><span class="chip">${v.prix == null ? "Prix non renseigné" : eur(v.prix)}</span></div></div>`).join("");
   const parMois = keys.filter(k => k !== mois).map(k => {
     const l = arch.filter(v => moisOf(v) === k), t = l.reduce((a, v) => a + (+v.prix || 0), 0);
     return '<div class="card" style="cursor:pointer" onclick="setVMois(\'' + k + '\')"><div class="row"><div class="t">' + esc(moisLabel(k)) + '</div><span class="chip">' + l.length + ' vente' + (l.length > 1 ? 's' : '') + ' · ' + t + ' €</span></div></div>';
@@ -1205,14 +1880,17 @@ function dossierCard(d){
   const c = d.clients ? fullName(d.clients) : "";
   const manque = infosManquantes(d) ? '<span title="Infos manquantes" style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;border:2px solid #dc2626;color:#dc2626;font-weight:800;font-size:14px;margin-right:6px">!</span>' : "";
   const l = left(d.echeance);
-  const cls = l == null ? "" : l < 0 ? "late" : l <= 2 ? "warn" : "";
+  const pretTxt = l == null ? "Pas de date prévue" : "Prêt pour le " + fr(d.echeance) + " · " + jours(l);
+  const enPret = d.statut !== "Terminé" && d.statut !== "Remis";
+  const pretBloc = enPret
+    ? (d.echeance ? dateBarHtml(d, pretTxt) : '<div class="m" style="margin-top:8px">' + pretTxt + '</div>')
+    : "";
   return `<div class="card" style="cursor:pointer" onclick="openD('${d.id}')">
     <div class="row" style="align-items:center"><div style="flex:1;min-width:0;text-align:left;align-self:flex-start"><div style="text-align:left"><span class="chip">${esc(d.type)}</span></div><div class="t" style="text-align:left;margin-top:4px">${esc(d.appareil)} · ${esc(c)}</div><div class="m" style="text-align:left">${esc(d.panne)}</div></div>${manque}</div>
     ${stepsHtml(d.statut)}
-    <div class="row" style="margin-top:8px">
-      ${d.statut === "Terminé" ? "" : d.statut === "Remis" ? `<span class="chip">${d.echeance ? "Remis le " + fr(d.echeance) : "Remis"}</span>` : `<span class="chip ${cls}">${l == null ? "Pas de date prévue" : "Prêt pour le " + fr(d.echeance) + " · " + jours(l)}</span>`}
-    </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px"><div>${pieceInner(d)}</div>${payChip(d)}</div>${d.statut === "Terminé" ? recupHtml(d) : ""}</div>`;
+    ${d.statut === "Remis" ? `<div class="row" style="margin-top:8px"><span class="chip">${d.echeance ? "Remis le " + fr(d.echeance) : "Remis"}</span></div>` : ""}
+    ${pretBloc}
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px"><div>${pieceInner(d)}</div>${payChip(d)}</div></div>`;
 }
 
 var CLI_OPEN=null, CLI_TRASH=false;
@@ -1330,7 +2008,7 @@ function catRow(r){
   const ok = r.prix != null && !isNaN(+r.prix);
   return '<div class="card"><div class="row"><div><div class="t">' + esc(r.reparation) + '</div><div class="m">'
     + (r.duree ? 'Durée : ' + esc(r.duree) : 'Durée à définir')
-    + (r.joy ? ' · joystick (1 ou 2)' + (ok ? ' · 2 joysticks : ' + (2 * r.prix - 5) + ' €' : '') : '')
+    + (r.joy ? ' · joystick (1 ou 2)' + (ok ? ' · 2 joysticks : ' + eur(2 * r.prix - 5) : '') : '')
     + '</div></div>'
     + '<div style="display:flex;gap:6px;align-items:center"><input inputmode="decimal" value="' + esc(r.prix == null ? "" : r.prix) + '" placeholder="à définir" style="width:90px;margin:0" onchange="setPrixCat(\'' + r.id + '\',this.value)"><span class="m">€</span></div></div>'
     + '<button class="chip late" style="margin-top:6px" onclick="delCat(\'' + r.id + '\')">Supprimer</button></div>';
@@ -1408,7 +2086,7 @@ function repCardHtml(d, rep){
   return '<div class="card" data-page="Réparation : ' + esc(d.panne) + '" style="margin:6px 0;' + (rep ? 'cursor:pointer;' : '') + '"' + (rep ? ' onclick="openD(\'' + d.id + '\')"' : '') + '>'
     + '<div class="row" style="align-items:center"><div style="flex:1;min-width:0;text-align:left;align-self:flex-start"><div style="text-align:left"><span class="chip">' + esc(d.type) + '</span></div><div class="t" style="text-align:left;margin-top:4px">' + esc(d.appareil) + ' · ' + esc(c) + '</div><div class="m" style="text-align:left">' + esc(d.panne) + '</div></div>' + manque + '</div>'
     + stepsHtml(d.statut)
-    + (date ? '<div class="row" style="margin-top:8px">' + date + '</div>' : '')
+    + (date ? '<div class="row" style="margin-top:8px">' + date + '</div>' : '') + dateBarHtml(d)
     + '<div style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px"><div>' + pieceInner(d) + '</div>' + payChip(d) + '</div>'
     + (d.statut === "Terminé" ? recupHtml(d) : '') + (d.statut === "Remis" ? garantieHtml(d) : '')
     + (d.statut === "Remis" ? '<div style="margin-top:6px" onclick="event.stopPropagation()"><button class="chip" onclick="event.stopPropagation();toggleSavD(\'' + d.id + '\')">' + (open ? 'Fermer SAV' : 'SAV') + '</button></div>'
@@ -1435,9 +2113,19 @@ function devLine(d, rep){
     + devRepsHtml(d.id)
     + '<div id="de-' + d.id + '"></div></div>';
 }
+function cliAchatsAppHtml(me){
+  const out = [];
+  (S.ventes || []).filter(v => v.client_id === me.id).forEach(v => venteLignes(v).forEach(l => {
+    if (!l.appareil_id) return;
+    const nom = [l.appareil, l.categorie, l.modele, l.couleur].filter(Boolean).join(" · ") + (l.quantite > 1 ? " × " + l.quantite : "");
+    const quand = v.archivee ? "Acheté le " + fr(v.date_effectue || v.date_rdv) : "Achat prévu" + (v.date_rdv ? " le " + fr(v.date_rdv) : "");
+    out.push('<div class="card"><div class="t">' + esc(nom) + '</div><div class="m">' + esc(quand) + '</div></div>');
+  }));
+  return out.join("");
+}
 function cliDevHtml(me){
   const ds = S.devices.filter(d => d.client_id === me.id);
-  return (ds.map(d => devLine(d, false)).join("") || '<p class="m">Aucun appareil pour le moment.</p>')
+  return (ds.map(d => devLine(d, false)).join("") + cliAchatsAppHtml(me) || '<p class="m">Aucun appareil pour le moment.</p>')
     + '<div id="devForm"></div><button class="btn ghost small" style="margin-top:6px" onclick="showDevForm(null,\'' + me.id + '\')">+ Ajouter un appareil</button>'
     + '<p class="m" style="margin-top:6px">Tu peux modifier tes appareils. Pour en retirer un, contacte ton réparateur.</p>';
 }
@@ -1749,7 +2437,7 @@ function detailView(){
     ${devis ? `<label id="lbl-panne">Nom de la réparation *</label>
     <input id="dNom" value="${esc(d.panne || "")}" placeholder="Ex. Remplacement écran" onchange="fSave('panne', this.value)">` : `<div class="m">${esc(d.type)} · ${esc(d.panne)}</div>`}
     ${stepsHtml(d.statut)}
-    ${dateBarHtml(d)}
+    ${d.statut === "Terminé" || d.statut === "Remis" ? "" : dateBarHtml(d)}
     <div class="m" style="margin-top:4px">* champs obligatoires · les modifications s’enregistrent automatiquement</div>
     <label>Notes</label>
     <textarea id="dNo" rows="2" onchange="fSave('notes', this.value)">${esc(d.notes || "")}</textarea>
@@ -1758,18 +2446,16 @@ function detailView(){
     ${devis ? `
     <label id="lbl-prix">Prix (€) *</label><input id="dPx" inputmode="decimal" value="${d.prix ?? ""}" placeholder="à définir" oninput="numOnly(this);updateReste()" onchange="fSave('prix', this.value)">
     <label id="lbl-duree">Durée de réparation *</label><input id="dDu" value="${esc(d.duree || "")}" placeholder="Ex. 2h" onchange="fSave('duree', this.value)">`
-    : `<div class="m" style="font-size:15px;margin-bottom:6px">Prix : ${d.prix == null ? "à définir" : d.prix + " €"}</div>
+    : `<div class="m" style="font-size:15px;margin-bottom:6px">Prix : ${d.prix == null ? "à définir" : eur(d.prix)}</div>
     <div class="m" style="font-size:15px;margin-bottom:6px">Durée de réparation : ${esc(d.duree || "à définir")}</div>`}
     <div class="row" style="align-items:center;margin-top:6px"><span id="lbl-recup">Date de dépôt : <b>${d.date_recup ? fr(d.date_recup) : "à définir"}</b></span>${devis ? "" : '<button class="chip" id="rcPen" onclick="rcEdit()" title="Modifier">✏️</button>'}</div>
     <div id="rcBox" style="display:${devis ? "block" : "none"}"><input id="dRecup" type="date" value="${d.date_recup || ""}" onchange="fSave('date_recup', this.value)"></div>
     ${termine ? "" : `<label id="dEcLbl">${remis ? "Remis le *" : "L’appareil sera prêt pour le"}</label><input id="dEc" type="date" value="${d.echeance || ""}" onchange="fSave('echeance', this.value)">`}
     ${termine ? `<label>Date de fin de réparation (le client a 30 jours pour venir le chercher)</label><input id="dTer" type="date" value="${d.date_termine || todayIso()}" onchange="fSave('date_termine', this.value)">${recupHtml(d)}` : ""}
     ${garantieHtml(d)}
-    <label>Acompte (€)</label><input id="dAco" inputmode="decimal" value="${d.acompte || ""}" placeholder="0" oninput="numOnly(this);updateReste()" onchange="fSave('acompte', this.value)">
-    ${termine ? `
     <div class="t" style="margin-top:10px">Paiement</div>
-    <div class="two"><div><label>Virement reçu (€)</label><input id="pV" inputmode="decimal" value="${d.paye_virement || ""}" placeholder="0" oninput="numOnly(this);updateReste()" onchange="fSave('paye_virement', this.value)"></div><div><label>Espèces reçues (€)</label><input id="pE" inputmode="decimal" value="${d.paye_especes || ""}" placeholder="0" oninput="numOnly(this);updateReste()" onchange="fSave('paye_especes', this.value)"></div></div>
-    ` : ""}
+    <div class="two"><div><label>Acompte (€)</label><input id="dAco" inputmode="decimal" value="${d.acompte || ""}" placeholder="0" oninput="numOnly(this);updateReste()" onchange="fSave('acompte', this.value)"></div><div><label>Virement reçu (€)</label><input id="pV" inputmode="decimal" value="${d.paye_virement || ""}" placeholder="0" oninput="numOnly(this);updateReste()" onchange="fSave('paye_virement', this.value)"></div></div>
+    <label>Espèces reçues (€)</label><input id="pE" inputmode="decimal" value="${d.paye_especes || ""}" placeholder="0" oninput="numOnly(this);updateReste()" onchange="fSave('paye_especes', this.value)">
     <div id="resteBox" style="text-align:center;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:19px;font-weight:400;letter-spacing:.03em;margin:12px 0"></div>
   </div>
   <h2>Pièces</h2>
@@ -1801,7 +2487,7 @@ function updateReste(){
   if (prix == null) { box.textContent = "Prix à définir"; box.style.color = ""; return; }
   const paye = valNum("pV", +d.paye_virement || 0) + valNum("pE", +d.paye_especes || 0) + valNum("dAco", +d.acompte || 0);
   const reste = Math.max(0, prix - paye);
-  box.textContent = "Prix : " + prix + " € · Reste : " + reste + " €";
+  box.textContent = "Prix : " + eur(prix) + " · Reste : " + eur(reste);
   box.style.color = reste === 0 ? "#1f8a4c" : "";
 }
 function paintDetail(){
@@ -1819,15 +2505,24 @@ function paintDetail(){
   if (sel) { const gate = d.statut === "Devis en cours" && !devisOk(d); [...sel.options].forEach(o => { if (o.value !== "Devis en cours") o.disabled = gate; }); }
 }
 /* Barre entre le dépôt et la date de remise : vert = jours passés, gris = jours restants */
-function dateBarHtml(d){
-  if (!d.echeance || !d.created_at) return "";
-  const start = new Date(String(d.created_at).slice(0, 10) + "T00:00");
+function dateBarHtml(d, legend){
+  if (!d.echeance) return "";
+  const debut = d.date_recup || String(d.created_at || "").slice(0, 10);
+  if (!debut) return "";
+  const start = new Date(debut + "T00:00");
   const end = new Date(d.echeance + "T00:00"), now = new Date(todayIso() + "T00:00");
   const total = Math.max(1, Math.round((end - start) / 86400000));
   const passed = Math.min(total, Math.max(0, Math.round((now - start) / 86400000)));
   const pct = Math.round(passed / total * 100);
-  return '<div style="margin-top:10px"><div class="m">' + fr(String(d.created_at).slice(0, 10)) + ' → ' + fr(d.echeance) + ' · ' + passed + ' j passés · ' + Math.max(0, total - passed) + ' j restants</div>'
-    + '<div style="height:8px;border-radius:4px;background:var(--line);overflow:hidden;margin-top:4px"><div style="height:100%;width:' + pct + '%;background:#1f8a4c"></div></div></div>';
+  const restants = Math.max(0, total - passed) + ' j restants';
+  const barre = '<div style="height:8px;border-radius:4px;background:var(--line);overflow:hidden;margin-top:4px"><div style="height:100%;width:' + pct + '%;background:#1f8a4c"></div></div>';
+  if (typeof legend === "string" || legend === true) {
+    // carte de la liste : le texte est placé sous la barre
+    return '<div style="margin-top:10px">' + barre + '<div class="m" style="margin-top:4px">' + (typeof legend === "string" ? legend : restants) + '</div></div>';
+  }
+  // page détail : légende complète au-dessus de la barre
+  const complet = passed + ' j passés · ' + restants;
+  return '<div style="margin-top:10px"><div class="m">' + complet + '</div>' + barre + '</div>';
 }
 async function fSave(field, value){
   const d = S.dossiers.find(x => x.id === DOSSIER);
@@ -1848,6 +2543,16 @@ async function fSave(field, value){
     v = t;
   } else {
     v = value || null;
+  }
+  if (field === "date_recup" && v && d.echeance && v > d.echeance) {
+    toast("La date de dépôt ne peut pas être après la date de remise.");
+    if ($("dRecup")) $("dRecup").value = d.date_recup || "";
+    return;
+  }
+  if (field === "echeance" && v && d.date_recup && v < d.date_recup) {
+    toast("La date de remise ne peut pas être avant la date de dépôt.");
+    if ($("dEc")) $("dEc").value = d.echeance || "";
+    return;
   }
   const upd = {[field]: v};
   if (field === "date_termine") upd.date_retour = v ? plus30(v) : null;
@@ -1993,7 +2698,7 @@ async function addPieceCmd(did, sku){
   await reload();
 }
 var STK_Q = "", STK_SORT = "nom", STK_TYPE = "", STK_ST = "";
-var ASORT = "nom", ATYPE = "", AST = "";
+var ASORT = "nom", ATYPE = "", AST = "", AGRADE = "";
 function selOpts(pairs, cur){ return pairs.map(p => '<option value="' + esc(p[0]) + '"' + (String(p[0]) === String(cur) ? ' selected' : '') + '>' + esc(p[1]) + '</option>').join(""); }
 function stkControls(){
   const types = [...new Set(S.stock.map(x => x.type).filter(Boolean))].sort().map(t => [t, t]);
@@ -2014,9 +2719,9 @@ function stkHtml(q){
     .filter(s => !STK_TYPE || s.type === STK_TYPE)
     .filter(s => !STK_ST || (STK_ST === "dispo" ? s.qte > 0 : !(s.qte > 0)))
     .sort(cmp);
-  return list.map(s => `<div class="card">
+  return list.map(s => `<div class="card" id="s-${esc(s.sku)}">
     <div class="row"><div><div class="t">${esc(s.nom)}</div><div class="m">${esc(s.type)} · ${esc(s.modele)}</div>
-    <div class="m"><span class="code">${esc(s.sku)}</span> · Réservé : ${s.res}</div></div>
+    <div class="m"><span class="code">${esc(s.sku)}</span></div><div class="m">Réservé : ${s.res}</div></div>
     <div style="display:flex;align-items:center;gap:6px"><button class="chip" onclick="adjStock('${esc(s.sku)}',-1)">−</button><span class="chip ${s.qte > 0 ? "ok" : "late"}">${s.qte > 0 ? s.qte + " dispo" : "Rupture"}</span><button class="chip" onclick="adjStock('${esc(s.sku)}',1)">+</button></div></div>
     <div style="margin-top:6px;display:flex;gap:6px"><button class="chip" onclick="editPiece('${esc(s.sku)}')">Modifier</button><button class="chip late" onclick="deleteStock('${esc(s.sku)}')">Supprimer</button></div>
     <div id="pe-${esc(s.sku)}"></div></div>`).join("")
@@ -2092,7 +2797,7 @@ function cliView(){
     <label>Code d’invitation</label><input id="cCode" inputmode="numeric" maxlength="6" placeholder="000000">
     <button class="btn" onclick="claimNow()">Valider</button><div class="err" id="cErr2"></div></div>
     <button class="btn ghost" onclick="logout()">Se déconnecter</button>`;
-  const head = `<div class="row" style="align-items:center;margin:4px 0 8px"><img src="logo.png" alt="Seconde Vie" style="height:44px"><button class="btn small ghost" onclick="toggleParam()">Paramètres</button></div>`;
+  const head = `<div class="row" style="align-items:center;margin:4px 0 8px"><img class="logo-h" src="logo.png" alt="Seconde Vie"><button class="btn small ghost" onclick="toggleParam()">Paramètres</button></div>`;
   if (!me.infos_verifiees_at) return head + `<h2 data-page="Vérification des informations">Vérifie tes informations</h2>
     <p class="m">Relis tes informations, corrige-les si besoin, puis confirme. Tes dossiers s’afficheront ensuite.</p>
     ${profForm(me, "Confirmer mes informations", "confirmProfile")}`;
@@ -2104,7 +2809,192 @@ function cliView(){
   return head + (PARAM_OPEN ? `<div class="card"><div class="t">Paramètres</div><button class="btn ghost small" style="margin-top:8px" onclick="PROF_EDIT=true;PARAM_OPEN=false;render()">Modifier mes informations</button><button class="btn ghost small" style="margin-top:8px" onclick="logout()">Déconnexion</button></div>` : "") + `<h1>Bonjour ${esc(me.prenom)}</h1>
   <h2 data-page="Mes informations">Mes informations</h2>${info}
   <h2 data-page="Mes appareils">Mes appareils</h2>${cliDevHtml(me)}
+  <h2 data-page="Mes réparations">Mes réparations</h2>${cliRepHtml(me)}
+  <h2 data-page="Mes achats">Mes achats</h2>${cliVentesHtml(me)}
   `;
+}
+function cliRepHtml(me){
+  const ds = S.dossiers.filter(d => d.client_id === me.id);
+  if (!ds.length) return '<p class="m">Aucune réparation pour le moment.</p>';
+  return ds.map(d => {
+    const p = payInfo(d);
+    const quand = d.statut === "Remis" ? (d.echeance ? "Remis le " + fr(d.echeance) : "Remis")
+      : d.statut === "Terminé" ? (d.date_retour ? "À retirer avant le " + fr(d.date_retour) : "Prête : à retirer")
+      : d.echeance ? "Remise prévue le " + fr(d.echeance) : "Date de remise pas encore fixée";
+    const solde = d.prix == null ? "Prix à définir" : "Prix : " + eur(d.prix) + " · " + (p.reste <= 0 ? "Réglé" : "Reste à régler : " + eur(p.reste));
+    return '<div class="card"><div class="t">' + esc(d.appareil || "Réparation") + '</div><div class="m">' + esc(d.panne || "") + '</div>'
+      + stepsHtml(d.statut)
+      + '<div class="m" style="margin-top:8px">' + esc(quand) + '</div>'
+      + '<div class="m" style="margin-top:6px">' + esc(solde) + '</div></div>';
+  }).join("");
+}
+function cliVentesHtml(me){
+  const vs = (S.ventes || []).filter(v => v.client_id === me.id);
+  if (!vs.length) return '<p class="m">Aucun achat pour le moment.</p>';
+  return vs.map(v => {
+    const quand = v.archivee ? "Terminée" + (v.date_effectue ? " le " + fr(v.date_effectue) : "")
+      : v.envoi ? "Envoi : " + (v.envoi_statut || "En préparation") + (v.transporteur ? " · " + v.transporteur : "")
+      : v.date_rdv ? "Rendez-vous le " + fr(v.date_rdv) + (v.lieu ? " · " + v.lieu : "") : "Rendez-vous à fixer";
+    return '<div class="card"><div class="t">' + esc(venteTitre(v)) + '</div><div class="m">' + esc(quand) + '</div>'
+      + (v.envoi && v.suivi ? '<div class="m">Numéro de suivi : ' + esc(v.suivi) + '</div>' : '')
+      + '<div class="m" style="margin-top:6px">' + (v.prix == null ? "Prix à définir" : "Prix : " + eur(v.prix)) + '</div></div>';
+  }).join("");
+}
+
+/* ---------- Aperçu client : données fictives en mémoire, rien n’est enregistré ---------- */
+var DEMO = false, DEMO_REAL = null;
+function demoDate(n){ const b = new Date(); b.setHours(0, 0, 0, 0); b.setDate(b.getDate() + n); return b.getFullYear() + "-" + String(b.getMonth() + 1).padStart(2, "0") + "-" + String(b.getDate()).padStart(2, "0"); }
+function demoSeed(){
+  const c = "demo-client";
+  return {
+    clients: [{id: c, auth_user_id: "demo-user", prenom: "Zoé", nom: "Martin", tel: "06 12 34 56 78", mail: "zoe.martin@exemple.fr", adr: "12 rue des Lilas", cp: "44000", ville: "Nantes", infos_verifiees_at: "2026-10-01T10:00:00Z"}],
+    devices: [
+      {id: "demo-d1", client_id: c, type: "Téléphone", modele: "iPhone 13", couleur: "Noir", imei: "356938035643809", pin: "1234", etat: "Écran fissuré"},
+      {id: "demo-d2", client_id: c, type: "Console", modele: "PS5", couleur: "Blanc", sn: "SN-EXEMPLE-42"}
+    ],
+    dossiers: [
+      {id: "demo-r1", client_id: c, type: "Réparation", appareil: "iPhone 13", panne: "Écran fissuré", statut: "En cours", echeance: demoDate(3), prix: 120, acompte: 40, paye_especes: 0, paye_virement: 0, device_id: "demo-d1", duree: "2h"},
+      {id: "demo-r2", client_id: c, type: "Réparation", appareil: "PS5", panne: "Port HDMI défectueux", statut: "Terminé", date_termine: demoDate(-2), date_retour: demoDate(20), prix: 90, acompte: 0, paye_virement: 0, paye_especes: 0, device_id: "demo-d2", duree: "1h"},
+      {id: "demo-r3", client_id: c, type: "Réparation", appareil: "Samsung S21", panne: "Batterie", statut: "Remis", echeance: demoDate(-10), prix: 60, acompte: 0, paye_virement: 0, paye_especes: 60, duree: "1h"}
+    ],
+    pieces: [],
+    ventes: [
+      {id: "demo-v1", client_id: c, lignes: [{appareil: "Téléphone", modele: "iPhone 11", couleur: "Noir", quantite: 1, appareil_id: "demo-s1"}], date_rdv: demoDate(5), lieu: "Nantes", prix: 180, envoi: false, archivee: false},
+      {id: "demo-v2", client_id: c, lignes: [{appareil: "Accessoire", modele: "Coque", quantite: 1}], envoi: true, envoi_statut: "Envoyé", transporteur: "Colissimo", suivi: "6A12345678901", prix: 45, archivee: false}
+    ],
+    sav: [], feedback: [], idees: [], depenses: [], stock: [], stockApp: [], catalogue: [], inv: []
+  };
+}
+function makeDemoSB(){
+  const KEY = {pieces_dossier: "pieces", stock_appareils: "stockApp", invitations: "inv"};
+  const clone = x => JSON.parse(JSON.stringify(x));
+  let seq = 0;
+  const store = t => { const k = KEY[t] || t; if (!Array.isArray(S[k])) S[k] = []; return S[k]; };
+  const from = table => {
+    let op = "select", payload = null, one = false;
+    const filters = [];
+    const run = () => {
+      const rows = store(table), match = r => filters.every(f => f(r));
+      let data = [];
+      if (op === "select") data = rows.filter(match).map(clone);
+      else if (op === "insert") data = payload.map(p => { const r = Object.assign({id: "demo-" + (++seq)}, p); rows.push(r); return clone(r); });
+      else if (op === "update") rows.filter(match).forEach(r => { Object.assign(r, payload); data.push(clone(r)); });
+      else if (op === "delete") { for (let i = rows.length - 1; i >= 0; i--) if (match(rows[i])) rows.splice(i, 1); }
+      if (one) data = data[0] || null;
+      return Promise.resolve({data, error: null});
+    };
+    const b = {
+      select(){ return b; },
+      order(){ return b; },
+      eq(col, val){ filters.push(r => r[col] === val); return b; },
+      insert(rows){ op = "insert"; payload = Array.isArray(rows) ? rows : [rows]; return b; },
+      update(p){ op = "update"; payload = p; return b; },
+      delete(){ op = "delete"; return b; },
+      single(){ one = true; return b; },
+      maybeSingle(){ one = true; return b; },
+      then(ok, ko){ return run().then(ok, ko); }
+    };
+    return b;
+  };
+  return {
+    from,
+    auth: {getSession: async () => ({data: {session: null}}), signOut: async () => ({error: null})},
+    rpc: async () => ({data: null, error: {message: "Action indisponible dans l’aperçu"}})
+  };
+}
+function startDemo(){
+  if (DEMO || ROLE !== "rep") return;
+  DEMO_REAL = {S, ME, ROLE, SB, VIEW, DOSSIER, PROF_EDIT, PARAM_OPEN};
+  S = demoSeed(); SB = makeDemoSB(); ME = {id: "demo-user"}; ROLE = "client";
+  DEMO = true; DOSSIER = null; PROF_EDIT = false; PARAM_OPEN = false;
+  render(); scrollTo(0, 0);
+}
+function endDemo(){
+  if (!DEMO) return;
+  const r = DEMO_REAL;
+  S = r.S; ME = r.ME; ROLE = r.ROLE; SB = r.SB; VIEW = r.VIEW; DOSSIER = r.DOSSIER; PROF_EDIT = r.PROF_EDIT; PARAM_OPEN = r.PARAM_OPEN;
+  DEMO = false; DEMO_REAL = null;
+  render();
+}
+/* ---------- Bases de données (administration) : lecture seule tant qu’on ne déverrouille pas ---------- */
+var DBA = {table: null, rows: null, edit: null, err: "", lock: true};
+const DBA_TABLES = [["clients","Clients"],["dossiers","Réparations"],["pieces_dossier","Pièces des réparations"],["devices","Appareils des clients"],["ventes","Ventes"],["stock","Stock (pièces)"],["stock_appareils","Appareils à vendre"],["catalogue","Catalogue"],["sav","SAV"],["idees","Idées"],["feedback","Suggestions & Bugs"],["depenses","Dépenses"]];
+const DBA_HIDE = ["id", "created_at"];
+function dbaHtml(){
+  const opts = '<option value="">- Choisir une table -</option>' + DBA_TABLES.map(([k, l]) => '<option value="' + k + '"' + (DBA.table === k ? ' selected' : '') + '>' + esc(l) + ' (' + k + ')</option>').join("");
+  let h = '<h1>Bases de données</h1>'
+    + (DBA.lock
+      ? '<div class="card"><div class="t">🔒 Lecture seule</div><div class="m">Rien ne peut être modifié tant que tu n’as pas déverrouillé. Le verrou se remet automatiquement après chaque modification et quand tu quittes cet onglet.</div><button class="btn small" style="margin-top:8px" onclick="dbaUnlock()">Déverrouiller les modifications</button></div>'
+      : '<div class="card" style="border-color:#e0b4a8"><div class="t" style="color:var(--bad)">Modification déverrouillée</div><div class="m">Les changements sont enregistrés directement dans la vraie base. Une mauvaise valeur peut casser l’application, et une suppression est définitive.</div><button class="btn ghost small" style="margin-top:8px" onclick="dbaLock()">Verrouiller maintenant</button></div>')
+    + '<label>Table</label><select onchange="dbaOpen(this.value)">' + opts + '</select>';
+  if (!DBA.table) return h;
+  h += '<div class="row" style="align-items:center;margin:8px 0"><div class="m" style="flex:1">' + (DBA.rows ? DBA.rows.length + ' ligne(s)' : 'Chargement…') + '</div>'
+    + (DBA.lock ? '' : '<button class="btn small" onclick="dbaNew()">+ Ajouter une ligne</button>')
+    + '<button class="btn ghost small" onclick="dbaLoad()">Actualiser</button></div>';
+  if (DBA.err) h += '<div class="err">' + esc(DBA.err) + '</div>';
+  if (DBA.edit !== null && !DBA.lock) h += dbaEditorHtml();
+  if (DBA.rows) h += DBA.rows.map((r, i) => dbaRowHtml(r, i)).join("") || '<p class="m">Aucune ligne dans cette table.</p>';
+  return h;
+}
+function dbaRowHtml(r, i){
+  const champs = Object.keys(r).filter(k => !DBA_HIDE.includes(k) && r[k] !== null && r[k] !== "" && typeof r[k] !== "object").slice(0, 4);
+  const boutons = DBA.lock ? '' : '<div class="row" style="gap:6px;margin-top:8px"><button class="chip" onclick="dbaEdit(' + i + ')">Modifier</button><button class="chip late" onclick="dbaDel(' + i + ')">Supprimer</button></div>';
+  return '<div class="card"><div class="m" style="word-break:break-all">id : ' + esc(String(r.id)) + '</div>'
+    + champs.map(k => '<div class="m">' + esc(k + ' : ' + String(r[k]).slice(0, 60)) + '</div>').join("") + boutons + '</div>';
+}
+function dbaEditorHtml(){
+  const isNew = DBA.edit === "new";
+  const row = isNew ? {} : (DBA.rows && DBA.rows[DBA.edit]) || {};
+  const obj = Object.assign({}, row);
+  DBA_HIDE.forEach(k => delete obj[k]);
+  return '<div class="card"><div class="t">' + (isNew ? 'Nouvelle ligne' : 'Modifier la ligne') + '</div>'
+    + (isNew ? '' : '<div class="m">id : ' + esc(String(row.id)) + ' (non modifiable)</div>')
+    + '<label>Contenu (JSON)</label><textarea id="dbaTxt" style="min-height:260px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;white-space:pre">' + esc(JSON.stringify(obj, null, 2)) + '</textarea>'
+    + '<div class="row" style="gap:6px;margin-top:8px"><button class="btn small" onclick="dbaSave()">Enregistrer</button><button class="btn ghost small" onclick="dbaCancel()">Annuler</button></div></div>';
+}
+function dbaUnlock(){
+  if (!confirm("Déverrouiller la modification de la base ? Les changements seront enregistrés directement et les suppressions sont définitives.")) return;
+  DBA.lock = false; DBA.err = ""; render();
+}
+function dbaLock(){ DBA.lock = true; DBA.edit = null; DBA.err = ""; render(); }
+async function dbaOpen(t){ DBA = {table: t || null, rows: null, edit: null, err: "", lock: true}; render(); if (t) dbaLoad(); }
+async function dbaLoad(){
+  if (!DBA.table) return;
+  const t = DBA.table;
+  const { data, error } = await SB.from(t).select("*");
+  if (DBA.table !== t) return;
+  DBA.rows = error ? [] : (data || []);
+  DBA.err = error ? "Lecture impossible : " + msgErr(error) : "";
+  render();
+}
+function dbaNew(){ if (DBA.lock) return; DBA.edit = "new"; DBA.err = ""; render(); }
+function dbaEdit(i){ if (DBA.lock) return; DBA.edit = i; DBA.err = ""; render(); }
+function dbaCancel(){ DBA.edit = null; DBA.err = ""; render(); }
+async function dbaSave(){
+  if (DBA.lock) return;
+  let obj;
+  try { obj = JSON.parse($("dbaTxt").value); } catch(e) { DBA.err = "JSON invalide : " + e.message; render(); return; }
+  if (!obj || typeof obj !== "object" || Array.isArray(obj)) { DBA.err = "Le contenu doit être un objet { … }."; render(); return; }
+  DBA_HIDE.forEach(k => delete obj[k]);
+  const isNew = DBA.edit === "new";
+  const row = isNew ? null : DBA.rows && DBA.rows[DBA.edit];
+  if (!isNew && !row) { DBA.err = "Ligne introuvable, actualise la table."; render(); return; }
+  const t = DBA.table;
+  const res = isNew ? await SB.from(t).insert(obj) : await SB.from(t).update(obj).eq("id", row.id);
+  if (res.error) { DBA.err = "Enregistrement impossible : " + msgErr(res.error); render(); return; }
+  toast(isNew ? "Ligne ajoutée" : "Ligne modifiée");
+  DBA.edit = null; DBA.err = ""; DBA.lock = true;
+  await dbaLoad();
+}
+async function dbaDel(i){
+  if (DBA.lock) return;
+  const row = DBA.rows && DBA.rows[i]; if (!row) return;
+  if (!confirm("Supprimer définitivement cette ligne de « " + DBA.table + " » (id " + row.id + ") ? Cette action est irréversible.")) return;
+  const { error } = await SB.from(DBA.table).delete().eq("id", row.id);
+  if (error) { DBA.err = "Suppression impossible : " + msgErr(error); render(); return; }
+  toast("Ligne supprimée");
+  DBA.lock = true; DBA.edit = null;
+  await dbaLoad();
 }
 async function claimNow(){
   const code = $("cCode").value.trim(), err = $("cErr2");
@@ -2114,7 +3004,20 @@ async function claimNow(){
   await boot();
 }
 
-boot();
+let JOUR_AFFICHE = todayIso();
+function verifierJour(){
+  if (todayIso() === JOUR_AFFICHE) return;
+  JOUR_AFFICHE = todayIso();
+  if (ME) render();
+}
+setInterval(verifierJour, 60000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) verifierJour(); });
+window.addEventListener("focus", verifierJour);
+window.addEventListener("resize", () => { if (VIEW === "dashboard" && !DOSSIER) fitDashVals(); });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (VIEW === "dashboard" && !DOSSIER) fitDashVals(); });
+
+boot().catch(function(e){ var a = document.getElementById('app'); if (a && !a.innerHTML) a.innerHTML = '<p class="m" style="padding:24px">L’application n’a pas pu démarrer. Vérifiez votre connexion internet, puis rechargez la page.</p>'; console.error(e); });
 </script>
+<script>if(!window.supabase){var a=document.getElementById('app');if(a&&!a.innerHTML)a.innerHTML='<p class="m" style="padding:24px">L’application n’a pas pu démarrer. Vérifiez votre connexion internet, puis rechargez la page.</p>'}</script>
 </body>
 </html>
