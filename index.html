@@ -640,6 +640,8 @@ function flash(msg){
 /* ---------- Réparateur ---------- */
 var SORT_REP = "ech", SORT_VENTE = "date";
 var DOSS_F = {statut: "", app: ""}, VENTE_F = {kind: "", app: ""};
+var ARCH_F = false; // false : en cours · true : archivées (réparations « Remis », ventes archivées)
+function archFiltre(){ return {all: "En cours", opts: [["1", "Archivées"]], cur: ARCH_F ? "1" : "", js: "ARCH_F=this.value===\'1\';render()"}; }
 function filtersRow(items){
   return '<div class="row" style="gap:6px;flex-wrap:wrap;margin:0 0 8px">' + items.map(i => '<select onchange="' + i.js + '">' + selOpts([["", i.all]].concat(i.opts), i.cur) + '</select>').join("") + '</div>';
 }
@@ -938,7 +940,7 @@ const REP = {
       statut: (a, b) => STEPS.indexOf(a.statut) - STEPS.indexOf(b.statut),
       appareil: (a, b) => ((a.appareil || "") + " " + (a.modele || "")).localeCompare((b.appareil || "") + " " + (b.modele || ""))
     }[SORT_REP] || ((a, b) => 0);
-    const baseList = S.dossiers.filter(d => d.statut !== "Remis");
+    const baseList = S.dossiers.filter(d => ARCH_F ? d.statut === "Remis" : d.statut !== "Remis");
     const list = baseList
       .filter(d => !DOSS_F.statut || d.statut === DOSS_F.statut)
       .filter(d => !DOSS_F.app || d.appareil === DOSS_F.app)
@@ -963,7 +965,8 @@ const REP = {
         : savSec + sortSelect(SORT_REP, [["ech", "Urgence (plus proche en premier)"], ["statut", "Avancement"], ["appareil", "Appareil"]], "setSortRep") + '<button class="chip" style="margin:-2px 0 8px" onclick="toggleSortDir()">' + (SORT_DIR === 1 ? "↑ Croissant" : "↓ Décroissant") + '</button>'
           + filtersRow([
               {all: "Tous les statuts", opts: STEPS.filter(x => x !== "Remis").map(x => [x, x]), cur: DOSS_F.statut, js: "DOSS_F.statut=this.value;render()"},
-              {all: "Tous les appareils", opts: repApps, cur: DOSS_F.app, js: "DOSS_F.app=this.value;render()"}
+              {all: "Tous les appareils", opts: repApps, cur: DOSS_F.app, js: "DOSS_F.app=this.value;render()"},
+              archFiltre()
             ]) + (list.length ? '<div class="card-grid">' + list.map(d => dossierCard(d)).join("") + '</div>' : '<p class="m">Aucune réparation pour le moment.</p>');
     return `<h1>Réparations et ventes</h1>` + piecesHtml + achatHtml + appResHtml() + tabs + body;
   },
@@ -1050,6 +1053,7 @@ const REP = {
     <div id="aL" style="margin-top:8px">${appStkHtml()}</div>
     ${DEV_EDIT ? "" : `<details style="margin-top:10px"><summary class="btn ghost small" style="display:inline-block;list-style:none;cursor:pointer">+ Ajouter un appareil à vendre</summary><div class="card" style="margin-top:8px">
       <label>Type / marque / modèle</label><div id="mp-a"></div>
+      <label>Modèle exact (si absent de la liste)</label><input id="aExact" placeholder="Ex. PS5 Slim Blanc" oninput="aExactChange(this.value)">
       <div id="aCouleurBox" style="display:none"><label>Couleur</label><select id="aCouleur"></select></div>
       <label>Quantité</label><input id="aQt" inputmode="numeric" value="1">
       <label>Grade</label><select id="aGrade"><option value="">- Aucun -</option><option>A</option><option>B</option><option>C</option><option>HS</option></select>
@@ -1650,7 +1654,7 @@ function ventesHtml(){
   const cmpV = {
     appareil: (a, b) => venteTitre(a).localeCompare(venteTitre(b))
   }[SORT_VENTE] || ((a, b) => (String(a.date_rdv) + String(a.heure_rdv || "")).localeCompare(String(b.date_rdv) + String(b.heure_rdv || "")));
-  const baseV = (S.ventes || []).filter(v => !v.archivee);
+  const baseV = (S.ventes || []).filter(v => ARCH_F ? v.archivee : !v.archivee);
   const venteApps = [...new Set(baseV.flatMap(v => venteLignes(v).map(l => l.appareil)).filter(Boolean))].sort().map(x => [x, x]);
   const list = baseV
     .filter(v => !VENTE_F.kind || (VENTE_F.kind === "envoi" ? !!v.envoi : !v.envoi))
@@ -1660,7 +1664,8 @@ function ventesHtml(){
   const form = VENTE_OPEN ? ventesFormHtml(ed || null) : "";
   return `<h2>Ventes</h2><button class="btn ghost small" onclick="go('newvente')">+ Nouvelle vente</button>${form}${sortSelect(SORT_VENTE, [["date", "Date RDV"], ["appareil", "Appareil"]], "setSortVente")}${filtersRow([
     {all: "Tous les types", opts: [["rdv", "Rendez-vous"], ["envoi", "Envoi"]], cur: VENTE_F.kind, js: "VENTE_F.kind=this.value;render()"},
-    {all: "Tous les appareils", opts: venteApps, cur: VENTE_F.app, js: "VENTE_F.app=this.value;render()"}
+    {all: "Tous les appareils", opts: venteApps, cur: VENTE_F.app, js: "VENTE_F.app=this.value;render()"},
+    archFiltre()
   ])}<div class="card-grid">${list.map(venteCard).join("")}</div>`;
 }
 function editVente(id){
@@ -1724,6 +1729,7 @@ function devEditHtml(x){
   return '<div class="card" style="border:2px solid var(--brand)">'
     + '<div class="t">Modifier « ' + esc(x.nom) + ' »</div>'
     + '<label>Type / marque / modèle</label><div id="mp-a"></div>'
+    + '<label>Modèle exact (si absent de la liste)</label><input id="aExact" placeholder="Ex. PS5 Slim Blanc" oninput="aExactChange(this.value)">'
     + '<div id="aCouleurBox" style="display:' + (list ? "block" : "none") + '"><label>Couleur</label><select id="aCouleur">' + opts + '</select></div>'
     + '<label>Quantité disponible (hors réservés)</label><input id="aQt" inputmode="numeric" value="' + x.qte + '">'
     + '<label>Grade</label><select id="aGrade">' + ["", "A", "B", "C", "HS"].map(g => '<option value="' + g + '"' + ((x.grade || "") === g ? " selected" : "") + '>' + (g || "- Aucun -") + '</option>').join("") + '</select>'
@@ -1744,15 +1750,16 @@ function editAppareil(id){
 function cancelAppEdit(){ DEV_EDIT = null; DEV_SEL = null; MP.a = []; PKS.a = {app: "", cat: ""}; render(); }
 async function saveAppareil(){
   const err = $("aErr"); err.textContent = "";
+  const SEL = devSelFinal();
   const x = (S.stockApp || []).find(y => y.id === DEV_EDIT); if (!x) return;
-  if (!DEV_SEL || !DEV_SEL.mod) { err.textContent = "Choisis le type, la marque et le modèle."; return; }
+  if (!SEL || !SEL.mod) { err.textContent = "Choisis le type et la marque, puis le modèle (ou écris le modèle exact)."; return; }
   const dispo = parseInt($("aQt").value, 10);
   if (isNaN(dispo) || dispo < 0) { err.textContent = "Quantité invalide."; return; }
   const coul = $("aCouleurBox") && $("aCouleurBox").style.display !== "none" ? $("aCouleur").value : "";
-  if (couleursFor(DEV_SEL.app, DEV_SEL.mod) && !coul) { err.textContent = "Choisis la couleur."; return; }
-  const nom = [DEV_SEL.app, DEV_SEL.cat, DEV_SEL.mod, coul].filter(Boolean).join(" · ");
+  if (couleursFor(SEL.app, SEL.mod) && !coul) { err.textContent = "Choisis la couleur."; return; }
+  const nom = [SEL.app, SEL.cat, SEL.mod, coul].filter(Boolean).join(" · ");
   if ((S.stockApp || []).some(y => y.nom === nom && y.id !== x.id)) { err.textContent = "Cet appareil existe déjà dans le stock."; return; }
-  const { error } = await SB.from("stock_appareils").update({ nom, appareil: DEV_SEL.app, categorie: DEV_SEL.cat, modele: DEV_SEL.mod, qte: dispo, grade: $("aGrade").value || null }).eq("id", x.id);
+  const { error } = await SB.from("stock_appareils").update({ nom, appareil: SEL.app, categorie: SEL.cat, modele: SEL.mod, qte: dispo, grade: $("aGrade").value || null }).eq("id", x.id);
   if (error) { err.textContent = msgErr(error); return; }
   DEV_EDIT = null; DEV_SEL = null; MP.a = []; PKS.a = {app: "", cat: ""};
   flash("Appareil modifié");
@@ -1760,14 +1767,15 @@ async function saveAppareil(){
 }
 async function addAppareil(){
   const err = $("aErr"); err.textContent = "";
+  const SEL = devSelFinal();
   const q = parseInt($("aQt").value, 10);
-  if (!DEV_SEL || !DEV_SEL.mod) { err.textContent = "Choisis le type, la marque et le modèle."; return; }
+  if (!SEL || !SEL.mod) { err.textContent = "Choisis le type et la marque, puis le modèle (ou écris le modèle exact)."; return; }
   if (isNaN(q) || q < 1) { err.textContent = "Quantité invalide."; return; }
   const coul = $("aCouleurBox") && $("aCouleurBox").style.display !== "none" ? $("aCouleur").value : "";
-  if (couleursFor(DEV_SEL.app, DEV_SEL.mod) && !coul) { err.textContent = "Choisis la couleur."; return; }
-  const nom = [DEV_SEL.app, DEV_SEL.cat, DEV_SEL.mod, coul].filter(Boolean).join(" · ");
+  if (couleursFor(SEL.app, SEL.mod) && !coul) { err.textContent = "Choisis la couleur."; return; }
+  const nom = [SEL.app, SEL.cat, SEL.mod, coul].filter(Boolean).join(" · ");
   if ((S.stockApp || []).some(x => x.nom === nom)) { err.textContent = "Cet appareil est déjà dans le stock : modifie sa quantité avec « Modifier » dans la liste."; return; }
-  const { error } = await SB.from("stock_appareils").insert({ nom, appareil: DEV_SEL.app, categorie: DEV_SEL.cat, modele: DEV_SEL.mod, qte: q, grade: $("aGrade").value || null });
+  const { error } = await SB.from("stock_appareils").insert({ nom, appareil: SEL.app, categorie: SEL.cat, modele: SEL.mod, qte: q, grade: $("aGrade").value || null });
   if (error) { err.textContent = msgErr(error); return; }
   DEV_SEL = null; MP.a = []; PKS.a = {app:"", cat:""};
   flash("Appareil ajouté au stock");
@@ -2060,6 +2068,18 @@ function vAchatChange(on){ if (on && $("vAppId")) $("vAppId").value = ""; }
 function exactTxt(){ return (($("vExact") && $("vExact").value) || "").trim(); }
 function vExactChange(v){ if (v.trim() && $("vAppId")) $("vAppId").value = ""; }
 var lineKey = l => [l.appareil, l.categorie, l.modele, l.couleur].filter(Boolean).join("|");
+function aExactTxt(){ return (($("aExact") && $("aExact").value) || "").trim(); }
+/* Modèle choisi : le modèle exact saisi l'emporte sur la liste. */
+function devSelFinal(){
+  const ex = aExactTxt();
+  if (!ex) return DEV_SEL;
+  const st = PKS.a || {};
+  return st.app && st.cat ? {app: st.app, cat: st.cat, mod: ex} : null;
+}
+function aExactChange(v){
+  const st = PKS.a || {}; const t = String(v || "").trim();
+  if (st.app && st.cat) aCouleurRefresh(st.app, t);
+}
 function aCouleurRefresh(app, mod){
   const box = $("aCouleurBox"); if (!box) return;
   const list = couleursFor(app, mod);
@@ -2542,20 +2562,36 @@ async function reloadPhotos(){
   const r = await SB.from("photos").select("*");
   if (!r.error) S.photos = r.data || [];
 }
+var PHOTO_ERR = "";
+/* Réduit la photo (1600 px max, JPEG) avant envoi : fichiers plus légers et format accepté par le stockage. null si le navigateur ne sait pas la lire (ex. HEIC sur PC). */
+async function photoPrep(f){
+  try {
+    const bmp = await createImageBitmap(f);
+    const k = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
+    const c = document.createElement("canvas");
+    c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+    c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+    if (bmp.close) bmp.close();
+    const blob = await new Promise(r => c.toBlob(r, "image/jpeg", 0.85));
+    return blob ? { body: blob, ext: "jpg", type: "image/jpeg" } : null;
+  } catch (e) { return null; }
+}
 async function addPhotos(kind, id, input){
   const files = [...(input.files || [])];
   if (!files.length) return;
+  PHOTO_ERR = "";
   if (DEMO) {
     S.photos = (S.photos || []).concat(files.map(f => ({ id: "demo-p-" + Math.random().toString(36).slice(2), dossier_id: kind === "dossier" ? id : null, device_id: kind === "device" ? id : null, path: URL.createObjectURL(f), demo: true })));
   } else {
     for (const f of files) {
-      const ext = ((f.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "")) || "jpg";
-      const path = (kind === "dossier" ? "dossiers/" : "appareils/") + id + "/" + Date.now() + "-" + Math.random().toString(36).slice(2, 8) + "." + ext;
-      const up = await SB.storage.from(PHOTO_BUCKET).upload(path, f, { contentType: f.type || "image/jpeg" });
-      if (up.error) { toast("Photo : " + msgErr(up.error)); break; }
+      const rawExt = ((f.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "")) || "jpg";
+      const prep = (await photoPrep(f)) || { body: f, ext: rawExt, type: f.type || "image/jpeg" };
+      const path = (kind === "dossier" ? "dossiers/" : "appareils/") + id + "/" + Date.now() + "-" + Math.random().toString(36).slice(2, 8) + "." + prep.ext;
+      const up = await SB.storage.from(PHOTO_BUCKET).upload(path, prep.body, { contentType: prep.type });
+      if (up.error) { PHOTO_ERR = "Photo non envoyée (" + (up.error.message || "erreur inconnue") + "). Vérifie que le bucket « photos » existe dans Supabase et que ses droits l’autorisent."; toast("Photo non envoyée"); break; }
       const row = { path }; row[kind === "dossier" ? "dossier_id" : "device_id"] = id;
       const ins = await SB.from("photos").insert(row);
-      if (ins.error) { toast("Photo : " + msgErr(ins.error)); break; }
+      if (ins.error) { PHOTO_ERR = "Photo envoyée mais non enregistrée (" + (ins.error.message || "erreur inconnue") + "). Vérifie la table « photos » et ses droits."; toast("Photo non enregistrée"); break; }
     }
     await reloadPhotos();
   }
@@ -2578,10 +2614,11 @@ function refreshPhotos(kind, id){
   if (kind === "device" && $("galerie") && $("galerie").style.display === "flex") openGalerie(kind, id);
   else render();
 }
-function photosBloc(kind, id){
-  const list = photosFor(kind, id);
-  return '<div class="gal-grid">' + list.map(p => '<a href="' + esc(photoUrl(p)) + '" target="_blank" rel="noopener"><img src="' + esc(photoUrl(p)) + '" alt="Photo"></a>').join("")
+function photosBloc(kind, id, extra){
+  const list = photosFor(kind, id).concat(extra || []);
+  return '<div class="gal-grid">' + list.map(p => '<a href="#" onclick="openImg(\'' + esc(photoUrl(p)) + '\');return false"><img src="' + esc(photoUrl(p)) + '" alt="Photo"></a>').join("")
     + '</div>' + (list.length ? "" : '<p class="m">Aucune photo pour le moment.</p>')
+    + (PHOTO_ERR ? '<div class="err">' + esc(PHOTO_ERR) + '</div>' : '')
     + (ROLE === "rep" ? '<label style="margin-top:8px">Ajouter des photos</label><input type="file" accept="image/*" multiple onchange="addPhotos(\'' + kind + '\',\'' + id + '\',this)">' : "");
 }
 function openGalerie(kind, id){
@@ -2595,13 +2632,27 @@ function openGalerie(kind, id){
   const list = photosFor(kind, id);
   o.innerHTML = '<div class="copy-card" style="width:min(760px,100%);max-height:90vh;overflow:auto">'
     + '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div class="t">Photos' + (d ? " · " + esc(d.modele || d.type) : "") + '</div><button class="chip" onclick="closeGalerie()">Fermer</button></div>'
-    + '<div class="gal-grid">' + list.map(p => '<div class="gal-item"><a href="' + esc(photoUrl(p)) + '" target="_blank" rel="noopener"><img src="' + esc(photoUrl(p)) + '" alt="Photo"></a>'
+    + '<div class="gal-grid">' + list.map(p => '<div class="gal-item"><a href="#" onclick="openImg(\'' + esc(photoUrl(p)) + '\');return false"><img src="' + esc(photoUrl(p)) + '" alt="Photo"></a>'
       + (ROLE === "rep" ? '<button class="chip late" onclick="delPhoto(\'' + p.id + '\',\'' + kind + '\',\'' + id + '\')">Supprimer</button>' : '') + '</div>').join("") + '</div>'
     + (list.length ? "" : '<p class="m">Aucune photo pour cet appareil.</p>')
+    + (PHOTO_ERR ? '<div class="err">' + esc(PHOTO_ERR) + '</div>' : '')
     + (ROLE === "rep" ? '<label style="margin-top:12px">Ajouter des photos</label><input type="file" accept="image/*" multiple onchange="addPhotos(\'' + kind + '\',\'' + id + '\',this)">' : "")
     + '</div>';
   o.style.display = "flex";
 }
+function openImg(url){
+  let o = $("imgPop");
+  if (!o) {
+    o = document.createElement("div"); o.id = "imgPop"; o.className = "copy-box";
+    o.onclick = e => { if (e.target === o) closeImg(); };
+    document.body.appendChild(o);
+  }
+  o.innerHTML = '<div class="copy-card" style="width:min(900px,100%);max-height:92vh;overflow:auto;text-align:center">'
+    + '<div style="display:flex;justify-content:flex-end"><button class="chip" onclick="closeImg()">Fermer</button></div>'
+    + '<img src="' + esc(url) + '" alt="Photo" style="max-width:100%;height:auto;border-radius:8px"></div>';
+  o.style.display = "flex";
+}
+function closeImg(){ const o = $("imgPop"); if (o) o.style.display = "none"; }
 function closeGalerie(){ const o = $("galerie"); if (o) o.style.display = "none"; }
 // Les manettes de jeu ne sont pas éligibles au label Qualirépar (conditions générales)
 function estManette(d){
@@ -2610,8 +2661,9 @@ function estManette(d){
 }
 function qualireparHtml(){
   const ds = S.dossiers.filter(d => !estManette(d));
+  const photosDev = d => d.device_id ? photosFor("device", d.device_id) : [];
   return '<h1>Qualirépar</h1><p class="m">Photos des réparations éligibles. Les manettes de jeu ne sont pas éligibles au label et n’apparaissent pas ici.</p>'
-    + (ds.length ? ds.map(d => '<div class="card"><div class="t">' + esc(d.appareil) + ' · ' + esc(d.panne || "") + '</div><div class="m">' + esc(d.statut || "") + ' · ' + photosFor("dossier", d.id).length + ' photo(s)</div>' + photosBloc("dossier", d.id) + '</div>').join("") : '<p class="m">Aucune réparation.</p>');
+    + (ds.length ? ds.map(d => '<div class="card"><div class="t">' + esc(d.appareil) + ' · ' + esc(d.panne || "") + '</div><div class="m">' + esc(d.statut || "") + ' · ' + (photosFor("dossier", d.id).length + photosDev(d).length) + ' photo(s)</div>' + photosBloc("dossier", d.id, photosDev(d)) + '</div>').join("") : '<p class="m">Aucune réparation.</p>');
 }
 function detailView(){
   const d = S.dossiers.find(x => x.id === DOSSIER);
