@@ -93,9 +93,7 @@ body.lg .dash-page > h2:first-of-type{margin-top:6px}
 .dash-list .empty{color:var(--mut)}
 @media (min-width:900px){ .dash-grid{grid-template-columns:repeat(5,minmax(0,1fr))} }
 @media (min-width:900px){ body.lg nav button.nav-copy{margin-top:16px;border:1px dashed #b9c9bf;color:var(--brand);background:#fff} }
-@media (max-width:899px){ nav button.nav-copy,nav button.nav-logout,nav button.nav-style{display:none} }
-nav button.nav-style{display:none}
-@media (min-width:900px){ body.lg nav button.nav-style{display:block;margin-top:8px;border:1px solid #d9e1dc;color:var(--brand);background:#fff} body.lg.rep-nav .style-btn{display:none} }
+@media (max-width:899px){ nav button.nav-copy,nav button.nav-logout{display:none} }
 .vue-client{border:1px dashed #cdd8d1;border-radius:16px;padding:12px;margin:8px 0 6px;background:rgba(255,255,255,.5)}
 .vue-note{font-size:13px;color:var(--mut);margin:6px 0 0}
 @media (min-width:900px){ body.lg .hdr-logout{display:none} body.lg nav button.nav-logout{margin-top:auto;color:var(--mut)} }
@@ -130,10 +128,6 @@ nav button.nav-style{display:none}
   .card-grid > .card{margin:0;padding:12px 14px;height:100%}
 }
 
-/* ---------- Bouton de style (toujours visible) ---------- */
-.style-btn{position:fixed;right:14px;bottom:76px;z-index:6;border:0;border-radius:99px;padding:8px 13px;font:600 13px/1 system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--brand);color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.2);cursor:pointer}
-.style-btn:hover{transform:translateY(-1px)}
-
 /* ---------- Logo d'en-tête ---------- */
 .logo-h{display:block;width:180px;height:auto;flex:none}
 /* ---------- Nouveau style : épuré, clair (body.lg) ---------- */
@@ -154,7 +148,6 @@ body.lg .modal{background:rgba(23,38,31,.32);-webkit-backdrop-filter:blur(4px);b
 body.lg .modal .card{background:#fff;backdrop-filter:none;-webkit-backdrop-filter:none}
 body.lg .fb-panel{background:#fff;border:1px solid #e3e9e5;border-radius:14px;box-shadow:0 12px 32px rgba(23,38,31,.14);-webkit-backdrop-filter:none;backdrop-filter:none}
 body.lg .toast,body.lg .flash{background:#17261f;border-radius:10px;-webkit-backdrop-filter:none;backdrop-filter:none}
-body.lg .style-btn{background:#fff;color:var(--brand);border:1px solid #d9e1dc;border-radius:10px;padding:8px 12px;box-shadow:0 2px 8px rgba(23,38,31,.08);-webkit-backdrop-filter:none;backdrop-filter:none}
 /* Navigation : barre flottante claire sur téléphone */
 body.lg nav{left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));top:auto;width:auto;max-width:none;transform:none;padding:4px;border:1px solid #e3e9e5;border-radius:16px;background:rgba(255,255,255,.94);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:0 8px 24px rgba(23,38,31,.10);overflow-x:auto;scrollbar-width:none}
 body.lg nav::-webkit-scrollbar{display:none}
@@ -173,7 +166,6 @@ body.lg .app{padding-bottom:110px}
   body.lg .fb-wrap,body.lg .fb-panel{left:256px}
   body.lg .fb-wrap.edge{left:232px}
   body.lg .fb-wrap.rep{bottom:14px}
-  body.lg .style-btn{bottom:18px;right:18px}
 }
 /* ---------- Bouton d'affichage de la navigation ---------- */
 .sb-toggle{display:none;position:fixed;left:12px;top:12px;z-index:7;width:34px;height:34px;align-items:center;justify-content:center;padding:0;border:1px solid #e6e1d6;border-radius:8px;background:#fff;color:#4f544b;cursor:pointer}
@@ -194,10 +186,10 @@ body.lg .app{padding-bottom:110px}
 @media (min-width:900px){ body.lg nav::-webkit-scrollbar{display:block;width:6px} body.lg nav::-webkit-scrollbar-thumb{background:#c9d6cf;border-radius:3px} body.lg nav{scrollbar-width:thin} }
 /* Connexion : une seule mise en page à toute taille. La photo se coupe par la gauche ; le formulaire garde sa taille. */
 body.lg:has(.lg-login),body:has(.lg-login){background:#FAF8F3}
-body:has(.lg-login) .style-btn{display:none !important}
 body .app:has(.lg-login),body.lg .app:has(.lg-login){max-width:none;margin:0;padding:0;width:100%;min-height:100vh}
 .lg-login{display:grid;grid-template-columns:minmax(0,min(50%,max(0px,calc(100vw - 496px))))minmax(0,1fr);grid-template-rows:84px auto;min-height:100vh;font-family:Inter,system-ui,sans-serif;color:#1F2A24}
 .lg-login.is-login .req,.lg-mobonly{display:none !important}
+@media (max-width:899px){ label.lg-mobonly{display:flex !important} }
 .lg-head{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding:0 32px;border-bottom:1px solid #E6E1D6;background:#FAF8F3;position:sticky;top:0;z-index:5}
 .lg-logo{display:block;height:56px;width:auto;max-width:none;margin:0}
 .lg-back{display:inline-block;font-size:14px;font-weight:600;color:#1F2A24;text-decoration:none;border:1px solid #DCD7CB;border-radius:999px;padding:9px 16px;background:#fff;white-space:nowrap}
@@ -275,7 +267,6 @@ body .app:has(.cl-desk),body.lg .app:has(.cl-desk){max-width:none !important;mar
 .cl-stat{background:#FFFFFF;border:1px solid #E6E1D6;color:#5B6660;text-decoration:none;font-size:14px;justify-content:space-between;min-width:0}
 .cl-num{font-size:32px;font-weight:600;color:#1F2A24}
 .cl-sections{max-width:760px;margin-top:40px}
-body:has(.cl-desk) .style-btn{display:none !important}
 /* Espace client : pas de barre latérale (la navigation est réservée au réparateur) */
 body:not(.rep-nav) .sb-toggle{display:none !important}
 body:not(.rep-nav).lg .app{margin-left:auto !important;margin-right:auto !important}
@@ -302,13 +293,12 @@ body:not(.rep-nav).lg .app{margin-left:auto !important;margin-right:auto !import
 .cl-sec{margin:32px 0 12px;font-size:22px;font-weight:600;color:#1F2A24;scroll-margin-top:24px}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600&display=swap" rel="stylesheet"></head>
-<body>
+<body class="lg">
 <div class="app" id="app"></div>
 <nav id="nav" class="hide"></nav>
 <div id="modal" class="modal hide"></div>
 <div id="fbWrap" class="fb-wrap"></div>
 <div id="notifWrap" class="notif-wrap"></div>
-<button id="styleBtn" class="style-btn" onclick="toggleStyle()">✨ Nouveau style</button>
 <button id="sbToggle" class="sb-toggle" title="Afficher ou masquer la navigation (Ctrl+B)" aria-label="Afficher ou masquer la navigation" onclick="toggleSidebar()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><line x1="9" y1="4" x2="9" y2="20"/></svg></button>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -554,24 +544,9 @@ document.addEventListener("keydown", e => {
   if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === "b") { e.preventDefault(); toggleSidebar(); }
 });
 
-/* ---------- Choix du style (mémorisé sur cet appareil) ---------- */
-function applyStyle(){
-  let lg = false;
-  try { lg = localStorage.getItem("sv_style") === "lg"; } catch(e) {}
-  document.body.classList.toggle("lg", lg);
-  const b = $("styleBtn");
-  if (b) b.textContent = lg ? "↩ Style actuel" : "✨ Nouveau style";
-}
-function toggleStyle(){
-  const lg = !document.body.classList.contains("lg");
-  try { localStorage.setItem("sv_style", lg ? "lg" : "std"); } catch(e) {}
-  applyStyle();
-}
-
 /* ---------- Affichage ---------- */
 function render(){
   const app = $("app"), nav = $("nav");
-  applyStyle();
   applySidebar();
   document.body.classList.toggle("rep-nav", ROLE === "rep" && !!ME);
   saveNav();
@@ -579,7 +554,7 @@ function render(){
   if (!ME) { nav.classList.add("hide"); $("fbWrap").innerHTML = ""; $("notifWrap").innerHTML = ""; closeNotifPanel(); app.innerHTML = loginView(); return; }
   if (ROLE === "rep") {
     nav.classList.remove("hide");
-    nav.innerHTML = REP_NAV.map(([v,l]) => `<button class="${VIEW===v?"on":""}" onclick="go('${v}')">${l}</button>`).join("") + '<button class="nav-copy" title="Copie les suggestions ajoutées depuis la dernière copie" onclick="copierNouvellesSuggestions()">Copier le récap</button><button class="nav-style" onclick="toggleStyle()">↩ Style actuel</button><button class="nav-logout" onclick="logout()">Déconnexion</button>';
+    nav.innerHTML = REP_NAV.map(([v,l]) => `<button class="${VIEW===v?"on":""}" onclick="go('${v}')">${l}</button>`).join("") + '<button class="nav-copy" title="Copie les suggestions ajoutées depuis la dernière copie" onclick="copierNouvellesSuggestions()">Copier le récap</button><button class="nav-logout" onclick="logout()">Déconnexion</button>';
     app.innerHTML = '<div class="row" style="align-items:center;margin:4px 0 8px"><img class="logo-h" src="' + LOGO_SRC + '" alt="Seconde Vie"><button class="btn small ghost hdr-logout" onclick="logout()">Déconnexion</button></div>' + (DOSSIER ? detailView() : REP[VIEW]());
     if (VIEW === "stock" && !DOSSIER) { mpDraw("n"); mpDraw("a"); }
     if (VIEW === "newvente") mpDraw("v");
