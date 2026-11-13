@@ -918,7 +918,7 @@ function repArchCard(d){
     + '<div class="row" style="margin-top:8px"><span>' + payeTxt + '</span><span class="m">Finalisé le ' + (repFin(d) ? fr(repFin(d)) : "—") + '</span></div>'
     + '<div style="margin-top:6px">' + gar + '</div></div>';
 }
-function repsPage(){
+function repsEspaceHtml(){
   const st = REP_STATE;
   const list = repList();
   const opt = (v, t, cur) => '<option value="' + esc(v) + '"' + (cur === v ? " selected" : "") + '>' + esc(t) + '</option>';
@@ -942,12 +942,16 @@ function repsPage(){
   const corps = list.length
     ? '<div class="card-grid">' + list.map(d => st.arch ? repArchCard(d) : dossierCard(d)).join("") + '</div>'
     : '<p class="m">Aucun élément pour ces filtres.</p>';
+  return filtres + corps;
+}
+function repsPage(){
   return '<div style="margin:4px 0 10px"><button class="btn small ghost" onclick="go(\'dashboard\')">← Tableau de bord</button></div>'
-    + '<h1>' + (st.arch ? "Archives des réparations" : "Réparations en cours") + ' <span class="m" style="font-size:16px">· ' + list.length + '</span></h1>'
-    + filtres + corps;
+    + '<h1>' + (REP_STATE.arch ? "Archives des réparations" : "Réparations en cours") + ' <span class="m" style="font-size:16px">· ' + repList().length + '</span></h1>'
+    + repsEspaceHtml();
 }
 function dashPageView(){
   if (DASH_PAGE === "act") return repsPage();
+  if (DASH_PAGE === "vente") return ventesPageDash();
   if (DASH_PAGE === "depenses") return depensesPage();
   const D = dashData();
   const byEch = (x, y) => (x.echeance || "9999") < (y.echeance || "9999") ? -1 : (x.echeance || "9999") > (y.echeance || "9999") ? 1 : 0;
@@ -1049,7 +1053,7 @@ const REP = {
               {all: "Tous les statuts", opts: STEPS.filter(x => x !== "Remis").map(x => [x, x]), cur: DOSS_F.statut, js: "DOSS_F.statut=this.value;render()"},
               {all: "Tous les appareils", opts: repApps, cur: DOSS_F.app, js: "DOSS_F.app=this.value;render()"},
               archFiltre()
-            ]) + (list.length ? '<div class="card-grid">' + list.map(d => dossierCard(d)).join("") + '</div>' : '<p class="m">Aucune réparation pour le moment.</p>');
+            ]) + (list.length ? '<div class="card-grid">' + list.map(d => dossierCard(d)).join("") + '</div>' : '<p class="m">Aucune réparation pour le moment.</p>') + '<h2>Recherche et archives</h2>' + repsEspaceHtml();
     return `<h1>Réparations et ventes</h1>` + piecesHtml + achatHtml + appResHtml() + tabs + body;
   },
   newvente(){
@@ -1753,23 +1757,32 @@ function venteCard(v){
     + (v.probleme ? '<button class="chip ok" onclick="setProbleme(\'' + v.id + '\',false)">Problème résolu</button> ' : '')
     + '</span></div></div>';
 }
-function ventesHtml(){
+function ventesEspaceHtml(){
+  const cmpDate = (a, b) => (String(a.date_rdv) + String(a.heure_rdv || "")).localeCompare(String(b.date_rdv) + String(b.heure_rdv || ""));
   const cmpV = {
-    appareil: (a, b) => venteTitre(a).localeCompare(venteTitre(b))
-  }[SORT_VENTE] || ((a, b) => (String(a.date_rdv) + String(a.heure_rdv || "")).localeCompare(String(b.date_rdv) + String(b.heure_rdv || "")));
+    appareil: (a, b) => venteTitre(a).localeCompare(venteTitre(b)),
+    type: (a, b) => (a.envoi ? 1 : 0) - (b.envoi ? 1 : 0) || cmpDate(a, b)
+  }[SORT_VENTE] || cmpDate;
   const baseV = (S.ventes || []).filter(v => ARCH_F ? v.archivee : !v.archivee);
   const venteApps = [...new Set(baseV.flatMap(v => venteLignes(v).map(l => l.appareil)).filter(Boolean))].sort().map(x => [x, x]);
   const list = baseV
     .filter(v => !VENTE_F.kind || (VENTE_F.kind === "envoi" ? !!v.envoi : !v.envoi))
     .filter(v => !VENTE_F.app || venteLignes(v).some(l => l.appareil === VENTE_F.app))
     .sort((a, b) => (b.probleme ? 1 : 0) - (a.probleme ? 1 : 0) || cmpV(a, b));
-  const ed = VENTE_EDIT ? (S.ventes || []).find(v => v.id === VENTE_EDIT) : null;
-  const form = VENTE_OPEN ? ventesFormHtml(ed || null) : "";
-  return `<h2>Ventes</h2><button class="btn ghost small" onclick="go('newvente')">+ Nouvelle vente</button>${form}${sortSelect(SORT_VENTE, [["date", "Date RDV"], ["appareil", "Appareil"]], "setSortVente")}${filtersRow([
+  return sortSelect(SORT_VENTE, [["date", "Date RDV"], ["appareil", "Appareil"], ["type", "Type de rendez-vous"]], "setSortVente") + filtersRow([
     {all: "Tous les types", opts: [["rdv", "Rendez-vous"], ["envoi", "Envoi"]], cur: VENTE_F.kind, js: "VENTE_F.kind=this.value;render()"},
     {all: "Tous les appareils", opts: venteApps, cur: VENTE_F.app, js: "VENTE_F.app=this.value;render()"},
     archFiltre()
-  ])}<div class="card-grid">${list.map(venteCard).join("")}</div>`;
+  ]) + '<div class="card-grid">' + list.map(venteCard).join("") + '</div>';
+}
+function ventesHtml(){
+  const ed = VENTE_EDIT ? (S.ventes || []).find(v => v.id === VENTE_EDIT) : null;
+  const form = VENTE_OPEN ? ventesFormHtml(ed || null) : "";
+  return '<h2>Ventes</h2><button class="btn ghost small" onclick="go(\'newvente\')">+ Nouvelle vente</button>' + form + ventesEspaceHtml();
+}
+function ventesPageDash(){
+  return '<div style="margin:4px 0 10px"><button class="btn small ghost" onclick="go(\'dashboard\')">← Tableau de bord</button></div>'
+    + '<h1>Ventes</h1><button class="btn ghost small" onclick="go(\'newvente\')">+ Nouvelle vente</button>' + ventesEspaceHtml();
 }
 function editVente(id){
   const v = (S.ventes || []).find(x => x.id === id); if (!v) return;
