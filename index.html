@@ -329,7 +329,7 @@ function left(d){ if(!d) return null; const e = new Date(d + "T00:00"), t = new 
 function jours(n){ return n == null ? "" : n < 0 ? "Délai dépassé" : n == 0 ? "aujourd’hui" : n + (n > 1 ? " jours restants" : " jour restant"); }
 function pcs(id){ return S.pieces.filter(p => p.dossier_id === id); }
 
-let S = {dossiers:[], pieces:[], clients:[], stock:[], inv:[], devices:[], catalogue:[], sav:[], feedback:[], ventes:[], stockApp:[], depenses:[]};
+let S = {dossiers:[], pieces:[], clients:[], stock:[], inv:[], devices:[], catalogue:[], sav:[], feedback:[], ventes:[], stockApp:[], depenses:[], appBase:[]};
 let ME = null, ROLE = null, VIEW = "dossiers", DOSSIER = null, CM = "login", RECOVERY = RECOVERY_LINK;
 
 function toast(msg){
@@ -370,6 +370,7 @@ async function loadAll(){
   if (ROLE === "rep") { const cg = await SB.from("catalogue").select("*"); S.catalogue = cg.data || []; if (cg.error) toast("Catalogue : " + msgErr(cg.error)); }
   const vt = await SB.from("ventes").select("*");
   if (vt.error) { S.ventes = []; if (ROLE === "rep") toast("Ventes : " + msgErr(vt.error)); } else S.ventes = vt.data || [];
+  if (ROLE === "rep") { const ab = await SB.from("appareils_base").select("*"); S.appBaseErr = !!ab.error; S.appBase = ab.error ? [] : (ab.data || []); }
   if (ROLE === "rep") { const sa = await SB.from("stock_appareils").select("*").order("nom"); if (sa.error) toast("Appareils à vendre : " + msgErr(sa.error)); else S.stockApp = sa.data || []; }
   const sv = await SB.from("sav").select("*").order("created_at", {ascending:false});
   if (sv.error) toast("SAV : " + msgErr(sv.error)); else S.sav = sv.data || [];
@@ -1088,7 +1089,7 @@ const REP = {
     const recap = AVIS_RECAP ? `<div class="card"><div class="t" style="margin-bottom:6px">Récap</div>
       <textarea id="recapTxt" readonly style="min-height:200px;white-space:pre">${esc(recapText(actAdmin))}</textarea>
       <button class="btn small" onclick="copyRecap()">Copier</button></div>` : "";
-    return `<h1>Suggestions &amp; Bugs</h1><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:8px"><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="chip" onclick="toggleRecap()">${AVIS_RECAP ? 'Fermer le récap' : 'Récap'}</button><button class="chip" onclick="copyRecapNow()">Copier le récap</button>${actAdmin.length ? '<button class="chip" onclick="archiveRecentes()">Archiver les récentes</button><button class="chip" onclick="archiveAll()">Tout archiver</button>' : ''}</div><span style="font-weight:600;white-space:nowrap">${act.length} suggestion${act.length > 1 ? "s" : ""}</span></div>` + recap
+    return `<h1>Suggestions &amp; Bugs</h1><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:8px"><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="chip" onclick="toggleRecap()">${AVIS_RECAP ? 'Fermer le récap' : 'Récap'}</button><button class="chip" onclick="copyRecapNow()">Copier le récap</button>${actAdmin.length ? '<button class="chip" onclick="archiveAll()">Tout archiver</button>' : ''}</div><span style="font-weight:600;white-space:nowrap">${act.length} suggestion${act.length > 1 ? "s" : ""}</span></div>` + recap
       + (act.map(card).join("") || '<p class="m">Aucune suggestion pour le moment.</p>')
       + (arch.length ? `<button class="btn ghost small" style="margin-top:8px" onclick="toggleArch()">${AVIS_ARCH ? 'Masquer les archives' : 'Afficher les archives (' + arch.length + ')'}</button>` + (AVIS_ARCH ? arch.map(card).join("") : "") : "");
   },
@@ -1494,21 +1495,6 @@ async function archiveAll(){
   const { error } = await SB.from("feedback").update({archive: true, resolu: true}).eq("archive", false).eq("auteur", "admin");
   if (error) { toast(msgErr(error)); return; }
   await go("avis");
-}
-async function archiveRecentes(){
-  let last = null;
-  try { last = localStorage.getItem("sv_avis_copie"); } catch(e) {}
-  const seuil = last ? new Date(last) : null;
-  const ids = (S.feedback || []).filter(x => !x.archive && fbAdmin(x) && (!seuil || new Date(x.created_at) > seuil)).map(x => x.id);
-  if (!ids.length) { flash("Aucune suggestion récente à archiver"); return; }
-  if (!confirm("Archiver " + ids.length + " suggestion(s) récente(s) ?")) return;
-  if (DEMO) { S.feedback = S.feedback.map(x => ids.includes(x.id) ? Object.assign({}, x, {archive: true, resolu: true}) : x); return render(); }
-  for (const id of ids) {
-    const { error } = await SB.from("feedback").update({archive: true, resolu: true}).eq("id", id);
-    if (error) { toast(msgErr(error)); return; }
-  }
-  flash("Suggestions récentes archivées");
-  await reload();
 }
 async function copyRecap(){
   const t = $("recapTxt");
@@ -2161,34 +2147,119 @@ function cliSet(k, v){
   $("cliL").innerHTML = cliHtml(nz($("cliQ").value));
 }
 
-/* ---- Onglet Appareils (tous les clients) ---- */
-var AP_F = {q: "", type: ""};
-function apCliName(id){ const c = S.clients.find(x => x.id === id); return c ? fullName(c) : "Client supprimé"; }
-function apListe(){
-  const q = nz(AP_F.q);
-  const list = S.devices.filter(d => (!AP_F.type || d.type === AP_F.type)
-      && (!q || [apCliName(d.client_id), d.modele, d.couleur, d.imei, d.sn, d.type].some(v => nz(v).indexOf(q) > -1)))
-    .sort((a, b) => (apCliName(a.client_id) + " " + (a.modele || "")).localeCompare(apCliName(b.client_id) + " " + (b.modele || ""), "fr"));
-  return list.map(d => '<div class="m" style="margin-top:10px;font-weight:600">Client : ' + esc(apCliName(d.client_id)) + '</div>' + devLine(d, true)).join("")
-    || '<p class="m">' + (S.devices.length ? 'Aucun appareil ne correspond.' : 'Aucun appareil enregistré.') + '</p>';
+/* ---- Appareils : base générale (type · marque · modèle), pour classer les pièces ---- */
+var AB_F = {q: "", type: ""}, AB_EDIT = null;
+var AB_TYPES = ["Téléphone", "Console", "Manette", "Enceinte", "PC portable", "Autre"];
+function abNorm(v){ return nz(v).replace(/\s+/g, " ").trim(); }
+function abKey(x){ return abNorm(x.type) + "|" + abNorm(x.marque) + "|" + abNorm(x.modele); }
+function abGuessMarque(type, modele){
+  const m = nz(modele);
+  if (type === "Téléphone") return /iphone|ipad/.test(m) ? "Apple" : /galaxy|samsung/.test(m) ? "Samsung" : /redmi|xiaomi|poco|\bmi\b/.test(m) ? "Xiaomi" : "Autre";
+  if (type === "Console" || type === "Manette") return /ps\d|playstation|dualshock|dualsense/.test(m) ? "PlayStation" : /switch|nintendo|\b[23]?ds|dsi|3ds|wii|joy|gamepad/.test(m) ? "Nintendo" : /xbox|series|one|360/.test(m) ? "XBOX" : "Autre";
+  if (type === "PC portable") return /macbook|apple/.test(m) ? "Apple" : /\bhp\b|pavilion|elitebook/.test(m) ? "HP" : /dell|latitude|xps/.test(m) ? "Dell" : /lenovo|thinkpad|ideapad/.test(m) ? "Lenovo" : /asus/.test(m) ? "Asus" : "Autre";
+  return "Autre";
 }
-function apRefresh(){ $("apL").innerHTML = apListe(); }
-function apSet(k, v){ AP_F[k] = v; apRefresh(); }
-function apPickCli(cid){ if (!cid) { $("devForm").innerHTML = ""; return; } showDevForm(null, cid); }
+/* Appareils déjà présents ailleurs : pièces, appareils des clients, catalogue */
+function abCandidats(){
+  const out = [];
+  const add = (type, marque, modele) => { modele = String(modele || "").trim(); if (!type || !modele) return; out.push({type: type, marque: marque || abGuessMarque(type, modele), modele: modele}); };
+  S.devices.forEach(d => add(d.type, null, d.modele));
+  S.stock.forEach(s => {
+    const mods = Array.isArray(s.modeles) && s.modeles.length ? s.modeles : String(s.modele || "").split(", ");
+    mods.forEach(m => {
+      const p = String(m).split(" · ");
+      if (p.length >= 3) add(p[0], p[1], p.slice(2).join(" · "));
+      else add(s.type || "Console", null, m);
+    });
+  });
+  S.catalogue.forEach(r => { if (r.appareil === "Mods") add(r.cible, r.categorie, r.modele); else add(r.appareil, r.categorie, r.modele); });
+  const seen = new Set(), res = [];
+  out.forEach(x => { const k = abKey(x); if (!seen.has(k)) { seen.add(k); res.push(x); } });
+  return res;
+}
+function abNouveaux(){
+  const have = new Set((S.appBase || []).map(abKey));
+  return abCandidats().filter(x => !have.has(abKey(x)));
+}
+function abImportHtml(){
+  const n = abNouveaux().length;
+  if (!n) return "";
+  return '<div class="card" style="margin:8px 0"><div class="t">' + n + ' appareil' + (n > 1 ? 's' : '') + ' à ajouter à la base</div>'
+    + '<div class="m">Ce sont les appareils déjà utilisés dans les pièces, les fiches clients ou le catalogue.</div>'
+    + '<button class="btn" onclick="abImporter()">Importer ces ' + n + ' appareil' + (n > 1 ? 's' : '') + '</button></div>';
+}
+async function abImporter(){
+  const rows = abNouveaux().map(x => ({type: x.type, marque: x.marque || null, modele: x.modele}));
+  if (!rows.length) return toast("Rien à importer : tout est déjà dans la base.");
+  const { error } = await SB.from("appareils_base").insert(rows);
+  if (error) { toast(msgErr(error)); return; }
+  toast(rows.length + " appareil(s) importé(s)");
+  await reload();
+}
+async function abAjouter(){
+  const err = $("abErr"); err.textContent = "";
+  const type = $("abT").value, marque = $("abM").value.trim(), modele = $("abMo").value.trim();
+  if (!modele) { err.textContent = "Le modèle est obligatoire."; return; }
+  if ((S.appBase || []).some(x => abKey(x) === abKey({type: type, marque: marque, modele: modele}))) { err.textContent = "Cet appareil est déjà dans la base."; return; }
+  const { error } = await SB.from("appareils_base").insert({type: type, marque: marque || null, modele: modele});
+  if (error) { err.textContent = msgErr(error); return; }
+  toast("Appareil ajouté à la base");
+  await reload();
+}
+function abEdit(id){ AB_EDIT = id; render(); }
+function abCancel(){ AB_EDIT = null; render(); }
+async function abSauver(id){
+  const type = $("abET").value, marque = $("abEMa").value.trim(), modele = $("abEM").value.trim();
+  if (!modele) { toast("Le modèle est obligatoire."); return; }
+  const { error } = await SB.from("appareils_base").update({type: type, marque: marque || null, modele: modele}).eq("id", id);
+  if (error) { toast(msgErr(error)); return; }
+  AB_EDIT = null; toast("Appareil modifié");
+  await reload();
+}
+async function abSupprimer(id){
+  if (!confirm("Retirer cet appareil de la base ? Les pièces déjà classées gardent leur modèle.")) return;
+  const { error } = await SB.from("appareils_base").delete().eq("id", id);
+  if (error) { toast(msgErr(error)); return; }
+  toast("Appareil retiré");
+  await reload();
+}
+function abLigne(x){
+  if (AB_EDIT === x.id) return '<div class="card" style="margin:4px 0"><div class="two"><div><label>Type</label><select id="abET">'
+    + AB_TYPES.map(t => '<option' + (t === x.type ? ' selected' : '') + '>' + t + '</option>').join("")
+    + '</select></div><div><label>Marque</label><input id="abEMa" value="' + esc(x.marque || "") + '"></div></div>'
+    + '<label>Modèle *</label><input id="abEM" value="' + esc(x.modele) + '">'
+    + '<div style="display:flex;gap:6px;margin-top:6px"><button class="chip ok" onclick="abSauver(\'' + x.id + '\')">Enregistrer</button><button class="chip" onclick="abCancel()">Annuler</button></div></div>';
+  return '<div class="row" style="align-items:center;padding:6px 0;border-bottom:1px solid rgba(128,128,128,.25)"><span>' + esc(x.modele) + '</span>'
+    + '<div style="display:flex;gap:6px"><button class="chip" onclick="abEdit(\'' + x.id + '\')">Modifier</button><button class="chip late" onclick="abSupprimer(\'' + x.id + '\')">Retirer</button></div></div>';
+}
+function abListe(){
+  const q = abNorm(AB_F.q);
+  const list = (S.appBase || []).filter(x => (!AB_F.type || x.type === AB_F.type) && (!q || [x.type, x.marque, x.modele].some(v => abNorm(v).indexOf(q) > -1)))
+    .sort((a, b) => abNorm(a.type).localeCompare(abNorm(b.type), "fr") || abNorm(a.marque).localeCompare(abNorm(b.marque), "fr") || abNorm(a.modele).localeCompare(abNorm(b.modele), "fr"));
+  let h = "", lastT = null, lastM = null;
+  list.forEach(x => {
+    if (x.type !== lastT) { h += '<div class="t" style="margin:14px 0 2px">' + esc(x.type) + '</div>'; lastT = x.type; lastM = null; }
+    const marque = x.marque || "Sans marque";
+    if (marque !== lastM) { h += '<div class="m" style="font-weight:600;margin-top:6px">' + esc(marque) + '</div>'; lastM = marque; }
+    h += abLigne(x);
+  });
+  return h || '<p class="m">' + ((S.appBase || []).length ? 'Aucun appareil ne correspond.' : 'La base est vide pour le moment.') + '</p>';
+}
+function abRefresh(){ $("abL").innerHTML = abListe(); }
 function appareilsHtml(){
-  const clis = S.clients.filter(c => !c.deleted_at).slice().sort((a, b) => fullName(a).localeCompare(fullName(b), "fr"));
-  const types = ["Téléphone", "Console", "Manette", "Enceinte", "PC portable", "Autre"];
-  return `<h1>Appareils</h1>
-    <div class="row" style="gap:8px;align-items:center;flex-wrap:nowrap;margin-top:4px">
-      <button class="btn" title="Ajouter un appareil" aria-label="Ajouter un appareil" style="width:44px;height:44px;min-width:44px;margin:0;padding:0;font-size:24px;line-height:1" onclick="$('apAdd').classList.toggle('hide')">+</button>
-      <input id="apQ" placeholder="Rechercher (client, modèle, IMEI, série…)" value="${esc(AP_F.q)}" oninput="AP_F.q=this.value;apRefresh()" style="flex:1;min-width:0;margin:0">
-    </div>
-    <div id="apAdd" class="card hide">
-      <label>Client *</label><select id="apCli" onchange="apPickCli(this.value)"><option value="">- sélectionner un client -</option>${clis.map(c => '<option value="' + c.id + '">' + esc(fullName(c)) + '</option>').join("")}</select>
-      <div id="devForm"></div>
-    </div>
-    <div class="row" style="gap:6px;flex-wrap:wrap;margin:8px 0"><select onchange="apSet('type',this.value)">${selOpts([["", "Tous les types"]].concat(types.map(t => [t, t])), AP_F.type)}</select></div>
-    <div id="apL">${apListe()}</div>`;
+  const head = '<h1>Appareils</h1><p class="m">Base générale des appareils (type · marque · modèle). Elle sert à classer les pièces.</p>';
+  if (S.appBaseErr) return head + '<div class="card"><div class="t">Base non créée</div><div class="m">La table « appareils_base » n’existe pas encore dans la base de données. Elle doit être créée une fois (voir le message d’installation).</div></div>';
+  return head
+    + '<div class="row" style="gap:8px;align-items:center;flex-wrap:nowrap;margin-top:4px">'
+    + '<button class="btn" title="Ajouter un appareil à la base" aria-label="Ajouter un appareil à la base" style="width:44px;height:44px;min-width:44px;margin:0;padding:0;font-size:24px;line-height:1" onclick="$(\'abAdd\').classList.toggle(\'hide\')">+</button>'
+    + '<input id="abQ" placeholder="Rechercher (type, marque, modèle)" value="' + esc(AB_F.q) + '" oninput="AB_F.q=this.value;abRefresh()" style="flex:1;min-width:0;margin:0"></div>'
+    + '<div id="abAdd" class="card hide"><div class="two"><div><label>Type</label><select id="abT">' + AB_TYPES.map(t => '<option>' + t + '</option>').join("") + '</select></div>'
+    + '<div><label>Marque</label><input id="abM" placeholder="Ex. Nintendo"></div></div>'
+    + '<label>Modèle *</label><input id="abMo" placeholder="Ex. Switch OLED">'
+    + '<button class="btn" onclick="abAjouter()">Ajouter à la base</button><div class="err" id="abErr"></div></div>'
+    + abImportHtml()
+    + '<div class="row" style="gap:6px;flex-wrap:wrap;margin:8px 0"><select onchange="AB_F.type=this.value;abRefresh()">' + selOpts([["", "Tous les types"]].concat(AB_TYPES.map(t => [t, t])), AB_F.type) + '</select></div>'
+    + '<div id="abL">' + abListe() + '</div>';
 }
 function cliHtml(q){
   const list = S.clients.filter(c => (CLI_TRASH ? !!c.deleted_at : !c.deleted_at) && (!q || nz(fullName(c)).indexOf(q) > -1) && cliPasFiltre(c))
@@ -3380,7 +3451,7 @@ function demoSeed(){
   };
 }
 function makeDemoSB(){
-  const KEY = {pieces_dossier: "pieces", stock_appareils: "stockApp", invitations: "inv"};
+  const KEY = {pieces_dossier: "pieces", stock_appareils: "stockApp", invitations: "inv", appareils_base: "appBase"};
   const clone = x => JSON.parse(JSON.stringify(x));
   let seq = 0;
   const store = t => { const k = KEY[t] || t; if (!Array.isArray(S[k])) S[k] = []; return S[k]; };
@@ -3432,7 +3503,7 @@ function endDemo(){
 }
 /* ---------- Bases de données (administration) : lecture seule tant qu’on ne déverrouille pas ---------- */
 var DBA = {table: null, rows: null, edit: null, err: "", lock: true};
-const DBA_TABLES = [["clients","Clients"],["dossiers","Réparations"],["pieces_dossier","Pièces des réparations"],["devices","Appareils des clients"],["ventes","Ventes"],["stock","Stock (pièces)"],["stock_appareils","Appareils à vendre"],["catalogue","Catalogue"],["sav","SAV"],["idees","Idées"],["feedback","Suggestions & Bugs"],["depenses","Dépenses"]];
+const DBA_TABLES = [["clients","Clients"],["dossiers","Réparations"],["pieces_dossier","Pièces des réparations"],["devices","Appareils des clients"],["appareils_base","Appareils (base)"],["ventes","Ventes"],["stock","Stock (pièces)"],["stock_appareils","Appareils à vendre"],["catalogue","Catalogue"],["sav","SAV"],["idees","Idées"],["feedback","Suggestions & Bugs"],["depenses","Dépenses"]];
 const DBA_HIDE = ["id", "created_at"];
 function dbaHtml(){
   const opts = '<option value="">- Choisir une table -</option>' + DBA_TABLES.map(([k, l]) => '<option value="' + k + '"' + (DBA.table === k ? ' selected' : '') + '>' + esc(l) + ' (' + k + ')</option>').join("");
