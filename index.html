@@ -1044,17 +1044,6 @@ const REP = {
   dashboard: () => dashboardView(),
   dashpage: () => dashPageView(),
   dossiers(){
-    const cmpRep = {
-      ech: (a, b) => (a.echeance || "9999") < (b.echeance || "9999") ? -1 : (a.echeance || "9999") > (b.echeance || "9999") ? 1 : 0,
-      statut: (a, b) => STEPS.indexOf(a.statut) - STEPS.indexOf(b.statut),
-      appareil: (a, b) => ((a.appareil || "") + " " + (a.modele || "")).localeCompare((b.appareil || "") + " " + (b.modele || ""))
-    }[SORT_REP] || ((a, b) => 0);
-    const baseList = S.dossiers.filter(d => ARCH_F ? d.statut === "Remis" : d.statut !== "Remis");
-    const list = baseList
-      .filter(d => !DOSS_F.statut || d.statut === DOSS_F.statut)
-      .filter(d => !DOSS_F.app || d.appareil === DOSS_F.app)
-      .sort((a, b) => cmpRep(a, b) * SORT_DIR);
-    const repApps = [...new Set(baseList.map(d => d.appareil).filter(Boolean))].sort().map(x => [x, x]);
     const aCommander = S.pieces.filter(p => p.statut === "À commander"), enRoute = S.pieces.filter(p => p.statut === "Commandé");
     const lignes = arr => arr.map(p => '<div class="card" style="padding:8px 10px"><div class="t" style="font-size:14px">' + p.qte + ' × ' + esc(p.nom) + '</div></div>').join("");
     const piecesHtml = (aCommander.length ? '<h2 style="color:#c2410c">Pièces à commander</h2>' + lignes(aCommander) : "")
@@ -1063,7 +1052,7 @@ const REP = {
     const achatHtml = aAch.length ? '<h2 style="color:#7c3aed">Appareils à acheter</h2>' + aAch.map(x => '<div class="card" style="padding:8px 10px"><div class="t" style="font-size:14px">' + x.l.quantite + ' × ' + esc([x.l.appareil, x.l.categorie, x.l.modele, x.l.couleur].filter(Boolean).join(" · ")) + '</div><div class="m">' + esc(venteClient(x.v)) + '</div><div style="margin-top:6px"><button class="chip" onclick="acheterReserver(\'' + x.v.id + '\',' + x.i + ')">Réserver si en stock</button></div></div>').join("") : "";
     const savSec = (S.sav || []).length ? '<h2>SAV</h2>' + savTabHtml("rep") : "";
     const nVentes = (S.ventes || []).filter(v => !v.archivee).length;
-    const nRep = baseList.length;
+    const nRep = S.dossiers.filter(d => ARCH_F ? d.statut === "Remis" : d.statut !== "Remis").length;
     const badge = n => ' <span style="font-size:11px;font-weight:600;opacity:.8">' + n + '</span>';
     const tab = (k, label, n) => '<button class="chip ' + (DOSS_TAB === k ? "ok" : "") + '" style="flex:1;text-align:center;padding:8px" onclick="setDossTab(\'' + k + '\')">' + label + (n != null ? badge(n) : "") + '</button>';
     const tabs = '<div class="row" style="gap:6px;align-items:center;margin:8px 0 12px">' + tab("rep", "Réparations", nRep) + tab("ventes", "Ventes", nVentes) + tab("agenda", "Agenda") + '</div>';
@@ -1071,12 +1060,7 @@ const REP = {
       ? agendaBody()
       : DOSS_TAB === "ventes"
         ? ventesHtml()
-        : savSec + sortSelect(SORT_REP, [["ech", "Urgence (plus proche en premier)"], ["statut", "Avancement"], ["appareil", "Appareil"]], "setSortRep") + '<button class="chip" style="margin:-2px 0 8px" onclick="toggleSortDir()">' + (SORT_DIR === 1 ? "↑ Croissant" : "↓ Décroissant") + '</button>'
-          + filtersRow([
-              {all: "Tous les statuts", opts: STEPS.filter(x => x !== "Remis").map(x => [x, x]), cur: DOSS_F.statut, js: "DOSS_F.statut=this.value;render()"},
-              {all: "Tous les appareils", opts: repApps, cur: DOSS_F.app, js: "DOSS_F.app=this.value;render()"},
-              archFiltre()
-            ]) + (list.length ? '<div class="card-grid">' + list.map(d => dossierCard(d)).join("") + '</div>' : '<p class="m">Aucune réparation pour le moment.</p>') + '<h2>Recherche et archives</h2>' + repsEspaceHtml();
+        : savSec + '<h2>Recherche et archives</h2>' + repsEspaceHtml();
     return `<h1>Réparations et ventes</h1>` + piecesHtml + achatHtml + appResHtml() + tabs + body;
   },
   newvente(){
