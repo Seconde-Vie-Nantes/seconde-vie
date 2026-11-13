@@ -318,7 +318,7 @@ function pstOpts(p){
 const PUCES = [["Puce Switch V1","Switch V1"],["Puce Switch V2","Switch V2"],["Puce Switch Lite","Switch Lite"],["Puce Switch OLED","Switch OLED"]];
 // Clé API Google Maps (Places). Vide = pas d’autocomplétion, seul le bouton « Chercher sur Google Maps » reste.
 const GMAPS_KEY = "";
-const REP_NAV = [["accueil","Accueil"],["dashboard","Tableau de bord"],["dossiers","Réparations et ventes"],["qualirepar","Qualirépar"],["clients","Clients"],["vueclient","Vue client"],["new","Nouvelle prestation"],["newvente","Nouvelle vente"],["ventes","Ventes"],["avis","Suggestions & Bugs"],["stock","Stock"],["catalogue","Réparations & Mods"],["dbadmin","Bases de données"]];
+const REP_NAV = [["accueil","Accueil"],["dashboard","Tableau de bord"],["dossiers","Réparations et ventes"],["qualirepar","Qualirépar"],["clients","Clients"],["appareils","Appareils"],["vueclient","Vue client"],["new","Nouvelle prestation"],["newvente","Nouvelle vente"],["ventes","Ventes"],["avis","Suggestions & Bugs"],["stock","Stock"],["catalogue","Réparations & Mods"],["dbadmin","Bases de données"]];
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -1092,9 +1092,13 @@ const REP = {
       + (act.map(card).join("") || '<p class="m">Aucune suggestion pour le moment.</p>')
       + (arch.length ? `<button class="btn ghost small" style="margin-top:8px" onclick="toggleArch()">${AVIS_ARCH ? 'Masquer les archives' : 'Afficher les archives (' + arch.length + ')'}</button>` + (AVIS_ARCH ? arch.map(card).join("") : "") : "");
   },
+  appareils(){ return appareilsHtml(); },
   clients(){
     return `<h1>Clients</h1>
-    <button class="btn" onclick="$('addBox').classList.toggle('hide')">+ Créer un compte client</button>
+    <div class="row" style="gap:8px;align-items:center;flex-wrap:nowrap;margin-top:4px">
+      <button class="btn" title="Créer un compte client" aria-label="Créer un compte client" style="width:44px;height:44px;min-width:44px;margin:0;padding:0;font-size:24px;line-height:1" onclick="$('addBox').classList.toggle('hide')">+</button>
+      <input id="cliQ" placeholder="Rechercher un client" oninput="$('cliL').innerHTML=cliHtml(nz(this.value))" style="flex:1;min-width:0;margin:0">
+    </div>
     <div id="addBox" class="card hide">
       <div class="two"><div><label>Prénom *</label><input id="cP"></div><div><label>Nom *</label><input id="cN"></div></div>
       <label>Téléphone *</label><input id="cT" inputmode="tel" maxlength="20">
@@ -1106,8 +1110,7 @@ const REP = {
       <button class="btn" onclick="addClient()">Enregistrer le client</button>
       <div class="err" id="cErr"></div>
     </div>
-    <div class="row" style="gap:6px;margin-top:10px"><select onchange="CLI_SORT=this.value;render()">${selOpts([["nom", "Trier : nom"], ["prenom", "Trier : prénom"], ["ville", "Trier : ville"]], CLI_SORT)}</select></div>
-    <input id="cliQ" placeholder="Rechercher un client" oninput="$('cliL').innerHTML=cliHtml(nz(this.value))" style="margin-top:8px">
+    <div class="row" style="gap:6px;flex-wrap:wrap;margin:8px 0">${cliFiltresHtml()}</div>
     <button class="btn ghost small" style="margin-top:8px" onclick="CLI_TRASH=!CLI_TRASH;render()">${CLI_TRASH ? "Voir les clients actifs" : "Corbeille (" + S.clients.filter(c => c.deleted_at).length + ")"}</button><div id="cliL">${cliHtml("")}</div>`;
   },
   new(){
@@ -2126,23 +2129,76 @@ function dossierCard(d, cli){
 
 var CLI_OPEN=null, CLI_TRASH=false;
 var CLI_SORT = "nom";
+var CLI_F = {compte: "", infos: "", app: ""};
 function cliCmp(a, b){
-  const k = {
-    nom: c => (c.nom || "") + " " + (c.prenom || ""),
-    prenom: c => (c.prenom || "") + " " + (c.nom || ""),
-    ville: c => (c.ville || "") + " " + (c.nom || "")
-  }[CLI_SORT] || (c => c.nom || "");
-  return k(a).localeCompare(k(b), "fr");
+  if (CLI_SORT === "creation_recent" || CLI_SORT === "creation_ancien") {
+    const ca = a.created_at || "", cb = b.created_at || "";
+    if (ca !== cb) return CLI_SORT === "creation_recent" ? (ca < cb ? 1 : -1) : (ca < cb ? -1 : 1);
+    return (a.nom || "").localeCompare(b.nom || "", "fr");
+  }
+  return ((a.nom || "") + " " + (a.prenom || "")).localeCompare((b.nom || "") + " " + (b.prenom || ""), "fr");
+}
+function cliPasFiltre(c){
+  const f = CLI_F;
+  if (f.compte === "ok" && !c.auth_user_id) return false;
+  if (f.compte === "no" && c.auth_user_id) return false;
+  if (f.infos === "ok" && !c.infos_verifiees_at) return false;
+  if (f.infos === "ko" && (!c.auth_user_id || c.infos_verifiees_at)) return false;
+  const avec = S.devices.some(d => d.client_id === c.id);
+  if (f.app === "ok" && !avec) return false;
+  if (f.app === "no" && avec) return false;
+  return true;
+}
+function cliFiltresHtml(){
+  const sel = (k, all, opts) => `<select onchange="cliSet('${k}',this.value)">${selOpts([["", all]].concat(opts), CLI_F[k])}</select>`;
+  return sel("compte", "Tous les comptes", [["ok", "Compte créé"], ["no", "Sans compte"]])
+    + sel("infos", "Toutes les infos", [["ok", "Infos vérifiées"], ["ko", "Infos à vérifier"]])
+    + sel("app", "Tous les appareils", [["ok", "Avec appareil"], ["no", "Sans appareil"]])
+    + `<select onchange="cliSet('sort',this.value)">${selOpts([["nom", "Trier : nom"], ["creation_recent", "Trier : création, récents d’abord"], ["creation_ancien", "Trier : création, anciens d’abord"]], CLI_SORT)}</select>`;
+}
+function cliSet(k, v){
+  if (k === "sort") CLI_SORT = v; else CLI_F[k] = v;
+  $("cliL").innerHTML = cliHtml(nz($("cliQ").value));
+}
+
+/* ---- Onglet Appareils (tous les clients) ---- */
+var AP_F = {q: "", type: ""};
+function apCliName(id){ const c = S.clients.find(x => x.id === id); return c ? fullName(c) : "Client supprimé"; }
+function apListe(){
+  const q = nz(AP_F.q);
+  const list = S.devices.filter(d => (!AP_F.type || d.type === AP_F.type)
+      && (!q || [apCliName(d.client_id), d.modele, d.couleur, d.imei, d.sn, d.type].some(v => nz(v).indexOf(q) > -1)))
+    .sort((a, b) => (apCliName(a.client_id) + " " + (a.modele || "")).localeCompare(apCliName(b.client_id) + " " + (b.modele || ""), "fr"));
+  return list.map(d => '<div class="m" style="margin-top:10px;font-weight:600">Client : ' + esc(apCliName(d.client_id)) + '</div>' + devLine(d, true)).join("")
+    || '<p class="m">' + (S.devices.length ? 'Aucun appareil ne correspond.' : 'Aucun appareil enregistré.') + '</p>';
+}
+function apRefresh(){ $("apL").innerHTML = apListe(); }
+function apSet(k, v){ AP_F[k] = v; apRefresh(); }
+function apPickCli(cid){ if (!cid) { $("devForm").innerHTML = ""; return; } showDevForm(null, cid); }
+function appareilsHtml(){
+  const clis = S.clients.filter(c => !c.deleted_at).slice().sort((a, b) => fullName(a).localeCompare(fullName(b), "fr"));
+  const types = ["Téléphone", "Console", "Manette", "Enceinte", "PC portable", "Autre"];
+  return `<h1>Appareils</h1>
+    <div class="row" style="gap:8px;align-items:center;flex-wrap:nowrap;margin-top:4px">
+      <button class="btn" title="Ajouter un appareil" aria-label="Ajouter un appareil" style="width:44px;height:44px;min-width:44px;margin:0;padding:0;font-size:24px;line-height:1" onclick="$('apAdd').classList.toggle('hide')">+</button>
+      <input id="apQ" placeholder="Rechercher (client, modèle, IMEI, série…)" value="${esc(AP_F.q)}" oninput="AP_F.q=this.value;apRefresh()" style="flex:1;min-width:0;margin:0">
+    </div>
+    <div id="apAdd" class="card hide">
+      <label>Client *</label><select id="apCli" onchange="apPickCli(this.value)"><option value="">- sélectionner un client -</option>${clis.map(c => '<option value="' + c.id + '">' + esc(fullName(c)) + '</option>').join("")}</select>
+      <div id="devForm"></div>
+    </div>
+    <div class="row" style="gap:6px;flex-wrap:wrap;margin:8px 0"><select onchange="apSet('type',this.value)">${selOpts([["", "Tous les types"]].concat(types.map(t => [t, t])), AP_F.type)}</select></div>
+    <div id="apL">${apListe()}</div>`;
 }
 function cliHtml(q){
-  const list = S.clients.filter(c => (CLI_TRASH ? !!c.deleted_at : !c.deleted_at) && (!q || nz(fullName(c)).indexOf(q) > -1))
+  const list = S.clients.filter(c => (CLI_TRASH ? !!c.deleted_at : !c.deleted_at) && (!q || nz(fullName(c)).indexOf(q) > -1) && cliPasFiltre(c))
     .sort((a,b) => cliCmp(a, b));
   return list.map(c => {
     const inv = S.inv.find(i => i.client_id === c.id && !i.used_at);
     const acc = c.auth_user_id ? '<span class="chip ok">Compte créé</span> ' + (c.infos_verifiees_at ? '<span class="chip ok">Infos vérifiées</span>' : '<span class="chip warn">Infos à vérifier</span>')
       : inv ? 'Code : <span class="code">' + esc(inv.code) + '</span>'
       : '<button class="chip" onclick="newCode(\'' + c.id + '\')">Générer un code</button>';
-    const head = '<div style="cursor:pointer" onclick="toggleCli(\'' + c.id + '\')"><div class="t">' + esc(fullName(c)) + (c.deleted_at ? ' <span class="chip late">Supprimé</span>' : '') + '</div><div class="m">' + esc(c.tel) + ' · ' + esc(c.mail) + '</div></div>';
+    const head = '<div style="cursor:pointer" onclick="toggleCli(\'' + c.id + '\')"><div class="t">' + esc(fullName(c)) + (c.deleted_at ? ' <span class="chip late">Supprimé</span>' : '') + '</div><div class="m">' + esc(c.tel) + ' · ' + esc(c.mail) + (c.created_at ? ' · créé le ' + fr(String(c.created_at).slice(0, 10)) : '') + '</div></div>';
     if (CLI_OPEN !== c.id) return '<div class="card">' + head + '</div>';
     const actions = c.deleted_at
       ? '<button class="btn" onclick="restoreCli(\'' + c.id + '\')">Restaurer</button><button class="btn ghost" style="color:var(--bad);border-color:var(--bad)" onclick="purgeCli(\'' + c.id + '\')">Supprimer définitivement</button>'
