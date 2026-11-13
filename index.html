@@ -3184,9 +3184,13 @@ function toggleParam(){ PARAM_OPEN = !PARAM_OPEN; render(); }
 function cliView(){
   const me = S.clients[0];
   if (!me) return `<h1>Bienvenue</h1>
-    <div class="card"><p class="m">Ton compte est créé. Entre le code d’invitation donné par ton réparateur pour accéder à tes dossiers.</p>
-    <label>Code d’invitation</label><input id="cCode" inputmode="numeric" maxlength="6" placeholder="000000">
-    <button class="btn" onclick="claimNow()">Valider</button><div class="err" id="cErr2"></div></div>
+    <div class="card"><p class="m">Ton compte est créé. Complète tes informations pour accéder à tes dossiers. Si ton réparateur t’a donné un code d’invitation, tu peux l’entrer aussi.</p>
+    <div class="two"><div><label>Prénom *</label><input id="bP"></div><div><label>Nom *</label><input id="bN"></div></div>
+    <label>Téléphone *</label><input id="bT" inputmode="tel" maxlength="20">
+    <label>Adresse *</label><input id="bA">
+    <div class="two"><div><label>Code postal *</label><input id="bCp" inputmode="numeric" maxlength="5"></div><div><label>Ville *</label><input id="bV"></div></div>
+    <label>Code d’invitation (facultatif)</label><input id="cCode" inputmode="numeric" maxlength="6" placeholder="000000">
+    <button class="btn" onclick="completeNow()">Valider</button><div class="err" id="cErr2"></div></div>
     <button class="btn ghost" onclick="logout()">Se déconnecter</button>`;
   const head = `<div class="row" style="align-items:center;margin:4px 0 8px"><img class="logo-h" src="${LOGO_SRC}" alt="Seconde Vie"><button class="btn small ghost" onclick="toggleParam()">Paramètres</button></div>`;
   if (!me.infos_verifiees_at) return head + `<h2 data-page="Vérification des informations">Vérifie tes informations</h2>
@@ -3464,6 +3468,26 @@ async function dbaDel(i){
   toast("Ligne supprimée");
   DBA.lock = true; DBA.edit = null;
   await dbaLoad();
+}
+/* Client connecté sans fiche : code d’invitation facultatif, sinon ses informations créent sa fiche. */
+async function completeNow(){
+  const err = $("cErr2"); err.textContent = "";
+  const code = $("cCode").value.trim();
+  if (code) {
+    if (!/^\d{6}$/.test(code)) { err.textContent = "Le code doit comporter 6 chiffres."; return; }
+    const { error } = await SB.rpc("claim_invitation", { p_code: code });
+    if (error) { err.textContent = /code_invalide/.test(error.message) ? "Code invalide ou déjà utilisé." : "Erreur : " + error.message; return; }
+    return boot();
+  }
+  const v = id => $(id).value.trim();
+  const d = {prenom: v("bP"), nom: v("bN"), tel: v("bT"), adr: v("bA"), cp: v("bCp"), ville: v("bV")};
+  if (!d.prenom || !d.nom || !d.tel || !d.adr || !d.cp || !d.ville) { err.textContent = "Tous les champs marqués * sont obligatoires, ou entre un code d’invitation."; return; }
+  if (!/^[0-9+ .\-]{6,20}$/.test(d.tel)) { err.textContent = "Le téléphone ne doit contenir que des chiffres."; return; }
+  if (!/^\d{5}$/.test(d.cp)) { err.textContent = "Le code postal doit comporter 5 chiffres."; return; }
+  const { data: u } = await SB.auth.getUser();
+  const { error: ie } = await SB.from("clients").insert({ ...d, mail: u.user.email, auth_user_id: u.user.id });
+  if (ie) { err.textContent = ie.code === "23505" ? "Un client existe déjà avec ce téléphone ou cet email. Contacte ton réparateur." : msgErr(ie); return; }
+  await boot();
 }
 async function claimNow(){
   const code = $("cCode").value.trim(), err = $("cErr2");
