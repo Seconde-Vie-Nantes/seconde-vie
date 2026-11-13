@@ -857,7 +857,97 @@ async function deleteDepense(id){
   if (error) { toast(msgErr(error)); return; }
   await reload();
 }
+/* ---------- Réparations en cours : filtres, tri et archives ---------- */
+var REP_STATE = {arch: false, statut: "", paie: "", from: "", to: "", sort: "date", desc: true};
+function repSet(k, v){ REP_STATE[k] = v; render(); }
+function repArch(on){ REP_STATE.arch = on; REP_STATE.statut = ""; if (on && REP_STATE.sort === "garantie") REP_STATE.sort = "date"; render(); }
+function repFin(d){ return (d.statut === "Remis" ? d.echeance : d.date_termine) || null; }
+function repSolde(d){ return payInfo(d).reste === 0; }
+function garantieRest(d){ if (d.statut !== "Remis" || !d.echeance) return null; return left(plus6m(d.echeance)); }
+function garantieMoisRest(fin){
+  const t = new Date(); t.setHours(0, 0, 0, 0);
+  const f = new Date(fin + "T00:00");
+  let m = (f.getFullYear() - t.getFullYear()) * 12 + (f.getMonth() - t.getMonth());
+  if (f.getDate() < t.getDate()) m--;
+  return Math.max(0, m);
+}
+function repKey(d){
+  const k = REP_STATE.sort;
+  if (k === "appareil") return d.appareil || "";
+  if (k === "client") return d.clients ? fullName(d.clients) : "";
+  if (k === "prix") return payInfo(d).tot;
+  if (k === "garantie") return garantieRest(d);
+  return repFin(d);
+}
+function repCmp(a, b){
+  const va = repKey(a), vb = repKey(b);
+  if (va == null && vb == null) return 0;
+  if (va == null) return 1;            // sans valeur : toujours en bas
+  if (vb == null) return -1;
+  const r = typeof va === "number" ? va - vb : String(va).localeCompare(String(vb), "fr");
+  return REP_STATE.desc ? -r : r;
+}
+function repList(){
+  const st = REP_STATE;
+  let list = S.dossiers.filter(d => st.arch ? d.statut === "Remis" : d.statut !== "Remis");
+  if (st.statut) list = list.filter(d => d.statut === st.statut);
+  if (st.paie === "reste") list = list.filter(d => !repSolde(d));
+  if (st.paie === "regle") list = list.filter(d => repSolde(d));
+  if (st.from) list = list.filter(d => repFin(d) && repFin(d) >= st.from);
+  if (st.to) list = list.filter(d => repFin(d) && repFin(d) <= st.to);
+  return list.slice().sort(repCmp);
+}
+function repArchCard(d){
+  const p = payInfo(d);
+  const rest = garantieRest(d);
+  let gar;
+  if (rest == null) gar = '<span class="m">Garantie : —</span>';
+  else if (rest <= 0) gar = '<span style="color:var(--bad);font-weight:700">Garantie : 0 mois · pas garanti</span>';
+  else {
+    const m = garantieMoisRest(plus6m(d.echeance));
+    const txt = m > 0 ? m + (m > 1 ? " mois restants" : " mois restant") : "moins d’1 mois restant";
+    gar = '<span style="color:' + (rest <= 30 ? 'var(--warn)' : 'var(--brand)') + ';font-weight:700">Garantie : ' + txt + '</span>';
+  }
+  const payeTxt = p.prix == null ? '<span class="m">Prix à définir</span>'
+    : '<span style="font-weight:600">Payé : ' + eur(p.tot) + '</span>' + (p.reste > 0 ? ' <span style="color:var(--warn)">· reste ' + eur(p.reste) + '</span>' : '');
+  return '<div class="card" style="cursor:pointer" onclick="openD(\'' + d.id + '\')">'
+    + '<div class="row" style="align-items:center"><div style="min-width:0"><div class="t">' + esc(d.appareil || "Appareil") + '</div>'
+    + '<div class="m">' + esc(d.clients ? fullName(d.clients) : "Client inconnu") + '</div></div>'
+    + '<span class="chip">' + esc(d.type || "Réparation") + '</span></div>'
+    + (d.panne ? '<div class="m" style="margin-top:4px">' + esc(d.panne) + '</div>' : '')
+    + '<div class="row" style="margin-top:8px"><span>' + payeTxt + '</span><span class="m">Finalisé le ' + (repFin(d) ? fr(repFin(d)) : "—") + '</span></div>'
+    + '<div style="margin-top:6px">' + gar + '</div></div>';
+}
+function repsPage(){
+  const st = REP_STATE;
+  const list = repList();
+  const opt = (v, t, cur) => '<option value="' + esc(v) + '"' + (cur === v ? " selected" : "") + '>' + esc(t) + '</option>';
+  const statutOpts = st.arch ? "" : '<div><label>Statut</label><select onchange="repSet(\'statut\', this.value)">'
+    + opt("", "Tous", st.statut) + opt("Devis en cours", "Devis en cours", st.statut) + opt("En cours", "En cours", st.statut) + opt("Terminé", "Terminé", st.statut) + '</select></div>';
+  const sortOpts = [["date", st.arch ? "Date de finalisation" : "Date prévue / finalisation"], ["appareil", "Nom de l’appareil"], ["client", "Client"], ["prix", "Prix payé"]];
+  if (st.arch) sortOpts.push(["garantie", "Garantie restante"]);
+  const toggle = (on, label, arch) => '<button class="btn small ' + (on ? '' : 'ghost') + '" style="flex:1" onclick="repArch(' + arch + ')">' + label + '</button>';
+  const filtres = '<div class="card" style="padding:12px">'
+    + '<div class="row" style="gap:8px;margin-bottom:10px">' + toggle(!st.arch, "En cours", false) + toggle(st.arch, "Archives", true) + '</div>'
+    + '<div class="two">' + statutOpts
+    + '<div><label>Paiement</label><select onchange="repSet(\'paie\', this.value)">' + opt("", "Tous", st.paie) + opt("reste", "À régler", st.paie) + opt("regle", "Réglé", st.paie) + '</select></div>'
+    + '<div class="two" style="grid-column:1/-1"><div><label>Du</label><input type="date" value="' + esc(st.from) + '" onchange="repSet(\'from\', this.value)"></div>'
+    + '<div><label>Au</label><input type="date" value="' + esc(st.to) + '" onchange="repSet(\'to\', this.value)"></div></div>'
+    + '</div>'
+    + '<div class="row" style="gap:8px;align-items:flex-end;margin-top:6px"><div style="flex:1;min-width:0"><label>Trier par</label><select onchange="repSet(\'sort\', this.value)">'
+    + sortOpts.map(x => opt(x[0], x[1], st.sort)).join("") + '</select></div>'
+    + '<button class="btn small ghost" onclick="repSet(\'desc\', !REP_STATE.desc)">' + (st.desc ? "↓ Récent d’abord" : "↑ Ancien d’abord") + '</button></div>'
+    + (st.from || st.to || st.paie || st.statut ? '<div style="margin-top:8px"><button class="chip" onclick="REP_STATE.from=\'\';REP_STATE.to=\'\';REP_STATE.paie=\'\';REP_STATE.statut=\'\';render()">Effacer les filtres</button></div>' : '')
+    + '</div>';
+  const corps = list.length
+    ? '<div class="card-grid">' + list.map(d => st.arch ? repArchCard(d) : dossierCard(d)).join("") + '</div>'
+    : '<p class="m">Aucun élément pour ces filtres.</p>';
+  return '<div style="margin:4px 0 10px"><button class="btn small ghost" onclick="go(\'dashboard\')">← Tableau de bord</button></div>'
+    + '<h1>' + (st.arch ? "Archives des réparations" : "Réparations en cours") + ' <span class="m" style="font-size:16px">· ' + list.length + '</span></h1>'
+    + filtres + corps;
+}
 function dashPageView(){
+  if (DASH_PAGE === "act") return repsPage();
   if (DASH_PAGE === "depenses") return depensesPage();
   const D = dashData();
   const byEch = (x, y) => (x.echeance || "9999") < (y.echeance || "9999") ? -1 : (x.echeance || "9999") > (y.echeance || "9999") ? 1 : 0;
