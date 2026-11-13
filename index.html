@@ -2148,7 +2148,9 @@ function cliSet(k, v){
 }
 
 /* ---- Appareils : base générale (type · marque · modèle), pour classer les pièces ---- */
-var AB_F = {q: "", type: ""}, AB_EDIT = null;
+var AB_F = {q: "", type: "", marque: ""}, AB_EDIT = null, AB_SORT = "nom";
+/* Accessoires et noms génériques : ce ne sont pas des appareils */
+var AB_ACCESSOIRE = /\bdock\b|accessoire|chargeur|câble|cable|adaptateur|housse|support/i;
 var AB_TYPES = ["Téléphone", "Console", "Manette", "Enceinte", "PC portable", "Autre"];
 function abNorm(v){ return nz(v).replace(/\s+/g, " ").trim(); }
 function abKey(x){ return abNorm(x.type) + "|" + abNorm(x.marque) + "|" + abNorm(x.modele); }
@@ -2162,7 +2164,7 @@ function abGuessMarque(type, modele){
 /* Appareils déjà présents ailleurs : pièces, appareils des clients, catalogue */
 function abCandidats(){
   const out = [];
-  const add = (type, marque, modele) => { modele = String(modele || "").trim(); if (!type || !modele) return; out.push({type: type, marque: marque || abGuessMarque(type, modele), modele: modele}); };
+  const add = (type, marque, modele) => { modele = String(modele || "").trim(); if (!type || !modele) return; if (AB_ACCESSOIRE.test(modele) || (marque && nz(marque) === nz(modele))) return; out.push({type: type, marque: marque || abGuessMarque(type, modele), modele: modele}); };
   S.devices.forEach(d => add(d.type, null, d.modele));
   S.stock.forEach(s => {
     const mods = Array.isArray(s.modeles) && s.modeles.length ? s.modeles : String(s.modele || "").split(", ");
@@ -2223,24 +2225,30 @@ async function abSupprimer(id){
   toast("Appareil retiré");
   await reload();
 }
+function abMeta(x){ return AB_SORT === "type" ? (x.marque || "Sans marque") : AB_SORT === "marque" ? (x.type || "") : [x.type, x.marque || "Sans marque"].join(" · "); }
 function abLigne(x){
   if (AB_EDIT === x.id) return '<div class="card" style="margin:4px 0"><div class="two"><div><label>Type</label><select id="abET">'
     + AB_TYPES.map(t => '<option' + (t === x.type ? ' selected' : '') + '>' + t + '</option>').join("")
     + '</select></div><div><label>Marque</label><input id="abEMa" value="' + esc(x.marque || "") + '"></div></div>'
     + '<label>Modèle *</label><input id="abEM" value="' + esc(x.modele) + '">'
     + '<div style="display:flex;gap:6px;margin-top:6px"><button class="chip ok" onclick="abSauver(\'' + x.id + '\')">Enregistrer</button><button class="chip" onclick="abCancel()">Annuler</button></div></div>';
-  return '<div class="row" style="align-items:center;padding:6px 0;border-bottom:1px solid rgba(128,128,128,.25)"><span>' + esc(x.modele) + '</span>'
+  return '<div class="row" style="align-items:center;padding:6px 0;border-bottom:1px solid rgba(128,128,128,.25)"><div><span>' + esc(x.modele) + '</span><div class="m">' + esc(abMeta(x)) + '</div></div>'
     + '<div style="display:flex;gap:6px"><button class="chip" onclick="abEdit(\'' + x.id + '\')">Modifier</button><button class="chip late" onclick="abSupprimer(\'' + x.id + '\')">Retirer</button></div></div>';
 }
 function abListe(){
   const q = abNorm(AB_F.q);
-  const list = (S.appBase || []).filter(x => (!AB_F.type || x.type === AB_F.type) && (!q || [x.type, x.marque, x.modele].some(v => abNorm(v).indexOf(q) > -1)))
-    .sort((a, b) => abNorm(a.type).localeCompare(abNorm(b.type), "fr") || abNorm(a.marque).localeCompare(abNorm(b.marque), "fr") || abNorm(a.modele).localeCompare(abNorm(b.modele), "fr"));
-  let h = "", lastT = null, lastM = null;
+  const cmp = {
+    type: (a, b) => abNorm(a.type).localeCompare(abNorm(b.type), "fr") || abNorm(a.marque).localeCompare(abNorm(b.marque), "fr") || abNorm(a.modele).localeCompare(abNorm(b.modele), "fr"),
+    marque: (a, b) => abNorm(a.marque).localeCompare(abNorm(b.marque), "fr") || abNorm(a.modele).localeCompare(abNorm(b.modele), "fr"),
+    nom: (a, b) => abNorm(a.modele).localeCompare(abNorm(b.modele), "fr") || abNorm(a.type).localeCompare(abNorm(b.type), "fr")
+  };
+  const list = (S.appBase || []).filter(x => (!AB_F.type || x.type === AB_F.type) && (!AB_F.marque || x.marque === AB_F.marque)
+      && (!q || [x.type, x.marque, x.modele].some(v => abNorm(v).indexOf(q) > -1)))
+    .sort(cmp[AB_SORT] || cmp.nom);
+  let h = "", last = null;
   list.forEach(x => {
-    if (x.type !== lastT) { h += '<div class="t" style="margin:14px 0 2px">' + esc(x.type) + '</div>'; lastT = x.type; lastM = null; }
-    const marque = x.marque || "Sans marque";
-    if (marque !== lastM) { h += '<div class="m" style="font-weight:600;margin-top:6px">' + esc(marque) + '</div>'; lastM = marque; }
+    const g = AB_SORT === "type" ? x.type : AB_SORT === "marque" ? (x.marque || "Sans marque") : null;
+    if (g !== null && g !== last) { h += '<div class="t" style="margin:14px 0 2px">' + esc(g) + '</div>'; last = g; }
     h += abLigne(x);
   });
   return h || '<p class="m">' + ((S.appBase || []).length ? 'Aucun appareil ne correspond.' : 'La base est vide pour le moment.') + '</p>';
@@ -2249,6 +2257,7 @@ function abRefresh(){ $("abL").innerHTML = abListe(); }
 function appareilsHtml(){
   const head = '<h1>Appareils</h1><p class="m">Base générale des appareils (type · marque · modèle). Elle sert à classer les pièces.</p>';
   if (S.appBaseErr) return head + '<div class="card"><div class="t">Base non créée</div><div class="m">La table « appareils_base » n’existe pas encore dans la base de données. Elle doit être créée une fois (voir le message d’installation).</div></div>';
+  const marques = [...new Set((S.appBase || []).map(x => x.marque).filter(Boolean))].sort((a, b) => a.localeCompare(b, "fr")).map(m => [m, m]);
   return head
     + '<div class="row" style="gap:8px;align-items:center;flex-wrap:nowrap;margin-top:4px">'
     + '<button class="btn" title="Ajouter un appareil à la base" aria-label="Ajouter un appareil à la base" style="width:44px;height:44px;min-width:44px;margin:0;padding:0;font-size:24px;line-height:1" onclick="$(\'abAdd\').classList.toggle(\'hide\')">+</button>'
@@ -2258,7 +2267,10 @@ function appareilsHtml(){
     + '<label>Modèle *</label><input id="abMo" placeholder="Ex. Switch OLED">'
     + '<button class="btn" onclick="abAjouter()">Ajouter à la base</button><div class="err" id="abErr"></div></div>'
     + abImportHtml()
-    + '<div class="row" style="gap:6px;flex-wrap:wrap;margin:8px 0"><select onchange="AB_F.type=this.value;abRefresh()">' + selOpts([["", "Tous les types"]].concat(AB_TYPES.map(t => [t, t])), AB_F.type) + '</select></div>'
+    + '<div class="row" style="gap:6px;flex-wrap:wrap;margin:8px 0">'
+    + '<select onchange="AB_SORT=this.value;abRefresh()">' + selOpts([["nom", "Trier : nom"], ["type", "Trier : type"], ["marque", "Trier : marque"]], AB_SORT) + '</select>'
+    + '<select onchange="AB_F.type=this.value;abRefresh()">' + selOpts([["", "Tous les types"]].concat(AB_TYPES.map(t => [t, t])), AB_F.type) + '</select>'
+    + '<select onchange="AB_F.marque=this.value;abRefresh()">' + selOpts([["", "Toutes les marques"]].concat(marques), AB_F.marque) + '</select></div>'
     + '<div id="abL">' + abListe() + '</div>';
 }
 function cliHtml(q){
