@@ -914,7 +914,7 @@ function repGar(d){
 function repPaye(d){
   const p = payInfo(d);
   if (p.prix == null) return '<span class="m">Prix à définir</span>';
-  return '<span style="font-weight:600">' + eur(p.tot) + '</span>' + (p.rep > 0 ? ' <span class="m">+ reprise ' + eur(p.rep) + '</span>' : '') + (p.reste > 0 ? ' <span style="color:var(--warn)">· reste ' + eur(p.reste) + '</span>' : '');
+  return '<span style="font-weight:600">' + eur(p.tot) + '</span>' + (p.rep > 0 ? ' <span class="m">+ reprise ' + eur(p.rep) + '</span>' : '') + (p.reste > 0 ? ' <span style="color:var(--warn)">· reste ' + eur(p.reste) + '</span>' : '') + (p.trop > 0 ? ' <span style="color:var(--bad)">· trop perçu ' + eur(p.trop) + '</span>' : '');
 }
 function repArchCard(d){
   const g = repGar(d);
@@ -1197,13 +1197,14 @@ function recupHtml(d){
 function payInfo(d){
   const vir = +d.paye_virement || 0, esp = +d.paye_especes || 0, aco = +d.acompte || 0, rep = +d.reprise_montant || 0, tot = vir + esp + aco;
   const prix = d.prix == null ? null : +d.prix;
-  return {vir, esp, aco, rep, tot, prix, reste: prix == null ? null : Math.max(0, prix - tot - rep)};
+  return {vir, esp, aco, rep, tot, prix, reste: prix == null ? null : Math.max(0, prix - tot - rep), trop: prix == null ? 0 : Math.max(0, tot + rep - prix)};
 }
 /* Acompte enregistré avant la répartition espèces / virement : compté tant qu'aucune répartition n'est saisie. */
 function acoNonReparti(d){ return ((+d.acompte_especes || 0) + (+d.acompte_virement || 0)) > 0 ? 0 : (+d.acompte || 0); }
 function payTxt(d){
   const p = payInfo(d);
   if (p.prix == null) return "Prix à définir";
+  if (p.trop > 0) return "Trop perçu " + eur(p.trop);
   if (p.reste <= 0) return "Réglé";
   return p.tot > 0 ? "Reste " + p.reste + " € à régler" : p.prix + " € à régler";
 }
@@ -2835,8 +2836,8 @@ function detailView(){
     <button class="chip late" style="margin-top:6px" onclick="delPieceD('${p.id}')">Retirer</button></div>`).join("")
     || '<p class="m">Aucune pièce pour ce dossier.</p>'}
   <div class="card"><div class="t">Ajouter une pièce utilisée</div>
-    <label>Recherche (SKU ou nom, une partie du mot suffit)</label>
-    <input id="pQ" oninput="hits('${d.id}')" autocomplete="off">
+    <label>Pièce</label>
+    <select id="pQ" onchange="hits('${d.id}')"><option value="">— Choisir une pièce du stock —</option>${S.stock.filter(x => x.sku).slice().sort((a, b) => String(a.nom).localeCompare(String(b.nom), "fr")).map(x => '<option value="' + esc(x.sku) + '">' + esc(x.nom) + ' · ' + esc(x.sku) + ' · ' + x.qte + ' dispo</option>').join("")}<option value="__new">+ Pièce absente du stock (la créer)</option></select>
     <label>Quantité</label><input id="pN" inputmode="numeric" value="1">
     <div id="pHits"></div>
     <div class="err" id="pErr"></div>
@@ -2858,9 +2859,9 @@ function updateReste(){
   const aco = splits > 0 ? splits : acoNonReparti(d);
   const rep = valNum("dRep", +d.reprise_montant || 0);
   const paye = valNum("pV", +d.paye_virement || 0) + valNum("pE", +d.paye_especes || 0) + aco;
-  const reste = Math.max(0, prix - rep - paye);
-  box.textContent = "Prix : " + eur(prix) + (rep > 0 ? " · Reprise : " + eur(rep) : "") + " · Reste : " + eur(reste);
-  box.style.color = reste === 0 ? "#1f8a4c" : "";
+  const reste = Math.max(0, prix - rep - paye), trop = Math.max(0, paye + rep - prix);
+  box.textContent = "Prix : " + eur(prix) + (rep > 0 ? " · Reprise : " + eur(rep) : "") + " · Reste : " + eur(reste) + (trop > 0 ? " · Trop perçu : " + eur(trop) : "");
+  box.style.color = trop > 0 ? "var(--bad)" : reste === 0 ? "#1f8a4c" : "";
 }
 function paintDetail(){
   const d = S.dossiers.find(x => x.id === DOSSIER);
@@ -3002,18 +3003,18 @@ async function applyPst(p, v){
   return error ? msgErr(error) : null;
 }
 function hits(did){
-  const q = nz($("pQ").value.trim()), box = $("pHits");
-  if (!q) { box.innerHTML = ""; return; }
-  const found = S.stock.filter(s => [s.sku, s.nom, s.type, s.modele].some(v => nz(v).indexOf(q) > -1)).slice(0, 8);
-  box.innerHTML = found.length
-    ? found.map(s => `<div class="card" style="margin:6px 0"><div class="row"><div><div class="t">${esc(s.nom)}</div>
-        <div class="m"><span class="code">${esc(s.sku)}</span> · ${esc(s.modele)} · ${s.qte} dispo</div></div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap"><button class="chip ok" onclick="addPiece('${did}','${esc(s.sku)}')">Ajouter</button><button class="chip" onclick="addPieceCmd('${did}','${esc(s.sku)}')">À commander</button></div></div></div>`).join("")
-    : `<p class="m">Aucune pièce en stock ne correspond.</p>
-       <button class="btn ghost" onclick="newPiece('${did}')">${$("pQ").value.trim().toLowerCase() === "autre" ? "Autre : écrire le nom de la pièce" : "Créer la pièce « " + esc($("pQ").value.trim()) + " » dans le stock"}</button>`;
+  const sku = $("pQ").value, box = $("pHits");
+  if (!sku) { box.innerHTML = ""; return; }
+  if (sku === "__new") { newPiece(did); return; }
+  const x = S.stock.find(y => y.sku === sku);
+  if (!x) { box.innerHTML = ""; return; }
+  box.innerHTML = '<div class="card" style="margin:6px 0"><div class="row"><div><div class="t">' + esc(x.nom) + '</div>'
+    + '<div class="m"><span class="code">' + esc(x.sku) + '</span> · ' + esc(x.modele) + ' · ' + x.qte + ' dispo</div></div>'
+    + '<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="chip ok" onclick="addPiece(\'' + did + '\',\'' + esc(x.sku) + '\')">Ajouter</button>'
+    + '<button class="chip" onclick="addPieceCmd(\'' + did + '\',\'' + esc(x.sku) + '\')">À commander</button></div></div></div>';
 }
 function newPiece(did){
-  const q = $("pQ").value.trim();
+  const q = "";
   const nom = q.toLowerCase() === "autre" ? "" : q.replace(/[<>"]/g, "");
   $("pHits").innerHTML = '<div class="card" style="margin:6px 0"><div class="t">Nouvelle pièce</div>'
     + '<label>Nom de la pièce</label><input id="npN" placeholder="Ex. Vis de charnière" value="' + esc(nom) + '">'
