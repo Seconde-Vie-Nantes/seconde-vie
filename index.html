@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Seconde Vie – Atelier</title>
 <link rel="icon" href="favicon.png">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://bagucelglclcssoclyaw.supabase.co" crossorigin>
 <style>
 :root{--bg:#f2f4f1;--surf:#fff;--ink:#17261f;--mut:#5d6b64;--line:#dfe4e0;--brand:#1f4d3f;--bad:#b3261e;--ok:#22703f;--warn:#b86e00}
 *{box-sizing:border-box}
@@ -277,10 +279,15 @@ body:not(.rep-nav).lg .app{margin-left:auto !important;margin-right:auto !import
 .gal-grid img{width:100%;height:140px;object-fit:cover;border-radius:10px;display:block;background:#EEF1EC}
 .gal-item{display:flex;flex-direction:column;gap:6px}
 .cl-back{font:inherit;font-size:14px;font-weight:600;color:#2F6B4F;background:none;border:0;padding:0;cursor:pointer;margin-bottom:8px}
+/* Écran affiché pendant le chargement de l'application */
+.boot{min-height:60vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:var(--mut);font-size:14px}
+.boot-dot{width:28px;height:28px;border:3px solid #dfe4e0;border-top-color:var(--brand);border-radius:50%;animation:boot-spin .8s linear infinite}
+@keyframes boot-spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.boot-dot{animation:none}}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600&display=swap" rel="stylesheet"></head>
 <body class="lg">
-<div class="app" id="app"></div>
+<div class="app" id="app"><div class="boot" id="boot" role="status"><div class="boot-dot"></div><p>Chargement…</p></div></div>
 <nav id="nav" class="hide"></nav>
 <div id="modal" class="modal hide"></div>
 <div id="fbWrap" class="fb-wrap"></div>
@@ -658,6 +665,28 @@ function achatLignes(){
   (S.ventes || []).filter(v => !v.archivee).forEach(v => venteLignes(v).forEach((l, i) => { if (l.acheter) out.push({v, l, i}); }));
   return out;
 }
+/* Chiffre d’affaires : réparations et mods remis (argent encaissé, daté de la remise) + ventes archivées (prix, daté de la vente) − dépenses (daté de la dépense). */
+function caDetail(key){
+  const rep = (S.dossiers || []).filter(d => d.statut === "Remis" && String(d.echeance || "").slice(0, 7) === key).reduce((t, d) => t + payInfo(d).tot, 0);
+  const ven = (S.ventes || []).filter(v => v.archivee && moisOf(v) === key).reduce((t, v) => t + (+v.prix || 0), 0);
+  const dep = (S.depenses || []).filter(x => String(x.date || "").slice(0, 7) === key).reduce((t, x) => t + (+x.montant || 0), 0);
+  return {rep, ven, dep, net: rep + ven - dep};
+}
+function caTotal(){
+  const rep = (S.dossiers || []).filter(d => d.statut === "Remis").reduce((t, d) => t + payInfo(d).tot, 0);
+  const ven = (S.ventes || []).filter(v => v.archivee).reduce((t, v) => t + (+v.prix || 0), 0);
+  const dep = (S.depenses || []).reduce((t, x) => t + (+x.montant || 0), 0);
+  return rep + ven - dep;
+}
+function ultimes6(cur){
+  const [cy, cm] = cur.split("-").map(Number), out = [];
+  for (let i = 5; i >= 0; i--) {
+    const dt = new Date(cy, cm - 1 - i, 1);
+    out.push({key: dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0"), lbl: dt.toLocaleDateString("fr-FR", {month: "short"}).replace(".", "")});
+  }
+  return out;
+}
+function scrollStats(){ const el = document.getElementById("caMoisCard"); if (el) el.scrollIntoView({behavior: "smooth", block: "start"}); }
 function dashData(){
   const today = todayIso(), cur = today.slice(0, 7);
   const act = S.dossiers.filter(d => d.statut !== "Remis");
@@ -730,8 +759,7 @@ function dashboardView(){
     "Pièces à commander": dashTile("Pièces à commander", aCmd.length, aCmd.map(p => ({t: esc(p.qte + " × " + p.nom), f: () => openD(p.dossier_id)})), () => dashPage("piece")),
     "Ventes en cours": dashTile("Ventes en cours", ouv.length, ouv.map(v => ({t: esc(venteTitre(v)) + " · " + esc(venteClient(v)), f: () => dashGo("dossiers", {tab: "ventes", focus: "vc-" + v.id})})), () => dashPage("vente")),
     "Ventes du mois": dashTile("Ventes du mois", mois.length, mois.map(v => ({t: esc(venteTitre(v)) + " · " + (v.prix == null ? "prix à définir" : eur(v.prix)), f: () => dashGo("ventes", {mois: cur, focus: "vb-" + v.id})})), () => dashPage("venteMois")),
-    "C.A. ventes du mois": dashTile("C.A. ventes du mois", eur(mois.reduce((t, v) => t + (+v.prix || 0), 0)), mois.map(v => ({t: esc(venteTitre(v)) + " · " + (v.prix == null ? "prix à définir" : eur(v.prix)), f: () => dashGo("ventes", {mois: cur, focus: "vb-" + v.id})})), () => dashPage("venteMois")),
-    "C.A. global": dashTile("C.A. global", eur(archTous.reduce((t, v) => t + (+v.prix || 0), 0)), archTous.map(v => ({t: esc(venteTitre(v)) + " · " + (v.prix == null ? "prix à définir" : eur(v.prix)), f: () => dashPage("venteTous")})), () => dashPage("venteTous")),
+    "C.A. global": dashTile("C.A. global", eur(caTotal()), ultimes6(cur).reverse().map(m => ({t: esc(m.lbl) + " · " + eur(caDetail(m.key).net), f: scrollStats})), scrollStats),
     "Stock bas": dashTile("Stock bas", stockBasL.length, stockBasL.map(x => ({t: esc(x.nom + (x.modele ? " · " + x.modele : "")) + " · " + (+x.qte || 0) + " en stock", f: () => dashGo("stock", {focus: "s-" + x.sku})})), () => dashPage("stockBas"), stockBasL.length > 0),
     "Dépenses": dashTile("Dépenses", eur(depMois.reduce((t, x) => t + (+x.montant || 0), 0)), depMois.map(x => ({t: eur(x.montant) + " · " + esc(x.libelle), f: () => dashPage("depenses")})), () => dashPage("depenses")),
     "Appareils à commander": dashTile("Appareils à commander", achatQ, achatL.map(x => ({t: esc(x.l.quantite + " × " + [x.l.appareil, x.l.categorie, x.l.modele, x.l.couleur].filter(Boolean).join(" · ")), f: () => dashPage("achat")})), () => dashPage("achat")),
@@ -746,19 +774,14 @@ function dashboardView(){
   const statutHtml = stCounts.map(x => barRow(x.lbl, x.n, x.n / stMax * 100, x.st === "Remis" ? null : () => dashGo("dossiers", {tab: "rep", statut: x.st}))).join("");
 
   // Graphique 2 : chiffre des ventes sur 6 mois
-  const [cy, cm] = cur.split("-").map(Number);
-  const months = [];
-  for (let i = 5; i >= 0; i--) {
-    const dt = new Date(cy, cm - 1 - i, 1);
-    months.push({key: dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0"), lbl: dt.toLocaleDateString("fr-FR", {month: "short"}).replace(".", "")});
-  }
+  const months = ultimes6(cur);
   const archV = (S.ventes || []).filter(v => v.archivee);
   const soldCount = {};
   archV.forEach(v => venteLignes(v).forEach(l => { if (l.appareil) soldCount[l.appareil] = (soldCount[l.appareil] || 0) + (+l.quantite || 1); }));
   const topSold = Object.entries(soldCount).sort((a, b) => b[1] - a[1]).slice(0, 5);
   const sMax = Math.max(1, ...topSold.map(x => x[1]));
   const soldHtml = topSold.map(([name, n]) => barRow(name, n, n / sMax * 100, () => dashGo("ventes", {mois: cur}))).join("");
-  months.forEach(m => m.sum = archV.filter(v => moisOf(v) === m.key).reduce((t, v) => t + (+v.prix || 0), 0));
+  months.forEach(m => m.sum = caDetail(m.key).net);
   const mMax = Math.max(1, ...months.map(m => m.sum));
   const moisHtml = months.map(m => '<div class="vcol" onclick="dashRun(' + dashReg(() => dashGo("ventes", {mois: m.key})) + ')"><div class="vval">' + eur(m.sum) + '</div><div class="vbar" style="height:' + Math.max(2, Math.round(m.sum / mMax * 130)) + 'px"></div><div class="vlbl">' + esc(m.lbl) + '</div></div>').join("");
 
@@ -769,9 +792,13 @@ function dashboardView(){
   const tMax = Math.max(1, ...top.map(x => x[1]));
   const appHtml = top.map(([name, n]) => barRow(name, n, n / tMax * 100, () => dashGo("dossiers", {tab: "rep", app: name}))).join("");
 
+  const cd = caDetail(cur);
+  const caCarte = '<div class="card chart-card" id="caMoisCard"><div class="chart-title">C.A. du mois</div><div class="dash-val' + (cd.net < 0 ? ' alert' : '') + '" style="font-size:34px">' + eur(cd.net) + '</div>'
+    + '<div class="m" style="margin-top:8px">Réparations et mods ' + eur(cd.rep) + ' · Ventes ' + eur(cd.ven) + ' · Dépenses − ' + eur(cd.dep) + '</div></div>';
   const charts = '<div class="dash-charts">'
+    + caCarte
     + '<div class="card chart-card"><div class="chart-title">Réparations en cours</div>' + statutHtml + '</div>'
-    + '<div class="card chart-card"><div class="chart-title">Chiffre des ventes · 6 mois</div><div class="vbars">' + moisHtml + '</div></div>'
+    + '<div class="card chart-card"><div class="chart-title">C.A. · 6 mois</div><div class="vbars">' + moisHtml + '</div></div>'
     + '<div class="card chart-card"><div class="chart-title">Appareils les plus réparés</div>' + appHtml + '</div>'
     + '<div class="card chart-card"><div class="chart-title">Appareils les plus vendus</div>' + soldHtml + '</div>'
     + '</div>';
@@ -779,7 +806,7 @@ function dashboardView(){
   const next = act.filter(d => d.echeance).sort((x, y) => x.echeance < y.echeance ? -1 : x.echeance > y.echeance ? 1 : 0).slice(0, 6);
   const rows = next.map(d => '<div class="card" style="cursor:pointer" onclick="openD(\'' + d.id + '\')"><div class="row" style="align-items:center"><div><div class="t">' + esc(d.appareil || "Réparation") + '</div><div class="m">' + esc(d.clients ? fullName(d.clients) : "") + '</div></div><span class="chip' + (d.echeance < today ? " late" : "") + '">' + fr(d.echeance) + '</span></div></div>').join("");
   const section = (titre, cartes) => '<h2>' + titre + '</h2><div class="dash-grid">' + cartes + '</div>';
-  return '<div class="dash-page"><h1>Tableau de bord</h1>' + section("Réparations", grp(["Réparations en cours", "À déposer", "En retard", "Prêts à récupérer"])) + section("Ventes", grp(["Ventes en cours", "Ventes du mois", "C.A. ventes du mois", "C.A. global", "Dépenses", "Appareils à commander", "Appareils réservés"])) + section("Stock", grp(["Pièces à commander", "Pièces réservées", "Stock bas"])) + '<h2>Statistiques</h2>' + charts + '<h2>Prochaines remises</h2>' + rows + '</div>';
+  return '<div class="dash-page"><h1>Tableau de bord</h1>' + section("Réparations", grp(["Réparations en cours", "À déposer", "En retard", "Prêts à récupérer"])) + section("Ventes", grp(["Ventes en cours", "Ventes du mois", "C.A. global", "Dépenses", "Appareils à commander", "Appareils réservés"])) + section("Stock", grp(["Pièces à commander", "Pièces réservées", "Stock bas"])) + '<h2>Statistiques</h2>' + charts + '<h2>Prochaines remises</h2>' + rows + '</div>';
 }
 var DASH_PAGE = null;
 function dashPage(key){ DASH_PAGE = key; go("dashpage"); }
@@ -3322,8 +3349,8 @@ window.addEventListener("focus", verifierJour);
 window.addEventListener("resize", () => { if (VIEW === "dashboard" && !DOSSIER) fitDashVals(); });
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (VIEW === "dashboard" && !DOSSIER) fitDashVals(); });
 
-boot().catch(function(e){ var a = document.getElementById('app'); if (a && !a.innerHTML) a.innerHTML = '<p class="m" style="padding:24px">L’application n’a pas pu démarrer. Vérifiez votre connexion internet, puis rechargez la page.</p>'; console.error(e); });
+boot().catch(function(e){ var a = document.getElementById('app'); if (a && (!a.innerHTML || a.querySelector('#boot'))) a.innerHTML = '<p class="m" style="padding:24px">L’application n’a pas pu démarrer. Vérifiez votre connexion internet, puis rechargez la page.</p>'; console.error(e); });
 </script>
-<script>if(!window.supabase){var a=document.getElementById('app');if(a&&!a.innerHTML)a.innerHTML='<p class="m" style="padding:24px">L’application n’a pas pu démarrer. Vérifiez votre connexion internet, puis rechargez la page.</p>'}</script>
+<script>if(!window.supabase){var a=document.getElementById('app');if(a&&(!a.innerHTML||a.querySelector('#boot')))a.innerHTML='<p class="m" style="padding:24px">L’application n’a pas pu démarrer. Vérifiez votre connexion internet, puis rechargez la page.</p>'}</script>
 </body>
 </html>
