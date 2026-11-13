@@ -284,6 +284,13 @@ body:not(.rep-nav).lg .app{margin-left:auto !important;margin-right:auto !import
 .boot-dot{width:28px;height:28px;border:3px solid #dfe4e0;border-top-color:var(--brand);border-radius:50%;animation:boot-spin .8s linear infinite}
 @keyframes boot-spin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.boot-dot{animation:none}}
+/* Archives : affichage liste détaillée */
+.rep-tab{display:grid;grid-template-columns:minmax(140px,1.4fr) minmax(110px,1.2fr) minmax(130px,1.4fr) minmax(130px,1.2fr) 110px minmax(160px,1.4fr);gap:10px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--line);font-size:13px;cursor:pointer}
+.rep-tab:last-child{border-bottom:0}
+.rep-tab.head{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);cursor:default;background:#f6f8f7}
+.rep-tab:not(.head):hover{background:#f3f6f4}
+.rep-tab > div[data-l]::before{content:attr(data-l);display:none}
+@media (max-width:899px){ .rep-tab{grid-template-columns:1fr 1fr;gap:8px 12px} .rep-tab.head{display:none} .rep-tab > div[data-l]::before{display:block;font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em} }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600&display=swap" rel="stylesheet"></head>
 <body class="lg">
@@ -858,7 +865,7 @@ async function deleteDepense(id){
   await reload();
 }
 /* ---------- Réparations en cours : filtres, tri et archives ---------- */
-var REP_STATE = {arch: false, statut: "", paie: "", from: "", to: "", sort: "date", desc: true};
+var REP_STATE = {arch: false, statut: "", paie: "", from: "", to: "", sort: "date", desc: true, vue: "cases"};
 function repSet(k, v){ REP_STATE[k] = v; render(); }
 function repArch(on){ REP_STATE.arch = on; REP_STATE.statut = ""; if (on && REP_STATE.sort === "garantie") REP_STATE.sort = "date"; render(); }
 function repFin(d){ return (d.statut === "Remis" ? d.echeance : d.date_termine) || null; }
@@ -897,26 +904,41 @@ function repList(){
   if (st.to) list = list.filter(d => repFin(d) && repFin(d) <= st.to);
   return list.slice().sort(repCmp);
 }
-function repArchCard(d){
-  const p = payInfo(d);
+function repGar(d){
   const rest = garantieRest(d);
-  let gar;
-  if (rest == null) gar = '<span class="m">Garantie : —</span>';
-  else if (rest <= 0) gar = '<span style="color:var(--bad);font-weight:700">Garantie : 0 mois · pas garanti</span>';
-  else {
-    const m = garantieMoisRest(plus6m(d.echeance));
-    const txt = m > 0 ? m + (m > 1 ? " mois restants" : " mois restant") : "moins d’1 mois restant";
-    gar = '<span style="color:' + (rest <= 30 ? 'var(--warn)' : 'var(--brand)') + ';font-weight:700">Garantie : ' + txt + '</span>';
-  }
-  const payeTxt = p.prix == null ? '<span class="m">Prix à définir</span>'
-    : '<span style="font-weight:600">Payé : ' + eur(p.tot) + '</span>' + (p.reste > 0 ? ' <span style="color:var(--warn)">· reste ' + eur(p.reste) + '</span>' : '');
+  if (rest == null) return {t: "—", c: "var(--mut)"};
+  if (rest <= 0) return {t: "0 mois · pas garanti", c: "var(--bad)"};
+  const m = garantieMoisRest(plus6m(d.echeance));
+  return {t: m > 0 ? m + (m > 1 ? " mois restants" : " mois restant") : "moins d’1 mois restant", c: rest <= 30 ? "var(--warn)" : "var(--brand)"};
+}
+function repPaye(d){
+  const p = payInfo(d);
+  if (p.prix == null) return '<span class="m">Prix à définir</span>';
+  return '<span style="font-weight:600">' + eur(p.tot) + '</span>' + (p.rep > 0 ? ' <span class="m">+ reprise ' + eur(p.rep) + '</span>' : '') + (p.reste > 0 ? ' <span style="color:var(--warn)">· reste ' + eur(p.reste) + '</span>' : '');
+}
+function repArchCard(d){
+  const g = repGar(d);
   return '<div class="card" style="cursor:pointer" onclick="openD(\'' + d.id + '\')">'
     + '<div class="row" style="align-items:center"><div style="min-width:0"><div class="t">' + esc(d.appareil || "Appareil") + '</div>'
     + '<div class="m">' + esc(d.clients ? fullName(d.clients) : "Client inconnu") + '</div></div>'
     + '<span class="chip">' + esc(d.type || "Réparation") + '</span></div>'
     + (d.panne ? '<div class="m" style="margin-top:4px">' + esc(d.panne) + '</div>' : '')
-    + '<div class="row" style="margin-top:8px"><span>' + payeTxt + '</span><span class="m">Finalisé le ' + (repFin(d) ? fr(repFin(d)) : "—") + '</span></div>'
-    + '<div style="margin-top:6px">' + gar + '</div></div>';
+    + '<div class="row" style="margin-top:8px"><span>Payé : ' + repPaye(d) + '</span><span class="m">Finalisé le ' + (repFin(d) ? fr(repFin(d)) : "—") + '</span></div>'
+    + '<div style="margin-top:6px;color:' + g.c + ';font-weight:700">Garantie : ' + g.t + '</div></div>';
+}
+function repArchListe(list){
+  const head = '<div class="rep-tab head"><div>Appareil</div><div>Client</div><div>Type</div><div>Payé</div><div>Finalisé le</div><div>Garantie</div></div>';
+  const rows = list.map(d => {
+    const g = repGar(d);
+    return '<div class="rep-tab" onclick="openD(\'' + d.id + '\')">'
+      + '<div data-l="Appareil"><b>' + esc(d.appareil || "Appareil") + '</b></div>'
+      + '<div data-l="Client">' + esc(d.clients ? fullName(d.clients) : "Client inconnu") + '</div>'
+      + '<div data-l="Type"><span class="chip">' + esc(d.type || "Réparation") + '</span>' + (d.panne ? ' <span class="m">' + esc(d.panne) + '</span>' : '') + '</div>'
+      + '<div data-l="Payé">' + repPaye(d) + '</div>'
+      + '<div data-l="Finalisé le">' + (repFin(d) ? fr(repFin(d)) : "—") + '</div>'
+      + '<div data-l="Garantie" style="color:' + g.c + ';font-weight:700">' + g.t + '</div></div>';
+  }).join("");
+  return '<div class="card" style="padding:0;overflow:hidden">' + head + rows + '</div>';
 }
 function repsEspaceHtml(){
   const st = REP_STATE;
@@ -927,8 +949,9 @@ function repsEspaceHtml(){
   const sortOpts = [["date", st.arch ? "Date de finalisation" : "Date prévue / finalisation"], ["appareil", "Nom de l’appareil"], ["client", "Client"], ["prix", "Prix payé"]];
   if (st.arch) sortOpts.push(["garantie", "Garantie restante"]);
   const toggle = (on, label, arch) => '<button class="btn small ' + (on ? '' : 'ghost') + '" style="flex:1" onclick="repArch(' + arch + ')">' + label + '</button>';
+  const vueBtn = st.arch ? '<button class="btn small ghost" style="flex:0 0 auto" onclick="repSet(\'vue\', REP_STATE.vue === \'liste\' ? \'cases\' : \'liste\')">' + (st.vue === "liste" ? "▦ Cases" : "☰ Liste détaillée") + '</button>' : '';
   const filtres = '<div class="card" style="padding:12px">'
-    + '<div class="row" style="gap:8px;margin-bottom:10px">' + toggle(!st.arch, "En cours", false) + toggle(st.arch, "Archives", true) + '</div>'
+    + '<div class="row" style="gap:8px;margin-bottom:10px">' + toggle(!st.arch, "En cours", false) + toggle(st.arch, "Archives", true) + vueBtn + '</div>'
     + '<div class="two">' + statutOpts
     + '<div><label>Paiement</label><select onchange="repSet(\'paie\', this.value)">' + opt("", "Tous", st.paie) + opt("reste", "À régler", st.paie) + opt("regle", "Réglé", st.paie) + '</select></div>'
     + '<div class="two" style="grid-column:1/-1"><div><label>Du</label><input type="date" value="' + esc(st.from) + '" onchange="repSet(\'from\', this.value)"></div>'
@@ -939,9 +962,9 @@ function repsEspaceHtml(){
     + '<button class="btn small ghost" onclick="repSet(\'desc\', !REP_STATE.desc)">' + (st.desc ? "↓ Récent d’abord" : "↑ Ancien d’abord") + '</button></div>'
     + (st.from || st.to || st.paie || st.statut ? '<div style="margin-top:8px"><button class="chip" onclick="REP_STATE.from=\'\';REP_STATE.to=\'\';REP_STATE.paie=\'\';REP_STATE.statut=\'\';render()">Effacer les filtres</button></div>' : '')
     + '</div>';
-  const corps = list.length
-    ? '<div class="card-grid">' + list.map(d => st.arch ? repArchCard(d) : dossierCard(d)).join("") + '</div>'
-    : '<p class="m">Aucun élément pour ces filtres.</p>';
+  const corps = !list.length ? '<p class="m">Aucun élément pour ces filtres.</p>'
+    : st.arch && st.vue === "liste" ? repArchListe(list)
+    : '<div class="card-grid">' + list.map(d => st.arch ? repArchCard(d) : dossierCard(d)).join("") + '</div>';
   return filtres + corps;
 }
 function repsPage(){
@@ -1188,10 +1211,12 @@ function recupHtml(d){
     + '<div style="display:flex;justify-content:space-between;gap:8px;margin-top:6px;font-weight:600;color:' + col + '"><span>Retour avant le ' + fr(dl) + '</span><span>' + jours(l) + '</span></div></div>';
 }
 function payInfo(d){
-  const vir = +d.paye_virement || 0, esp = +d.paye_especes || 0, aco = +d.acompte || 0, tot = vir + esp + aco;
+  const vir = +d.paye_virement || 0, esp = +d.paye_especes || 0, aco = +d.acompte || 0, rep = +d.reprise_montant || 0, tot = vir + esp + aco;
   const prix = d.prix == null ? null : +d.prix;
-  return {vir, esp, aco, tot, prix, reste: prix == null ? null : Math.max(0, prix - tot)};
+  return {vir, esp, aco, rep, tot, prix, reste: prix == null ? null : Math.max(0, prix - tot - rep)};
 }
+/* Acompte enregistré avant la répartition espèces / virement : compté tant qu'aucune répartition n'est saisie. */
+function acoNonReparti(d){ return ((+d.acompte_especes || 0) + (+d.acompte_virement || 0)) > 0 ? 0 : (+d.acompte || 0); }
 function payTxt(d){
   const p = payInfo(d);
   if (p.prix == null) return "Prix à définir";
@@ -2810,8 +2835,10 @@ function detailView(){
     ${termine ? `<label>Date de fin de réparation (le client a 30 jours pour venir le chercher)</label><input id="dTer" type="date" value="${d.date_termine || todayIso()}" onchange="fSave('date_termine', this.value)">${recupHtml(d)}` : ""}
     ${garantieHtml(d)}
     <div class="t" style="margin-top:10px">Paiement</div>
-    <div class="two"><div><label>Acompte (€)</label><input id="dAco" inputmode="decimal" value="${d.acompte || ""}" placeholder="0" oninput="numOnly(this);updateReste()" onchange="fSave('acompte', this.value)"></div><div><label>Virement reçu (€)</label><input id="pV" inputmode="decimal" value="${d.paye_virement || ""}" placeholder="0" oninput="numOnly(this);updateReste()" onchange="fSave('paye_virement', this.value)"></div></div>
-    <label>Espèces reçues (€)</label><input id="pE" inputmode="decimal" value="${d.paye_especes || ""}" placeholder="0" oninput="numOnly(this);updateReste()" onchange="fSave('paye_especes', this.value)">
+    ${acoNonReparti(d) > 0 ? '<div class="m" style="margin-top:6px">Acompte déjà enregistré, non réparti entre espèces et virement : ' + eur(acoNonReparti(d)) + '</div>' : ""}
+    <div class="two"><div><label>Acompte espèces (€)</label><input id="dAcoE" inputmode="decimal" value="${d.acompte_especes || ""}" placeholder="0" oninput="numOnly(this);updateReste()" onchange="fSave('acompte_especes', this.value)"></div><div><label>Acompte virement (€)</label><input id="dAcoV" inputmode="decimal" value="${d.acompte_virement || ""}" placeholder="0" oninput="numOnly(this);updateReste()" onchange="fSave('acompte_virement', this.value)"></div></div>
+    <div class="two"><div><label>Virement reçu (€)</label><input id="pV" inputmode="decimal" value="${d.paye_virement || ""}" placeholder="0" oninput="numOnly(this);updateReste()" onchange="fSave('paye_virement', this.value)"></div><div><label>Espèces reçues (€)</label><input id="pE" inputmode="decimal" value="${d.paye_especes || ""}" placeholder="0" oninput="numOnly(this);updateReste()" onchange="fSave('paye_especes', this.value)"></div></div>
+    <div class="two"><div><label>Reprise : appareil</label><input id="dRepA" value="${esc(d.reprise_appareil || "")}" placeholder="ex. Switch V1" onchange="fSave('reprise_appareil', this.value)"></div><div><label>Montant de la reprise (€)</label><input id="dRep" inputmode="decimal" value="${d.reprise_montant || ""}" placeholder="0" oninput="numOnly(this);updateReste()" onchange="fSave('reprise_montant', this.value)"></div></div>
     <div id="resteBox" style="text-align:center;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:19px;font-weight:400;letter-spacing:.03em;margin:12px 0"></div>
   </div>
   <h2>Photos</h2>
@@ -2843,9 +2870,12 @@ function updateReste(){
   const pEl = $("dPx");
   const prix = pEl ? (pEl.value.trim() === "" ? null : valNum("dPx", 0)) : d.prix;
   if (prix == null) { box.textContent = "Prix à définir"; box.style.color = ""; return; }
-  const paye = valNum("pV", +d.paye_virement || 0) + valNum("pE", +d.paye_especes || 0) + valNum("dAco", +d.acompte || 0);
-  const reste = Math.max(0, prix - paye);
-  box.textContent = "Prix : " + eur(prix) + " · Reste : " + eur(reste);
+  const splits = valNum("dAcoE", 0) + valNum("dAcoV", 0);
+  const aco = splits > 0 ? splits : acoNonReparti(d);
+  const rep = valNum("dRep", +d.reprise_montant || 0);
+  const paye = valNum("pV", +d.paye_virement || 0) + valNum("pE", +d.paye_especes || 0) + aco;
+  const reste = Math.max(0, prix - rep - paye);
+  box.textContent = "Prix : " + eur(prix) + (rep > 0 ? " · Reprise : " + eur(rep) : "") + " · Reste : " + eur(reste);
   box.style.color = reste === 0 ? "#1f8a4c" : "";
 }
 function paintDetail(){
@@ -2895,7 +2925,7 @@ async function fSave(field, value){
     v = t === "" ? null : parseFloat(t);
   } else if (field === "duree") {
     v = durNorm(value);
-  } else if (["acompte", "paye_virement", "paye_especes"].includes(field)) {
+  } else if (["acompte", "acompte_especes", "acompte_virement", "paye_virement", "paye_especes", "reprise_montant"].includes(field)) {
     const t = parseFloat(String(value || "0").replace(",", "."));
     if (isNaN(t) || t < 0) { toast("Montant invalide."); return; }
     v = t;
@@ -2914,8 +2944,11 @@ async function fSave(field, value){
   }
   const upd = {[field]: v};
   if (field === "date_termine") upd.date_retour = v ? plus30(v) : null;
+  if (["acompte_especes", "acompte_virement"].includes(field)) {
+    upd.acompte = (+(field === "acompte_especes" ? v : d.acompte_especes) || 0) + (+(field === "acompte_virement" ? v : d.acompte_virement) || 0);
+  }
   const tmp = Object.assign({}, d, upd);
-  if (["prix", "acompte", "paye_virement", "paye_especes"].includes(field)) upd.paye = tmp.prix != null && payInfo(tmp).reste === 0;
+  if (["prix", "acompte", "acompte_especes", "acompte_virement", "paye_virement", "paye_especes", "reprise_montant"].includes(field)) upd.paye = tmp.prix != null && payInfo(tmp).reste === 0;
   const { error } = await SB.from("dossiers").update(upd).eq("id", d.id);
   if (error) { toast(msgErr(error)); return; }
   Object.assign(d, upd);
