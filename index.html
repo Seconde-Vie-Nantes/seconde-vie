@@ -121,6 +121,14 @@ body.lg .dash-page > h2:first-of-type{margin-top:6px}
 
 /* ---------- Logo d'en-tête ---------- */
 .logo-h{display:block;width:180px;height:auto;flex:none}
+.ab-cell{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sq{display:flex;align-items:center;justify-content:center;width:44px;height:44px;min-width:44px;margin:0;padding:0;line-height:1}
+.ic{position:relative;display:block;width:16px;height:16px;transition:transform .6s ease;pointer-events:none}
+.ic::before,.ic::after{content:"";position:absolute;left:50%;top:50%;background:currentColor;border-radius:2px;transform:translate(-50%,-50%)}
+.ic::before{width:16px;height:2px}
+.ic::after{width:2px;height:16px}
+.ic.minus::after{transform:translate(-50%,-50%) scaleY(0)}
+body.lg .cl-mhead{position:sticky;top:0;z-index:6;background:#f4f6f5;margin-left:-20px !important;margin-right:-20px !important;padding:10px 20px 6px !important}
 /* ---------- Thème : fond clair et cartes en verre dépoli ---------- */
 body.lg{background:#f4f6f5;color:#17261f;min-height:100vh}
 body.lg h1{font-size:24px;font-weight:700;letter-spacing:-.02em;margin:6px 0 16px}
@@ -223,7 +231,7 @@ body .app:has(.lg-login),body.lg .app:has(.lg-login){max-width:none;margin:0;pad
 body .app:has(.cl-desk),body.lg .app:has(.cl-desk){max-width:none !important;margin:0 !important;padding:0 !important;width:100%}
 .cl-desk{min-height:100vh;background:#FAF8F3;font-family:Inter,system-ui,sans-serif;color:#1F2A24;box-sizing:border-box}
 .cl-desk *{box-sizing:border-box}
-.cl-head{display:flex;align-items:center;justify-content:space-between;height:84px;padding:0 40px;background:#FFFFFF;border-bottom:1px solid #E6E1D6}
+.cl-head{display:flex;align-items:center;justify-content:space-between;height:84px;padding:0 40px;background:#FFFFFF;border-bottom:1px solid #E6E1D6;position:sticky;top:0;z-index:10}
 .cl-head-l{display:flex;align-items:center;gap:40px}
 .cl-logo{height:40px;width:auto;display:block}
 .cl-nav{display:flex;gap:28px;font-size:15px;font-weight:500;position:static;background:none;border:0;padding:0;margin:0;height:auto;width:auto}
@@ -555,7 +563,7 @@ function render(){
   if (!ME) { nav.classList.add("hide"); $("fbWrap").innerHTML = ""; $("notifWrap").innerHTML = ""; closeNotifPanel(); app.innerHTML = loginView(); return; }
   if (ROLE === "rep") {
     nav.classList.remove("hide");
-    nav.innerHTML = REP_NAV.map(([v,l]) => `<button class="${VIEW===v?"on":""}" onclick="go('${v}')">${l}</button>`).join("") + '<button class="nav-copy" title="Copie les suggestions ajoutées depuis la dernière copie" onclick="copierNouvellesSuggestions()">Copier le récap</button><button class="nav-logout" onclick="logout()">Déconnexion</button>';
+    nav.innerHTML = REP_NAV.map(([v,l]) => `<button class="${VIEW===v?"on":""}" onclick="go('${v}')">${l}</button>`).join("") + '<button class="nav-copy" title="Copie toutes les suggestions et bugs non archivés" onclick="copierRecapNonArchive()">Copier le récap</button><button class="nav-logout" onclick="logout()">Déconnexion</button>';
     app.innerHTML = '<div class="row" style="align-items:center;margin:4px 0 8px"><img class="logo-h" src="' + LOGO_SRC + '" alt="Seconde Vie"><button class="btn small ghost hdr-logout" onclick="logout()">Déconnexion</button></div>' + (DOSSIER ? detailView() : REP[VIEW]());
     if (VIEW === "stock" && !DOSSIER) { mpDraw("n"); mpDraw("a"); }
     if (VIEW === "newvente") mpDraw("v");
@@ -614,16 +622,13 @@ function flash(msg){
 }
 
 /* ---------- Réparateur ---------- */
-var SORT_REP = "ech", SORT_VENTE = "date";
+var SORT_VENTE = "date";
 var DOSS_F = {statut: "", app: ""}, VENTE_F = {kind: "", app: ""};
 var ARCH_F = false; // false : en cours · true : archivées (réparations « Remis », ventes archivées)
 function archFiltre(){ return {all: "En cours", opts: [["1", "Archivées"]], cur: ARCH_F ? "1" : "", js: "ARCH_F=this.value===\'1\';render()"}; }
 function filtersRow(items){
   return '<div class="row" style="gap:6px;flex-wrap:wrap;margin:0 0 8px">' + items.map(i => '<select onchange="' + i.js + '">' + selOpts([["", i.all]].concat(i.opts), i.cur) + '</select>').join("") + '</div>';
 }
-function setSortRep(v){ SORT_REP = v; render(); }
-var SORT_DIR = 1;
-function toggleSortDir(){ SORT_DIR = -SORT_DIR; render(); }
 function setSortVente(v){ SORT_VENTE = v; render(); }
 function sortSelect(val, opts, fn){
   return '<div class="row" style="align-items:center;gap:6px;margin:0 0 8px"><span class="m">Trier par</span><select onchange="' + fn + '(this.value)">'
@@ -635,7 +640,7 @@ function dashReg(f){ DASH_ACT.push(f); return DASH_ACT.length - 1; }
 function dashRun(i){ const f = DASH_ACT[i]; if (f) f(); }
 function dashGo(view, opt){
   opt = opt || {};
-  if (view === "dossiers") { DOSS_TAB = opt.tab || "rep"; DOSS_F = {statut: opt.statut || "", app: opt.app || ""}; if (opt.sort) SORT_REP = opt.sort; }
+  if (view === "dossiers") { DOSS_TAB = opt.tab || "rep"; DOSS_F = {statut: opt.statut || "", app: opt.app || ""}; }
   if (view === "ventes") VMOIS = opt.mois || null;
   if (view === "stock") { STOCK_TAB = "pieces"; STK_Q = ""; STK_TYPE = ""; STK_ST = ""; }
   FOCUS_ID = opt.focus || null;
@@ -732,23 +737,16 @@ function showCopyBox(txt, onOk){
   };
   $("copyClose").onclick = () => box.remove();
 }
-async function copierNouvellesSuggestions(){
+async function copierRecapNonArchive(){
   if (!DEMO) {
     const fb = await SB.from("feedback").select("*").order("created_at", {ascending:false});
     if (fb.error) { toast("Suggestions : " + msgErr(fb.error)); return; }
     S.feedback = fb.data || [];
   }
-  let last = null;
-  try { last = localStorage.getItem("sv_avis_copie"); } catch(e) {}
-  const seuil = last ? new Date(last) : null;
-  const list = (S.feedback || []).filter(x => !x.archive && fbAdmin(x) && (!seuil || new Date(x.created_at) > seuil));
-  if (!list.length) { flash("Aucune nouvelle suggestion depuis la dernière copie"); return; }
+  const list = (S.feedback || []).filter(x => !x.archive && fbAdmin(x));
+  if (!list.length) { flash("Aucune suggestion non archivée à copier"); return; }
   const txt = recapText(list);
-  const plusRecent = list.reduce((m, x) => new Date(x.created_at) > m ? new Date(x.created_at) : m, new Date(0));
-  const enregistrer = () => {
-    try { localStorage.setItem("sv_avis_copie", plusRecent.toISOString()); } catch(e) {}
-    flash("Récap copié ✓ (" + list.length + ")");
-  };
+  const enregistrer = () => flash("Récap copié ✓ (" + list.length + ")");
   // Si le navigateur refuse la copie automatique (le clic est déjà loin), on affiche le texte à copier
   const repli = () => showCopyBox(txt, enregistrer);
   if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(txt).then(enregistrer, repli);
@@ -1097,7 +1095,7 @@ const REP = {
   clients(){
     return `<h1>Clients</h1>
     <div class="row" style="gap:8px;align-items:center;flex-wrap:nowrap;margin-top:4px">
-      <button class="btn" title="Créer un compte client" aria-label="Créer un compte client" style="width:44px;height:44px;min-width:44px;margin:0;padding:0;font-size:24px;line-height:1" onclick="$('addBox').classList.toggle('hide')">+</button>
+      <button class="btn sq" title="Créer un compte client" aria-label="Créer un compte client" onclick="$('addBox').classList.toggle('hide')"><span class="ic"></span></button>
       <input id="cliQ" placeholder="Rechercher un client" oninput="$('cliL').innerHTML=cliHtml(nz(this.value))" style="flex:1;min-width:0;margin:0">
     </div>
     <div id="addBox" class="card hide">
@@ -1259,6 +1257,38 @@ function setFbHidden(v){ if (v) closeFeedback(); FB_HIDDEN = v; try { localStora
 /* ---------- Mises à jour (cloche en haut à droite) ----------
    Ajouter une entrée en haut de la liste à chaque mise en ligne. */
 var UPDATES = [
+  {id: "2026-11-13-g", date: "13/11/2026", titre: "Colonnes des appareils", items: [
+    "Appareils : type, marque et modèle sont alignés en colonnes dans la liste."]},
+  {id: "2026-11-13-f", date: "13/11/2026", titre: "Fondu de la case", items: [
+    "Appareils : la case passe du vert au rouge en fondu à l’ouverture, et revient au vert en fondu à la fermeture."]},
+  {id: "2026-11-13-e", date: "13/11/2026", titre: "Case rouge à l’ouverture", items: [
+    "Appareils : quand le « + » devient « × », la case devient rouge.",
+    "Appareils : la fermeture repasse directement au « + », sans animation."]},
+  {id: "2026-11-13-d", date: "13/11/2026", titre: "Liste des appareils", items: [
+    "Appareils : type, marque et modèle sont sur la même ligne.",
+    "Appareils : « Retirer » devient une case carrée avec un X."]},
+  {id: "2026-11-13-c", date: "13/11/2026", titre: "Icônes « + » et « × »", items: [
+    "Appareils : seuls le « + » et le « × » tournent, la case reste fixe.",
+    "Appareils : le « × » revient au « + » sans tour supplémentaire.",
+    "Appareils : le « + » de création passe à « − » sans animation."]},
+  {id: "2026-11-13-b", date: "13/11/2026", titre: "Pièces liées à la base Appareils", items: [
+    "Stock et pièces de réparation : le modèle d’une pièce se choisit dans la base Appareils (type → marque → modèle), plus en texte libre.",
+    "Les puces Switch ajoutées au stock sont liées à la base Appareils (Console · Nintendo)."]},
+  {id: "2026-11-13-a", date: "13/11/2026", titre: "Clients, appareils et récap", items: [
+    "Clients : bouton « + » carré pour créer un compte, à côté de la recherche.",
+    "Clients : filtres (compte, infos, appareils) et tri par nom ou par date de création.",
+    "Appareils : base générale type · marque · modèle, à remplir depuis les pièces, les clients et le catalogue. Tri et filtres comme dans le stock.",
+    "Les accessoires (dock, chargeur, câble…) ne sont pas proposés dans la base.",
+    "Suggestions : « Copier le récap » copie toutes les suggestions non archivées.",
+    "Suggestions : le bouton « Archiver les récentes » est retiré.",
+    "Réparations : la pièce utilisée se choisit dans une liste, et le trop-perçu s’affiche.",
+    "Espace client : la barre du haut reste collée en haut.",
+    "Appareils : la marque se choisit dans une liste. Le « + » à côté ouvre la saisie d’une nouvelle marque.",
+    "Appareils : type, marque et modèle sont obligatoires. Les marques suivent le type, les modèles suivent la marque.",
+    "Appareils : le type a aussi son « + » pour saisir un nouveau type. Le « + » et le « × » font un tour complet.",
+    "Les « + » et « × » sont centrés dans leur case.",
+    "Appareils : filtres type, marque et modèle sous le formulaire et au-dessus du tri.",
+    "Appareils : le « + » de création devient « − » en ouvrant le formulaire."]},
   {id: "2026-11-03-t", date: "03/11/2026", time: "04:22", titre: "Bases de données", items: [
     "Nouvel onglet « Bases de données » : voir, ajouter, modifier et supprimer les lignes des tables.",
     "Lecture seule par défaut : il faut appuyer sur « Déverrouiller » pour modifier, ajouter ou supprimer. Le verrou se remet après chaque modification."]},
@@ -2148,7 +2178,7 @@ function cliSet(k, v){
 }
 
 /* ---- Appareils : base générale (type · marque · modèle), pour classer les pièces ---- */
-var AB_F = {q: "", type: "", marque: ""}, AB_EDIT = null, AB_SORT = "nom";
+var AB_F = {q: "", type: "", marque: ""}, AB_EDIT = null, AB_SORT = "nom", AB_MM = {};
 /* Accessoires et noms génériques : ce ne sont pas des appareils */
 var AB_ACCESSOIRE = /\bdock\b|accessoire|chargeur|câble|cable|adaptateur|housse|support/i;
 var AB_TYPES = ["Téléphone", "Console", "Manette", "Enceinte", "PC portable", "Autre"];
@@ -2198,22 +2228,121 @@ async function abImporter(){
   toast(rows.length + " appareil(s) importé(s)");
   await reload();
 }
+/* Types : liste des types connus (constante + types déjà présents dans la base) */
+function abTypes(){ return [...new Set(AB_TYPES.concat((S.appBase || []).map(x => x.type).filter(Boolean)))]; }
+/* Listes liées : marques selon le type, modèles selon le type et la marque */
+function abMarques(){ return [...new Set((S.appBase || []).map(x => x.marque).filter(Boolean))].sort((a, b) => a.localeCompare(b, "fr")); }
+function abMarquesFor(t){ return t ? [...new Set((S.appBase || []).filter(x => x.type === t).map(x => x.marque).filter(Boolean))].sort((a, b) => a.localeCompare(b, "fr")) : []; }
+function abModelesFor(t, m){ return (t && m) ? [...new Set((S.appBase || []).filter(x => x.type === t && x.marque === m).map(x => x.modele).filter(Boolean))].sort((a, b) => a.localeCompare(b, "fr")) : []; }
+/* Champ à liste : menu déroulant ; le bouton « + » passe à la saisie et devient « × ».
+   Un tour complet : + → × en sens horaire, × → + en sens anti-horaire. */
+function abSelHtml(pre, cur, list, ph, nouveau, ok){
+  const on = !!AB_MM[pre], ang = AB_MM[pre + "#"] || 0;
+  if (cur && list.indexOf(cur) < 0) list = list.concat([cur]);
+  const titre = on ? "Choisir dans la liste" : nouveau;
+  const dis = ok ? "" : " disabled";
+  return '<div class="row" style="gap:8px;align-items:center;flex-wrap:nowrap">'
+    + '<button type="button" id="' + pre + 'P" class="btn sq" title="' + titre + '" aria-label="' + titre + '"' + dis + ' style="transition:background-color .6s ease,box-shadow .15s;' + (on ? 'background:var(--bad);color:#fff;' : '') + (ok ? '' : 'opacity:.4') + '" onclick="abSelMode(\'' + pre + '\')"><span class="ic" style="transform:rotate(' + (ang + (on ? 45 : 0)) + 'deg)"></span></button>'
+    + '<select id="' + pre + 'S" onchange="abRefreshFor(\'' + pre + '\')"' + dis + ' style="flex:1;min-width:0;margin:0;' + (on ? 'display:none' : '') + '">' + optList(list, cur || "", ph) + '</select>'
+    + '<input id="' + pre + '" oninput="abRefreshFor(\'' + pre + '\')" value="' + esc(on ? (cur || "") : "") + '" placeholder="' + nouveau + '" style="flex:1;min-width:0;margin:0;' + (on ? '' : 'display:none') + '"></div>';
+}
+function abSetMode(pre, on){
+  AB_MM[pre] = !!on;
+  const b = $(pre + "P"), sel = $(pre + "S"), inp = $(pre);
+  if (!b || !sel || !inp) return;
+  const titre = on ? "Choisir dans la liste" : inp.placeholder;
+  const ic = b.querySelector(".ic"), ang = "rotate(" + ((AB_MM[pre + "#"] || 0) + (on ? 45 : 0)) + "deg)";
+  b.style.background = on ? "var(--bad)" : ""; b.style.color = on ? "#fff" : "";
+  if (ic) {
+    if (on) ic.style.transform = ang;
+    else { ic.style.transition = "none"; ic.style.transform = ang; void ic.offsetWidth; ic.style.transition = ""; }
+  }
+  b.title = titre; b.setAttribute("aria-label", titre);
+  sel.style.display = on ? "none" : "";
+  inp.style.display = on ? "" : "none";
+}
+function abSelMode(pre){
+  const ouvrir = !AB_MM[pre];
+  if (ouvrir) AB_MM[pre + "#"] = (AB_MM[pre + "#"] || 0) + 360;
+  abSetMode(pre, ouvrir);
+  if (ouvrir) $(pre).focus();
+  abRefreshFor(pre);
+}
+function abSelVal(pre){ return AB_MM[pre] ? $(pre).value : $(pre + "S").value; }
+function abSetOk(pre, ok){
+  const b = $(pre + "P"), sel = $(pre + "S");
+  if (!b || !sel) return;
+  b.disabled = !ok; sel.disabled = !ok; b.style.opacity = ok ? "" : ".4";
+}
+/* Recalcule les listes selon le type (et la marque) choisis ; sans type ni marque, rien ne se saisit */
+function abFormRefresh(T, M, Mo){
+  const t = abSelVal(T);
+  if (!t) { abSetMode(M, false); abSetMode(Mo, false); }
+  const curM = abSelVal(M), mList = abMarquesFor(t);
+  $(M + "S").innerHTML = optList(mList, mList.indexOf(curM) >= 0 ? curM : "", "— Choisir une marque —");
+  const mv = abSelVal(M);
+  if (!mv) abSetMode(Mo, false);
+  const curMo = abSelVal(Mo), moList = abModelesFor(t, mv);
+  $(Mo + "S").innerHTML = optList(moList, moList.indexOf(curMo) >= 0 ? curMo : "", "— Choisir un modèle —");
+  abSetOk(M, !!t);
+  abSetOk(Mo, !!t && !!mv);
+}
+/* Chaque formulaire : type → marque → modèle */
+var AB_GROUPES = [["abT", "abM", "abMo"], ["abET", "abEMa", "abEM"]];
+function abRefreshFor(pre){
+  if (AB_FILTRE.indexOf(pre) >= 0) { abFiltreRefresh(); abRefresh(); return; }
+  const g = AB_GROUPES.find(x => x.indexOf(pre) >= 0);
+  if (g) abFormRefresh(g[0], g[1], g[2]);
+}
+/* Filtres : même principe que le formulaire (liste + « + » pour saisir), mais tout est facultatif */
+var AB_FV = {abFT: {raw: "", exact: true}, abFM: {raw: "", exact: true}, abFMo: {raw: "", exact: true}};
+var AB_FILTRE = ["abFT", "abFM", "abFMo"];
+function abFiltreSave(pre){ AB_FV[pre] = {raw: abSelVal(pre).trim(), exact: !AB_MM[pre]}; }
+function abOk(val, f){ const v = abNorm(f.raw); return !v || (f.exact ? abNorm(val) === v : abNorm(val).indexOf(v) > -1); }
+function abFiltreListes(){
+  const t = AB_FV.abFT.exact ? AB_FV.abFT.raw : "";
+  const m = AB_FV.abFM.exact ? AB_FV.abFM.raw : "";
+  const modeles = [...new Set((S.appBase || []).filter(x => (!t || x.type === t) && (!m || x.marque === m)).map(x => x.modele).filter(Boolean))].sort((a, b) => a.localeCompare(b, "fr"));
+  return {types: abTypes(), marques: t ? abMarquesFor(t) : abMarques(), modeles: modeles};
+}
+function abFiltresHtml(){
+  const L = abFiltreListes(), lbl = t => '<div class="m" style="margin:8px 0 2px;font-weight:600">' + t + '</div>';
+  const sel = (pre, list, cur, ph) => '<select id="' + pre + 'S" onchange="abRefreshFor(\'' + pre + '\')">' + optList(list, list.indexOf(cur) >= 0 ? cur : "", ph) + '</select>';
+  return '<div style="margin:8px 0">' + lbl('Filtrer par type') + sel('abFT', L.types, AB_FV.abFT.raw, 'Tous les types')
+    + lbl('Filtrer par marque') + sel('abFM', L.marques, AB_FV.abFM.raw, 'Toutes les marques')
+    + lbl('Filtrer par modèle') + sel('abFMo', L.modeles, AB_FV.abFMo.raw, 'Tous les modèles') + '</div>';
+}
+/* Recalcule les listes de marque et de modèle selon les filtres choisis au-dessus */
+function abFiltreRefresh(){
+  AB_FILTRE.forEach(abFiltreSave);
+  const L = abFiltreListes();
+  $("abFMS").innerHTML = optList(L.marques, L.marques.indexOf(AB_FV.abFM.raw) >= 0 ? AB_FV.abFM.raw : "", "Toutes les marques");
+  abFiltreSave("abFM");
+  const L2 = abFiltreListes();
+  $("abFMoS").innerHTML = optList(L2.modeles, L2.modeles.indexOf(AB_FV.abFMo.raw) >= 0 ? AB_FV.abFMo.raw : "", "Tous les modèles");
+  abFiltreSave("abFMo");
+}
 async function abAjouter(){
   const err = $("abErr"); err.textContent = "";
-  const type = $("abT").value, marque = $("abM").value.trim(), modele = $("abMo").value.trim();
+  const type = abSelVal("abT").trim(), marque = abSelVal("abM").trim(), modele = abSelVal("abMo").trim();
+  if (!type) { err.textContent = "Choisis d’abord un type."; return; }
+  if (!marque) { err.textContent = "La marque est obligatoire."; return; }
   if (!modele) { err.textContent = "Le modèle est obligatoire."; return; }
   if ((S.appBase || []).some(x => abKey(x) === abKey({type: type, marque: marque, modele: modele}))) { err.textContent = "Cet appareil est déjà dans la base."; return; }
-  const { error } = await SB.from("appareils_base").insert({type: type, marque: marque || null, modele: modele});
+  const { error } = await SB.from("appareils_base").insert({type: type, marque: marque, modele: modele});
   if (error) { err.textContent = msgErr(error); return; }
+  AB_MM.abT = false; AB_MM.abM = false; AB_MM.abMo = false;
   toast("Appareil ajouté à la base");
   await reload();
 }
-function abEdit(id){ AB_EDIT = id; render(); }
+function abEdit(id){ AB_EDIT = id; AB_MM.abET = false; AB_MM.abEMa = false; AB_MM.abEM = false; render(); }
 function abCancel(){ AB_EDIT = null; render(); }
 async function abSauver(id){
-  const type = $("abET").value, marque = $("abEMa").value.trim(), modele = $("abEM").value.trim();
+  const type = abSelVal("abET").trim(), marque = abSelVal("abEMa").trim(), modele = abSelVal("abEM").trim();
+  if (!type) { toast("Choisis un type."); return; }
+  if (!marque) { toast("La marque est obligatoire."); return; }
   if (!modele) { toast("Le modèle est obligatoire."); return; }
-  const { error } = await SB.from("appareils_base").update({type: type, marque: marque || null, modele: modele}).eq("id", id);
+  const { error } = await SB.from("appareils_base").update({type: type, marque: marque, modele: modele}).eq("id", id);
   if (error) { toast(msgErr(error)); return; }
   AB_EDIT = null; toast("Appareil modifié");
   await reload();
@@ -2225,15 +2354,15 @@ async function abSupprimer(id){
   toast("Appareil retiré");
   await reload();
 }
-function abMeta(x){ return AB_SORT === "type" ? (x.marque || "Sans marque") : AB_SORT === "marque" ? (x.type || "") : [x.type, x.marque || "Sans marque"].join(" · "); }
 function abLigne(x){
-  if (AB_EDIT === x.id) return '<div class="card" style="margin:4px 0"><div class="two"><div><label>Type</label><select id="abET">'
-    + AB_TYPES.map(t => '<option' + (t === x.type ? ' selected' : '') + '>' + t + '</option>').join("")
-    + '</select></div><div><label>Marque</label><input id="abEMa" value="' + esc(x.marque || "") + '"></div></div>'
-    + '<label>Modèle *</label><input id="abEM" value="' + esc(x.modele) + '">'
+  if (AB_EDIT === x.id) return '<div class="card" style="margin:4px 0"><div class="two"><div><label>Type *</label>' + abSelHtml('abET', x.type, abTypes(), '— Choisir un type —', 'Nouveau type', true) + '</div>'
+    + '<div><label>Marque *</label>' + abSelHtml('abEMa', x.marque || '', abMarquesFor(x.type), '— Choisir une marque —', 'Nouvelle marque', true) + '</div></div>'
+    + '<label>Modèle *</label>' + abSelHtml('abEM', x.modele, abModelesFor(x.type, x.marque), '— Choisir un modèle —', 'Nouveau modèle', true)
     + '<div style="display:flex;gap:6px;margin-top:6px"><button class="chip ok" onclick="abSauver(\'' + x.id + '\')">Enregistrer</button><button class="chip" onclick="abCancel()">Annuler</button></div></div>';
-  return '<div class="row" style="align-items:center;padding:6px 0;border-bottom:1px solid rgba(128,128,128,.25)"><div><span>' + esc(x.modele) + '</span><div class="m">' + esc(abMeta(x)) + '</div></div>'
-    + '<div style="display:flex;gap:6px"><button class="chip" onclick="abEdit(\'' + x.id + '\')">Modifier</button><button class="chip late" onclick="abSupprimer(\'' + x.id + '\')">Retirer</button></div></div>';
+  return '<div class="row" style="align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(128,128,128,.25)">'
+    + '<div style="flex:1;min-width:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.3fr);gap:8px"><span class="ab-cell">' + esc(x.type) + '</span><span class="ab-cell">' + esc(x.marque || "Sans marque") + '</span><b class="ab-cell">' + esc(x.modele) + '</b></div>'
+    + '<div style="display:flex;gap:6px;align-items:center;flex-shrink:0"><button class="chip" onclick="abEdit(\'' + x.id + '\')">Modifier</button>'
+    + '<button class="btn sq ghost" title="Retirer cet appareil" aria-label="Retirer cet appareil" onclick="abSupprimer(\'' + x.id + '\')"><span class="ic" style="transform:rotate(45deg)"></span></button></div></div>';
 }
 function abListe(){
   const q = abNorm(AB_F.q);
@@ -2242,7 +2371,7 @@ function abListe(){
     marque: (a, b) => abNorm(a.marque).localeCompare(abNorm(b.marque), "fr") || abNorm(a.modele).localeCompare(abNorm(b.modele), "fr"),
     nom: (a, b) => abNorm(a.modele).localeCompare(abNorm(b.modele), "fr") || abNorm(a.type).localeCompare(abNorm(b.type), "fr")
   };
-  const list = (S.appBase || []).filter(x => (!AB_F.type || x.type === AB_F.type) && (!AB_F.marque || x.marque === AB_F.marque)
+  const list = (S.appBase || []).filter(x => abOk(x.type, AB_FV.abFT) && abOk(x.marque, AB_FV.abFM) && abOk(x.modele, AB_FV.abFMo)
       && (!q || [x.type, x.marque, x.modele].some(v => abNorm(v).indexOf(q) > -1)))
     .sort(cmp[AB_SORT] || cmp.nom);
   let h = "", last = null;
@@ -2254,23 +2383,38 @@ function abListe(){
   return h || '<p class="m">' + ((S.appBase || []).length ? 'Aucun appareil ne correspond.' : 'La base est vide pour le moment.') + '</p>';
 }
 function abRefresh(){ $("abL").innerHTML = abListe(); }
+/* Bouton « + » de création : devient « − » en ouvrant le formulaire, sans rotation */
+function abAddHtml(){
+  const on = !!AB_MM.abAdd;
+  const t = on ? "Fermer le formulaire" : "Ajouter un appareil à la base";
+  return '<button class="btn sq" id="abAddB" title="' + t + '" aria-label="' + t + '" onclick="abAddToggle()"><span class="ic' + (on ? ' minus' : '') + '"></span></button>';
+}
+function abAddToggle(){
+  const ouvrir = !AB_MM.abAdd;
+  AB_MM.abAdd = ouvrir;
+  const b = $("abAddB");
+  b.querySelector(".ic").classList.toggle("minus", ouvrir);
+  b.title = ouvrir ? "Fermer le formulaire" : "Ajouter un appareil à la base";
+  b.setAttribute("aria-label", b.title);
+  $("abAdd").classList.toggle("hide", !ouvrir);
+}
 function appareilsHtml(){
   const head = '<h1>Appareils</h1><p class="m">Base générale des appareils (type · marque · modèle). Elle sert à classer les pièces.</p>';
   if (S.appBaseErr) return head + '<div class="card"><div class="t">Base non créée</div><div class="m">La table « appareils_base » n’existe pas encore dans la base de données. Elle doit être créée une fois (voir le message d’installation).</div></div>';
-  const marques = [...new Set((S.appBase || []).map(x => x.marque).filter(Boolean))].sort((a, b) => a.localeCompare(b, "fr")).map(m => [m, m]);
+  AB_MM.abT = false; AB_MM.abM = false; AB_MM.abMo = false;
   return head
     + '<div class="row" style="gap:8px;align-items:center;flex-wrap:nowrap;margin-top:4px">'
-    + '<button class="btn" title="Ajouter un appareil à la base" aria-label="Ajouter un appareil à la base" style="width:44px;height:44px;min-width:44px;margin:0;padding:0;font-size:24px;line-height:1" onclick="$(\'abAdd\').classList.toggle(\'hide\')">+</button>'
+    + abAddHtml()
     + '<input id="abQ" placeholder="Rechercher (type, marque, modèle)" value="' + esc(AB_F.q) + '" oninput="AB_F.q=this.value;abRefresh()" style="flex:1;min-width:0;margin:0"></div>'
-    + '<div id="abAdd" class="card hide"><div class="two"><div><label>Type</label><select id="abT">' + AB_TYPES.map(t => '<option>' + t + '</option>').join("") + '</select></div>'
-    + '<div><label>Marque</label><input id="abM" placeholder="Ex. Nintendo"></div></div>'
-    + '<label>Modèle *</label><input id="abMo" placeholder="Ex. Switch OLED">'
+    + '<div id="abAdd" class="card' + (AB_MM.abAdd ? '' : ' hide') + '">'
+    + '<label>Type *</label>' + abSelHtml('abT', '', abTypes(), '— Choisir un type —', 'Nouveau type', true)
+    + '<label>Marque *</label>' + abSelHtml('abM', '', [], '— Choisir une marque —', 'Nouvelle marque', false)
+    + '<label>Modèle *</label>' + abSelHtml('abMo', '', [], '— Choisir un modèle —', 'Nouveau modèle', false)
     + '<button class="btn" onclick="abAjouter()">Ajouter à la base</button><div class="err" id="abErr"></div></div>'
     + abImportHtml()
+    + abFiltresHtml()
     + '<div class="row" style="gap:6px;flex-wrap:wrap;margin:8px 0">'
-    + '<select onchange="AB_SORT=this.value;abRefresh()">' + selOpts([["nom", "Trier : nom"], ["type", "Trier : type"], ["marque", "Trier : marque"]], AB_SORT) + '</select>'
-    + '<select onchange="AB_F.type=this.value;abRefresh()">' + selOpts([["", "Tous les types"]].concat(AB_TYPES.map(t => [t, t])), AB_F.type) + '</select>'
-    + '<select onchange="AB_F.marque=this.value;abRefresh()">' + selOpts([["", "Toutes les marques"]].concat(marques), AB_F.marque) + '</select></div>'
+    + '<select onchange="AB_SORT=this.value;abRefresh()">' + selOpts([["nom", "Trier : nom"], ["type", "Trier : type"], ["marque", "Trier : marque"]], AB_SORT) + '</select></div>'
     + '<div id="abL">' + abListe() + '</div>';
 }
 function cliHtml(q){
@@ -2658,6 +2802,18 @@ function pkHtml(key){
   }
   return h;
 }
+/* Pièces : le modèle se choisit dans la base Appareils (type → marque → modèle), jamais en texte libre */
+function pkBaseHtml(key){
+  const st = PKS[key] = PKS[key] || {app:"", cat:""};
+  const base = S.appBase || [];
+  if (!base.length) return '<p class="m">La base Appareils est vide. Ajoute d’abord les appareils dans l’onglet Appareils.</p>';
+  const types = abTypes().filter(t => base.some(x => x.type === t));
+  const brands = st.app ? abMarquesFor(st.app) : [];
+  const mods = st.app && st.cat ? abModelesFor(st.app, st.cat) : [];
+  return '<select onchange="pkSet(\'' + key + '\',\'app\',this.value)">' + optList(types, st.app, "Type d’appareil…") + '</select>'
+    + '<div class="two" style="margin-top:6px"><select' + (st.app ? '' : ' disabled') + ' onchange="pkSet(\'' + key + '\',\'cat\',this.value)">' + optList(brands, st.cat, "Marque…") + '</select>'
+    + '<select' + (st.cat ? '' : ' disabled') + ' onchange="pkMod(\'' + key + '\',this.value)">' + optList(mods, "", "Modèle…") + '</select></div>';
+}
 function pkSet(key, k, v){ const st = PKS[key] = PKS[key] || {app:"", cat:""}; st[k] = v; if (k === "app") { st.cat = ""; st.gam = ""; } if (k === "cat") st.gam = ""; if (key === "a") { DEV_SEL = null; MP.a = []; aCouleurRefresh("", ""); } mpDraw(key); }
 function pkMod(key, mod){
   const st = PKS[key] || {}; if (!mod || !st.app || !st.cat) return;
@@ -2675,7 +2831,7 @@ function mpDraw(key){
     return;
   }
   box.innerHTML = MP[key].map(m => '<span class="chip ok" style="margin:2px 4px 2px 0">' + esc(m) + ' <button style="border:0;background:none;cursor:pointer;font-weight:700" onclick="mpDel(\'' + key + '\',\'' + esc(m) + '\')">×</button></span>').join("")
-    + '<div style="margin-top:6px">' + pkHtml(key) + '</div>';
+    + '<div style="margin-top:6px">' + (key === "v" || key === "a" ? pkHtml(key) : pkBaseHtml(key)) + '</div>';
 }
 function mpAdd(key, v){ MP[key] = MP[key] || []; if (v && MP[key].indexOf(v) < 0) MP[key].push(v); mpDraw(key); }
 function mpDel(key, v){ MP[key] = MP[key].filter(x => x !== v); mpDraw(key); }
@@ -3260,12 +3416,18 @@ async function adjStock(sku, d){
   await reload();
 }
 async function seedPuces(){
-  const rows = [];
+  if (S.appBaseErr) return toast("La table Appareils n’existe pas encore.");
+  const rows = [], base = [];
   let max = S.stock.reduce((t, s) => Math.max(t, parseInt(String(s.sku).replace(/\D/g, ""), 10) || 0), 5000);
   PUCES.forEach(([nom, modele]) => {
-    if (!S.stock.some(s => s.nom === nom)) rows.push({ sku: "PC-" + (++max), nom, type: "Console", modele, qte: 0, res: 0 });
+    if (!S.stock.some(s => s.nom === nom)) {
+      const cle = "Console · Nintendo · " + modele;
+      if (!(S.appBase || []).some(x => abKey(x) === abKey({type: "Console", marque: "Nintendo", modele: modele}))) base.push({type: "Console", marque: "Nintendo", modele: modele});
+      rows.push({ sku: "PC-" + (++max), nom, type: "Console", modeles: [cle], modele: cle, qte: 0, res: 0 });
+    }
   });
   if (!rows.length) return toast("Les puces sont déjà au stock.");
+  if (base.length) { const { error: eb } = await SB.from("appareils_base").insert(base); if (eb) return toast(msgErr(eb)); }
   const { error } = await SB.from("stock").insert(rows);
   if (error) return toast(msgErr(error));
   toast("Puces ajoutées (quantité 0 : règle-les avec + / −).");
@@ -3277,7 +3439,7 @@ var PROF_EDIT=false;
 function profForm(c, label, fn){
   const f = (id, lbl, val, extra) => '<label>' + lbl + '</label><input id="' + id + '" value="' + esc(val || "") + '"' + (extra || "") + '>';
   return '<div class="card" style="margin:8px 0 0">'
-    + '<div class="two"><div>' + f("pfP","Prénom *",c.prenom).replace("<label>","<label>") + '</div><div>' + f("pfN","Nom *",c.nom) + '</div></div>'
+    + '<div class="two"><div>' + f("pfP","Prénom *",c.prenom) + '</div><div>' + f("pfN","Nom *",c.nom) + '</div></div>'
     + f("pfT","Téléphone *",c.tel,' inputmode="tel" maxlength="20"')
     + f("pfM","Email (identifiant de connexion)",c.mail,' disabled')
     + '<p class="m" style="margin:4px 0 0">Pour changer ton email de connexion, contacte ton réparateur.</p>'
@@ -3316,7 +3478,7 @@ function cliView(){
     <label>Code d’invitation (facultatif)</label><input id="cCode" inputmode="numeric" maxlength="6" placeholder="000000">
     <button class="btn" onclick="completeNow()">Valider</button><div class="err" id="cErr2"></div></div>
     <button class="btn ghost" onclick="logout()">Se déconnecter</button>`;
-  const head = `<div class="row" style="align-items:center;margin:4px 0 8px"><img class="logo-h" src="${LOGO_SRC}" alt="Seconde Vie"><button class="btn small ghost" onclick="toggleParam()">Paramètres</button></div>`;
+  const head = `<div class="row cl-mhead" style="align-items:center;margin:4px 0 8px"><img class="logo-h" src="${LOGO_SRC}" alt="Seconde Vie"><button class="btn small ghost" onclick="toggleParam()">Paramètres</button></div>`;
   if (!me.infos_verifiees_at) return head + `<h2 data-page="Vérification des informations">Vérifie tes informations</h2>
     <p class="m">Relis tes informations, corrige-les si besoin, puis confirme. Tes dossiers s’afficheront ensuite.</p>
     ${profForm(me, "Confirmer mes informations", "confirmProfile")}`;
@@ -3611,13 +3773,6 @@ async function completeNow(){
   const { data: u } = await SB.auth.getUser();
   const { error: ie } = await SB.from("clients").insert({ ...d, mail: u.user.email, auth_user_id: u.user.id });
   if (ie) { err.textContent = ie.code === "23505" ? "Un client existe déjà avec ce téléphone ou cet email. Contacte ton réparateur." : msgErr(ie); return; }
-  await boot();
-}
-async function claimNow(){
-  const code = $("cCode").value.trim(), err = $("cErr2");
-  if (!/^\d{6}$/.test(code)) { err.textContent = "Le code doit comporter 6 chiffres."; return; }
-  const { error } = await SB.rpc("claim_invitation", { p_code: code });
-  if (error) { err.textContent = /code_invalide/.test(error.message) ? "Code invalide ou déjà utilisé." : "Erreur : " + error.message; return; }
   await boot();
 }
 
