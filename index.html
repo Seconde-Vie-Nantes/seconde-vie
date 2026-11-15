@@ -129,8 +129,45 @@ body.lg .dash-page > h2:first-of-type{margin-top:6px}
 .dba-t td.act{white-space:nowrap}
 .dba-t tr.dba-fr th{position:static;cursor:default;border-bottom:1px solid var(--line);padding:5px 6px;background:var(--surf)}
 .dba-t tr.dba-fr input{width:100%;min-width:90px;margin:0;padding:5px 7px;font-size:12px;font-weight:400;border-radius:8px}
-.stk-grid{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1.3fr) minmax(0,.9fr) minmax(0,.9fr)}
-@media (max-width:600px){.stk-grid{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1.3fr)}.stk-x{display:none}}
+.stk-row{display:grid;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid rgba(128,128,128,.25);grid-template-columns:var(--stk-cols,minmax(0,1.4fr) minmax(0,1fr) minmax(0,1.3fr) minmax(0,.9fr) minmax(0,.9fr) 300px);min-width:max-content}
+.stk-head{border-bottom:2px solid var(--line)}
+/* Liste des clients : une ligne par client en colonnes */
+.card.cli-card{position:relative;padding:6px 12px;margin-bottom:6px}
+body.lg .card.cli-card{padding:6px 14px;margin-bottom:6px}
+.cli-head{display:grid;gap:10px;align-items:center;padding:0 12px 4px;font-size:12px;font-weight:700;color:var(--mut);grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1.3fr) minmax(0,1.5fr) minmax(0,.6fr) minmax(0,.9fr) 44px}
+body.lg .cli-head{padding:0 14px 4px}
+.cli-head>div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cli-row{display:grid;gap:10px;align-items:center;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1.3fr) minmax(0,1.5fr) minmax(0,.6fr) minmax(0,.9fr) 34px;min-height:34px}
+.cli-row>div{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px}
+.cli-caret{width:34px;height:34px;border-radius:10px;border:1px solid var(--line);background:var(--surf);color:var(--ink);display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer}
+.cli-alert{position:absolute;top:-7px;right:-7px;width:20px;height:20px;border-radius:50%;background:var(--bad);color:#fff;font-weight:700;font-size:13px;line-height:20px;text-align:center}
+.cli-body-wrap{display:grid;grid-template-rows:1fr;animation:cliIn .3s cubic-bezier(.2,.7,.2,1) both}
+.cli-body-wrap.cli-out{animation:cliOut .2s ease-in both;pointer-events:none}
+.cli-body{min-height:0;overflow:hidden}
+.cli-in{margin-top:6px;padding-top:6px;border-top:1px solid var(--line)}
+@keyframes cliIn{from{grid-template-rows:0fr;opacity:0;transform:translateY(-4px)}to{grid-template-rows:1fr;opacity:1;transform:none}}
+@keyframes cliOut{from{grid-template-rows:1fr;opacity:1}to{grid-template-rows:0fr;opacity:0}}
+@media (prefers-reduced-motion: reduce){.cli-body-wrap,.cli-body-wrap.cli-out{animation:none}}
+@media (max-width:600px){
+  .cli-head{display:none}
+  .cli-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 34px;gap:1px 10px}
+  .cli-row>div{white-space:normal}
+  .cli-row>div:nth-child(1){grid-column:1;grid-row:1}
+  .cli-row>div:nth-child(2){grid-column:2;grid-row:1}
+  .cli-row>div:nth-child(3){grid-column:1 / span 2;grid-row:2}
+  .cli-row>div:nth-child(4){grid-column:1;grid-row:3}
+  .cli-row>div:nth-child(5){grid-column:2;grid-row:3}
+  .cli-row>div:nth-child(6){grid-column:1 / span 2;grid-row:4;font-size:12px;color:var(--mut)}
+  .cli-row>.cli-caret{grid-column:3;grid-row:1 / span 4;align-self:center}
+  .cli-row>.cli-c{font-size:13px}
+  .cli-row>.cli-c[data-l="Créé le"]::before{content:"Créé le : ";font-weight:600}
+}
+.stk-head>span{position:relative;padding-right:10px}
+.stk-rz{position:absolute;top:0;bottom:0;right:0;width:10px;cursor:col-resize;touch-action:none;z-index:2}
+.stk-rz:hover,.stk-rz:active{background:linear-gradient(90deg,transparent 4px,var(--brand) 4px,var(--brand) 6px,transparent 6px)}
+.stk-wrap{overflow-x:auto;max-width:100%}
+.stk-act{display:flex;gap:6px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+@media (max-width:600px){.stk-row{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1.3fr);min-width:0}.stk-x,.stk-rz{display:none}.stk-act{grid-column:1/-1;justify-content:flex-start}.stk-head .stk-act{display:none}}
 .ab-cell{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sq{display:flex;align-items:center;justify-content:center;width:44px;height:44px;min-width:44px;margin:0;padding:0;line-height:1}
 .ic{position:relative;display:block;width:16px;height:16px;transition:transform .6s ease;pointer-events:none}
@@ -388,7 +425,7 @@ async function loadAll(){
   if (ROLE === "rep") { const cg = await SB.from("catalogue").select("*"); S.catalogue = cg.data || []; if (cg.error) toast("Catalogue : " + msgErr(cg.error)); }
   const vt = await SB.from("ventes").select("*");
   if (vt.error) { S.ventes = []; if (ROLE === "rep") toast("Ventes : " + msgErr(vt.error)); } else S.ventes = vt.data || [];
-  if (ROLE === "rep") { const ab = await SB.from("appareils_base").select("*"); S.appBaseErr = !!ab.error; S.appBase = ab.error ? [] : (ab.data || []); }
+  { const ab = await SB.from("appareils_base").select("*"); S.appBaseErr = !!ab.error && ROLE === "rep"; S.appBase = ab.error ? [] : (ab.data || []); }
   if (ROLE === "rep") { const sa = await SB.from("stock_appareils").select("*").order("nom"); if (sa.error) toast("Appareils à vendre : " + msgErr(sa.error)); else S.stockApp = sa.data || []; }
   const sv = await SB.from("sav").select("*").order("created_at", {ascending:false});
   if (sv.error) toast("SAV : " + msgErr(sv.error)); else S.sav = sv.data || [];
@@ -652,7 +689,7 @@ function dashGo(view, opt){
   opt = opt || {};
   if (view === "dossiers") { DOSS_TAB = opt.tab || "rep"; DOSS_F = {statut: opt.statut || "", app: opt.app || ""}; }
   if (view === "ventes") VMOIS = opt.mois || null;
-  if (view === "stock") { STOCK_TAB = "pieces"; STK_Q = ""; STK_TYPE = ""; STK_ST = ""; }
+  if (view === "stock") { STOCK_TAB = "pieces"; STK_Q = ""; STK_TYPE = ""; STK_ST = ""; STK_MQ = ""; STK_MO = ""; }
   FOCUS_ID = opt.focus || null;
   if (FOCUS_ID) setTimeout(() => { FOCUS_ID = null; }, 1500);
   go(view);
@@ -836,7 +873,7 @@ function depCalc(from){
 }
 function depensesPage(){
   const cur = todayIso().slice(0, 7);
-  const cats = ["Pièces", "Outillage", "Loyer", "Transport", "Fournitures", "Autre"];
+  const cats = ["Pièces", "Outillage", "Loyer", "Transport", "Fournitures", "Accessoire", "Protection", "Autre"];
   const list = (S.depenses || []).slice().sort((a, b) => String(b.date).localeCompare(String(a.date)));
   const sumT = arr => arr.reduce((t, x) => t + (+x.montant || 0), 0);
   const moisList = list.filter(x => String(x.date).slice(0, 7) === cur);
@@ -1120,17 +1157,20 @@ const REP = {
       <div class="err" id="cErr"></div>
     </div>
     <div class="row" style="gap:6px;flex-wrap:wrap;margin:8px 0">${cliFiltresHtml()}</div>
-    <button class="btn ghost small" style="margin-top:8px" onclick="CLI_TRASH=!CLI_TRASH;render()">${CLI_TRASH ? "Voir les clients actifs" : "Corbeille (" + S.clients.filter(c => c.deleted_at).length + ")"}</button><div id="cliL">${cliHtml("")}</div>`;
+    <button class="btn ghost small" style="margin:8px 0 14px" onclick="CLI_TRASH=!CLI_TRASH;render()">${CLI_TRASH ? "Voir les clients actifs" : "Corbeille (" + S.clients.filter(c => c.deleted_at).length + ")"}</button><div id="cliL">${cliHtml("")}</div>`;
   },
   new(){
     if (NEW_TAB === "idees") return `<h1>Nouvelle prestation</h1>` + newTabs() + ideasHtml();
     if (!S.clients.filter(c => !c.deleted_at).length) return `<h1>Nouvelle prestation</h1>` + newTabs() + `<p class="m">Crée d’abord un client dans l’onglet Clients.</p>`;
     return `<h1>Nouvelle prestation</h1>` + newTabs() + `<div class="card">
-      <label>Client</label><select id="nC" onchange="$('nD').innerHTML=this.value?devOpts(this.value):'<option value=&quot;&quot;>- choisis d’abord un client -</option>'"><option value="">- sélectionner un client -</option>${S.clients.filter(c => !c.deleted_at).map(c => `<option value="${c.id}">${esc(fullName(c))}</option>`).join("")}</select>
+      <label>Client</label><select id="nC" onchange="nCPick(this.value)"><option value="">- sélectionner un client -</option>${S.clients.filter(c => !c.deleted_at).map(c => `<option value="${c.id}">${esc(fullName(c))}</option>`).join("")}</select>
       <label>Type</label><select id="nT"><option>Réparation</option><option>Mod</option><option>SAV</option></select>
-      <label>Appareil du client</label><select id="nD"><option value="">- choisis d’abord un client -</option></select>
-      <label>Panne / prestation</label><input id="nW" placeholder="Ex. Joystick Hall effect">
-      <div class="two"><div><label>Prix (€)</label><input id="nP" inputmode="decimal" placeholder="à définir"></div><div><label>Durée de réparation</label><input id="nDu" placeholder="Ex. 1h"></div></div>
+      <label>Appareil du client</label><select id="nD" onchange="nDPick()"><option value="">- choisis d’abord un client -</option></select>
+      <label>Panne / prestation *</label><select id="nR" onchange="nRPick()"><option value="">- choisis d’abord un appareil -</option></select>
+      <input id="nW" placeholder="Nom de la prestation" style="display:none;margin-top:6px">
+      <div class="two"><div><label>Prix (€)</label><input id="nP" inputmode="decimal" placeholder="à définir" oninput="nFinal()"></div><div><label>Durée de réparation</label><input id="nDu" placeholder="Ex. 1h"></div></div>
+      <div class="two"><div><label>Remise</label><input id="nRm" inputmode="decimal" placeholder="0" oninput="nFinal()"></div><div><label>Unité</label><select id="nRu" onchange="nFinal()"><option value="eur">€</option><option value="pct">%</option></select></div></div>
+      <div class="m" id="nFinal" style="margin:4px 0 8px">Prix final : à définir</div>
       <label>Retour prévu</label><input id="nE" type="date">
       <label>Notes</label><textarea id="nNo" rows="2"></textarea>
       <button class="btn" onclick="createD()">Créer le dossier</button>
@@ -1142,17 +1182,21 @@ const REP = {
   stock(){
     const tabs = '<div class="row" style="gap:6px;margin:8px 0 12px"><button class="chip ' + (STOCK_TAB === "pieces" ? "ok" : "") + '" style="flex:1;text-align:center;padding:8px" onclick="setStockTab(\'pieces\')">Pièces</button><button class="chip ' + (STOCK_TAB === "appareils" ? "ok" : "") + '" style="flex:1;text-align:center;padding:8px" onclick="setStockTab(\'appareils\')">Appareils</button></div>';
     const piecesTab = `
-    <input id="sQ" placeholder="Rechercher par SKU, pièce, type ou modèle" value="${esc(STK_Q)}" oninput="STK_Q=this.value;$('stkL').innerHTML=stkHtml(STK_Q)">
-    ${stkControls()}
-    <div id="stkL">${stkHtml(STK_Q)}</div>
-    ${S.stock.some(s => /Puce/.test(s.nom)) ? "" : '<button class="btn ghost" onclick="seedPuces()">Ajouter les puces Switch au stock</button>'}
-    <details style="margin-top:10px"><summary class="btn ghost small" style="display:inline-block;list-style:none;cursor:pointer">+ Ajouter une pièce</summary><div class="card" style="margin-top:8px">
+    <div class="row" style="gap:8px;align-items:center;flex-wrap:nowrap;margin-top:4px">
+      <button class="btn sq" id="stkAddB" title="${STK_ADD ? "Fermer le formulaire" : "Ajouter une pièce"}" aria-label="${STK_ADD ? "Fermer le formulaire" : "Ajouter une pièce"}" onclick="stkAddToggle()"><span class="ic${STK_ADD ? " minus" : ""}"></span></button>
+      <input id="sQ" placeholder="Rechercher (SKU, pièce, type ou modèle)" value="${esc(STK_Q)}" oninput="STK_Q=this.value;$('stkL').innerHTML=stkHtml(STK_Q)" style="flex:1;min-width:0;margin:0">
+    </div>
+    <div id="stkAdd" class="card${STK_ADD ? "" : " hide"}">
       <label>Nom</label><input id="sN">
       <label>Quantité</label><input id="sQt" inputmode="numeric" value="0">
       <label>Modèles</label><div id="mp-n"></div>
       <button class="btn" onclick="addStock()">Ajouter au stock</button>
       <div class="err" id="sErr"></div>
-    </div></details>`;
+    </div>
+    ${orphanBtn()}
+    ${stkControls()}
+    <div id="stkL">${stkHtml(STK_Q)}</div>
+    ${S.stock.some(s => /Puce/.test(s.nom)) ? "" : '<button class="btn ghost" onclick="seedPuces()">Ajouter les puces Switch au stock</button>'}`;
     const appTab = `
     <input id="aQ" placeholder="Rechercher un appareil" value="${esc(APP_Q)}" oninput="APP_Q=this.value;$('aL').innerHTML=appStkHtml()">
     ${appControls()}
@@ -1267,6 +1311,49 @@ function setFbHidden(v){ if (v) closeFeedback(); FB_HIDDEN = v; try { localStora
 /* ---------- Mises à jour (cloche en haut à droite) ----------
    Ajouter une entrée en haut de la liste à chaque mise en ligne. */
 var UPDATES = [
+  {id: "2026-11-15-q", date: "15/11/2026", titre: "Appareils des clients : photo et dernière réparation", items: [
+    "Dans la fiche d’un client déroulée, chaque appareil affiche sa photo (carré) avec son modèle dessous, et à droite la date et la panne de sa dernière réparation.",
+    "Photo du Xiaomi Redmi Note 5 bleu ajoutée au modèle Redmi Note 5."]},
+  {id: "2026-11-15-p", date: "15/11/2026", titre: "Détails client plus fluides", items: [
+    "Le détail d’un client se déroule et se replie en douceur, sans saut d’écran.",
+    "En ouvrant une autre fiche, la précédente se replie d’abord."]},
+  {id: "2026-11-15-o", date: "15/11/2026", titre: "Clients plus compacts sur téléphone", items: [
+    "Sur téléphone, chaque client tient sur quatre lignes au lieu de six."]},
+  {id: "2026-11-15-n", date: "15/11/2026", titre: "Page clients plus compacte", items: [
+    "Les lignes de clients sont moins épaisses et le bouton Corbeille a davantage d’espace avec la liste."]},
+  {id: "2026-11-15-m", date: "15/11/2026", titre: "Nouvelle liste des clients", items: [
+    "Chaque client tient sur une ligne : Prénom Nom, numéro, mail, adresse, code postal et date de création.",
+    "Le chevron à droite déroule la fiche du client (détail, appareils, actions) et se replie en appuyant de nouveau."]},
+  {id: "2026-11-15-l", date: "15/11/2026", titre: "Photos Qualirépar liées à l’appareil", items: [
+    "Les photos ajoutées depuis Qualirépar sont rattachées à l’appareil du client : une carte par appareil, avec ses réparations.",
+    "Les photos des réparations restent dans leur réparation. La galerie de l’appareil regroupe toutes les photos, avec leur origine (Qualirépar, réparation ou galerie)."]},
+  {id: "2026-11-15-k", date: "15/11/2026", titre: "Alerte client sans appareil en base", items: [
+    "Un point rouge « ! » s’affiche en haut à droite de la fiche d’un client qui a un appareil absent de la base Appareils (par exemple un appareil effacé de la base)."]},
+  {id: "2026-11-15-j", date: "15/11/2026", titre: "Appareils reliés à la base", items: [
+    "Un appareil de client ajouté ou modifié par le réparateur est aussi ajouté à la base Appareils s’il n’y est pas.",
+    "Bouton « À relier à la base » : liste les pièces et les appareils de clients qui ne sont pas reliés à la base, avec un bouton « Relier » pour les corriger."]},
+  {id: "2026-11-15-i", date: "15/11/2026", titre: "Filtres des appareils", items: [
+    "Appareils : le filtre par modèle est retiré. Il reste les filtres par type et par marque."]},
+  {id: "2026-11-15-h", date: "15/11/2026", titre: "Catégories de dépenses", items: [
+    "Dépenses : deux nouvelles catégories, Accessoire et Protection, avant Autre."]},
+  {id: "2026-11-15-g", date: "15/11/2026", titre: "Stock et nom de réparation", items: [
+    "Stock : même mise en page que Appareils. Le « + » carré ouvre le formulaire d’ajout, la recherche est à côté, puis viennent les filtres type, marque, modèle et stock, et le tri.",
+    "Détail réparation : le nom ne se modifie que pour les dossiers Réparation et Mod ; un SAV affiche le nom sans le modifier."]},
+  {id: "2026-11-15-f", date: "15/11/2026", titre: "Nouvelle prestation", items: [
+    "Nouvelle prestation : la panne se choisit dans un menu des réparations du catalogue pour l’appareil choisi.",
+    "Le prix et la durée sont remplis automatiquement ; une remise en € ou en % est déduite, et le prix final s’affiche avant l’enregistrement.",
+    "« Autre (saisie libre) » permet de saisir une prestation absente du catalogue. La remise est notée dans les notes du dossier."]},
+  {id: "2026-11-15-e", date: "15/11/2026", titre: "Gamme des appareils", items: [
+    "Appareils : un champ « Gamme » facultatif après la marque, à la création comme à la modification (ex. Galaxy S, Redmi Note).",
+    "Quand une gamme est choisie, la liste des modèles ne montre que les modèles de cette gamme."]},
+  {id: "2026-11-15-d", date: "15/11/2026", titre: "Largeur des colonnes du stock", items: [
+    "Stock : glisser le bord droit d’un titre de colonne pour l’élargir ou la réduire. La largeur est gardée sur cet appareil.",
+    "« Largeurs par défaut » remet les colonnes comme avant."]},
+  {id: "2026-11-15-c", date: "15/11/2026", titre: "Stock : crayon", items: [
+    "Stock : « Modifier » devient une case carrée avec un crayon, à gauche de la croix « Supprimer »."]},
+  {id: "2026-11-15-b", date: "15/11/2026", titre: "Stock : en-têtes et suppression", items: [
+    "Stock : la liste a maintenant des en-têtes de colonnes (Nom, Type, Modèle, Référence, Réservé).",
+    "Stock : « Supprimer » devient une case carrée avec un X centré, comme « Retirer » dans Appareils."]},
   {id: "2026-11-15-a", date: "15/11/2026", titre: "Liste du stock", items: [
     "Stock : les pièces s’affichent en liste alignée comme l’onglet Appareils (nom, type, modèle, référence, réservé), avec les boutons à droite."]},
   {id: "2026-11-14-c", date: "14/11/2026", titre: "Filtres des bases de données", items: [
@@ -2256,6 +2343,71 @@ function abTypes(){ return [...new Set(AB_TYPES.concat((S.appBase || []).map(x =
 function abMarques(){ return [...new Set((S.appBase || []).map(x => x.marque).filter(Boolean))].sort((a, b) => a.localeCompare(b, "fr")); }
 function abMarquesFor(t){ return t ? [...new Set((S.appBase || []).filter(x => x.type === t).map(x => x.marque).filter(Boolean))].sort((a, b) => a.localeCompare(b, "fr")) : []; }
 function abModelesFor(t, m){ return (t && m) ? [...new Set((S.appBase || []).filter(x => x.type === t && x.marque === m).map(x => x.modele).filter(Boolean))].sort((a, b) => a.localeCompare(b, "fr")) : []; }
+/* Liens avec la base Appareils */
+function baseHasTrio(t, m, mo){ return (S.appBase || []).some(x => abKey(x) === abKey({type: t, marque: m, modele: mo})); }
+function baseHasModele(t, mo){ return (S.appBase || []).some(x => nz(x.type) === nz(t) && nz(x.modele) === nz(mo)); }
+function orphanList(){
+  const pieces = S.stock.map(s => {
+    const parts = stkPartsOf(s), bad = parts.filter(p => !baseHasTrio(p.t, p.m, p.mo));
+    return (bad.length || !parts.length) ? {s: s, bad: bad} : null;
+  }).filter(Boolean);
+  const devs = S.devices.filter(d => { const c = S.clients.find(x => x.id === d.client_id); return c && !c.deleted_at && !baseHasModele(d.type, d.modele); });
+  return {pieces: pieces, devs: devs};
+}
+/* Un appareil du client n’est plus dans la base (ex. effacé de la base) */
+function cliAlerte(c){
+  if (S.appBaseErr || c.deleted_at) return false;
+  return S.devices.some(d => d.client_id === c.id && !baseHasModele(d.type, d.modele));
+}
+function orphanCount(){ const o = orphanList(); return o.pieces.length + o.devs.length; }
+function orphanBtn(){
+  const n = orphanCount();
+  return n ? '<button class="btn ghost small" style="margin:6px 0" onclick="openOrph()">À relier à la base (' + n + ')</button>' : '';
+}
+function orphanHtml(){
+  const o = orphanList();
+  const row = (titre, sous, bouton) => '<div class="row" style="align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(128,128,128,.25)"><div style="flex:1;min-width:0"><div class="t" style="font-size:14px">' + titre + '</div><div class="m">' + sous + '</div></div>' + bouton + '</div>';
+  let h = '<p class="m">Ces éléments ne sont pas reliés à la base Appareils. Clique sur « Relier » pour les corriger.</p>';
+  if (!o.pieces.length && !o.devs.length) return h + '<p class="m">Tout est relié à la base.</p>';
+  if (o.pieces.length) h += '<h2 style="font-size:15px;margin:10px 0 0">Pièces (' + o.pieces.length + ')</h2>' + o.pieces.map(x => row(esc(x.s.nom) + ' <span class="code">' + esc(x.s.sku) + '</span>',
+    x.bad.length ? 'Modèle non relié : ' + x.bad.map(p => esc([p.t, p.m, p.mo].filter(Boolean).join(" · "))).join(", ") : 'Aucun modèle',
+    '<button class="chip" onclick="orphGo(\'piece\',\'' + x.s.sku + '\')">Relier</button>')).join("");
+  if (o.devs.length) h += '<h2 style="font-size:15px;margin:10px 0 0">Appareils de clients (' + o.devs.length + ')</h2>' + o.devs.map(d => {
+    const c = S.clients.find(x => x.id === d.client_id);
+    return row(esc(d.type) + " · " + esc(d.modele), 'Client : ' + esc(c ? fullName(c) : "") + ' · ' + (d.type === "Téléphone" ? 'IMEI ' : 'SN ') + esc((d.type === "Téléphone" ? d.imei : d.sn) || '–'),
+      '<button class="chip" onclick="orphGo(\'dev\',\'' + d.id + '\')">Relier</button>');
+  }).join("");
+  return h;
+}
+function openOrph(){
+  closeOrph();
+  const o = document.createElement("div");
+  o.id = "orphPop";
+  o.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:60;padding:16px";
+  o.onclick = e => { if (e.target === o) closeOrph(); };
+  o.innerHTML = '<div class="card" style="max-width:560px;width:100%;max-height:85vh;overflow:auto;margin:0"><div class="row" style="align-items:center;gap:8px"><h2 style="margin:0;flex:1">À relier à la base</h2><button class="chip" onclick="closeOrph()">Fermer</button></div>' + orphanHtml() + '</div>';
+  document.body.appendChild(o);
+}
+function closeOrph(){ const o = $("orphPop"); if (o) o.remove(); }
+/* Ouvre l’élément à corriger, à l’endroit où il se modifie */
+function orphGo(kind, id){
+  closeOrph();
+  if (kind === "piece") { VIEW = "stock"; STOCK_TAB = "pieces"; render(); editPiece(id); return; }
+  const d = S.devices.find(x => x.id === id); if (!d) return;
+  VIEW = "clients"; CLI_OPEN = d.client_id; render(); showDevForm(d.id, d.client_id);
+}
+/* Gamme : préfixe « Gamme · modèle » du nom du modèle (même convention que le catalogue) */
+function abSplit(modele){ const m = String(modele || ""), i = m.indexOf(" · "); return i < 0 ? {g: "", base: m} : {g: m.slice(0, i), base: m.slice(i + 3)}; }
+function abGammesFor(t, m){ return (t && m) ? [...new Set((S.appBase || []).filter(x => x.type === t && x.marque === m).map(x => abSplit(x.modele).g).filter(Boolean))].sort((a, b) => a.localeCompare(b, "fr")) : []; }
+function abBasesFor(t, m, g){
+  if (!g) return abModelesFor(t, m);
+  return [...new Set((S.appBase || []).filter(x => x.type === t && x.marque === m && abSplit(x.modele).g === g).map(x => abSplit(x.modele).base))].sort((a, b) => a.localeCompare(b, "fr"));
+}
+function abComp(g, base){
+  let b = String(base || "").trim();
+  if (g && b.indexOf(g + " · ") === 0) b = b.slice(g.length + 3);
+  return g ? g + " · " + b : b;
+}
 /* Champ à liste : menu déroulant ; le bouton « + » passe à la saisie et devient « × ».
    Un tour complet : + → × en sens horaire, × → + en sens anti-horaire. */
 function abSelHtml(pre, cur, list, ph, nouveau, ok){
@@ -2297,43 +2449,47 @@ function abSetOk(pre, ok){
   b.disabled = !ok; sel.disabled = !ok; b.style.opacity = ok ? "" : ".4";
 }
 /* Recalcule les listes selon le type (et la marque) choisis ; sans type ni marque, rien ne se saisit */
-function abFormRefresh(T, M, Mo){
+function abFormRefresh(T, M, Mo, G){
   const t = abSelVal(T);
-  if (!t) { abSetMode(M, false); abSetMode(Mo, false); }
+  if (!t) { abSetMode(M, false); abSetMode(Mo, false); if (G) abSetMode(G, false); }
   const curM = abSelVal(M), mList = abMarquesFor(t);
   $(M + "S").innerHTML = optList(mList, mList.indexOf(curM) >= 0 ? curM : "", "— Choisir une marque —");
   const mv = abSelVal(M);
-  if (!mv) abSetMode(Mo, false);
-  const curMo = abSelVal(Mo), moList = abModelesFor(t, mv);
+  if (!mv) { abSetMode(Mo, false); if (G) abSetMode(G, false); }
+  let gv = "";
+  if (G) {
+    const curG = abSelVal(G), gList = abGammesFor(t, mv);
+    $(G + "S").innerHTML = optList(gList, gList.indexOf(curG) >= 0 ? curG : "", "— Aucune gamme —");
+    gv = abSelVal(G);
+    abSetOk(G, !!t && !!mv);
+  }
+  const curMo = abSelVal(Mo), moList = G ? abBasesFor(t, mv, gv) : abModelesFor(t, mv);
   $(Mo + "S").innerHTML = optList(moList, moList.indexOf(curMo) >= 0 ? curMo : "", "— Choisir un modèle —");
   abSetOk(M, !!t);
   abSetOk(Mo, !!t && !!mv);
 }
 /* Chaque formulaire : type → marque → modèle */
-var AB_GROUPES = [["abT", "abM", "abMo"], ["abET", "abEMa", "abEM"], ["dvT", "dvMa", "dvM"]];
+var AB_GROUPES = [["abT", "abM", "abMo", "abG"], ["abET", "abEMa", "abEM", "abEG"], ["dvT", "dvMa", "dvM"]];
 function abRefreshFor(pre){
   if (AB_FILTRE.indexOf(pre) >= 0) { abFiltreRefresh(); abRefresh(); return; }
   const g = AB_GROUPES.find(x => x.indexOf(pre) >= 0);
-  if (g) abFormRefresh(g[0], g[1], g[2]);
+  if (g) abFormRefresh(g[0], g[1], g[2], g[3]);
   if (pre === "dvT") devTypeHook();
 }
 /* Filtres : même principe que le formulaire (liste + « + » pour saisir), mais tout est facultatif */
-var AB_FV = {abFT: {raw: "", exact: true}, abFM: {raw: "", exact: true}, abFMo: {raw: "", exact: true}};
-var AB_FILTRE = ["abFT", "abFM", "abFMo"];
+var AB_FV = {abFT: {raw: "", exact: true}, abFM: {raw: "", exact: true}};
+var AB_FILTRE = ["abFT", "abFM"];
 function abFiltreSave(pre){ AB_FV[pre] = {raw: abSelVal(pre).trim(), exact: !AB_MM[pre]}; }
 function abOk(val, f){ const v = abNorm(f.raw); return !v || (f.exact ? abNorm(val) === v : abNorm(val).indexOf(v) > -1); }
 function abFiltreListes(){
   const t = AB_FV.abFT.exact ? AB_FV.abFT.raw : "";
-  const m = AB_FV.abFM.exact ? AB_FV.abFM.raw : "";
-  const modeles = [...new Set((S.appBase || []).filter(x => (!t || x.type === t) && (!m || x.marque === m)).map(x => x.modele).filter(Boolean))].sort((a, b) => a.localeCompare(b, "fr"));
-  return {types: abTypes(), marques: t ? abMarquesFor(t) : abMarques(), modeles: modeles};
+  return {types: abTypes(), marques: t ? abMarquesFor(t) : abMarques()};
 }
 function abFiltresHtml(){
   const L = abFiltreListes(), lbl = t => '<div class="m" style="margin:8px 0 2px;font-weight:600">' + t + '</div>';
   const sel = (pre, list, cur, ph) => '<select id="' + pre + 'S" onchange="abRefreshFor(\'' + pre + '\')">' + optList(list, list.indexOf(cur) >= 0 ? cur : "", ph) + '</select>';
   return '<div style="margin:8px 0">' + lbl('Filtrer par type') + sel('abFT', L.types, AB_FV.abFT.raw, 'Tous les types')
-    + lbl('Filtrer par marque') + sel('abFM', L.marques, AB_FV.abFM.raw, 'Toutes les marques')
-    + lbl('Filtrer par modèle') + sel('abFMo', L.modeles, AB_FV.abFMo.raw, 'Tous les modèles') + '</div>';
+    + lbl('Filtrer par marque') + sel('abFM', L.marques, AB_FV.abFM.raw, 'Toutes les marques') + '</div>';
 }
 /* Recalcule les listes de marque et de modèle selon les filtres choisis au-dessus */
 function abFiltreRefresh(){
@@ -2341,30 +2497,29 @@ function abFiltreRefresh(){
   const L = abFiltreListes();
   $("abFMS").innerHTML = optList(L.marques, L.marques.indexOf(AB_FV.abFM.raw) >= 0 ? AB_FV.abFM.raw : "", "Toutes les marques");
   abFiltreSave("abFM");
-  const L2 = abFiltreListes();
-  $("abFMoS").innerHTML = optList(L2.modeles, L2.modeles.indexOf(AB_FV.abFMo.raw) >= 0 ? AB_FV.abFMo.raw : "", "Tous les modèles");
-  abFiltreSave("abFMo");
 }
 async function abAjouter(){
   const err = $("abErr"); err.textContent = "";
-  const type = abSelVal("abT").trim(), marque = abSelVal("abM").trim(), modele = abSelVal("abMo").trim();
+  const type = abSelVal("abT").trim(), marque = abSelVal("abM").trim(), base = abSelVal("abMo").trim();
   if (!type) { err.textContent = "Choisis d’abord un type."; return; }
   if (!marque) { err.textContent = "La marque est obligatoire."; return; }
-  if (!modele) { err.textContent = "Le modèle est obligatoire."; return; }
+  if (!base) { err.textContent = "Le modèle est obligatoire."; return; }
+  const modele = abComp(abSelVal("abG").trim(), base);
   if ((S.appBase || []).some(x => abKey(x) === abKey({type: type, marque: marque, modele: modele}))) { err.textContent = "Cet appareil est déjà dans la base."; return; }
   const { error } = await SB.from("appareils_base").insert({type: type, marque: marque, modele: modele});
   if (error) { err.textContent = msgErr(error); return; }
-  AB_MM.abT = false; AB_MM.abM = false; AB_MM.abMo = false;
+  AB_MM.abT = false; AB_MM.abM = false; AB_MM.abMo = false; AB_MM.abG = false;
   toast("Appareil ajouté à la base");
   await reload();
 }
-function abEdit(id){ AB_EDIT = id; AB_MM.abET = false; AB_MM.abEMa = false; AB_MM.abEM = false; render(); }
+function abEdit(id){ AB_EDIT = id; AB_MM.abET = false; AB_MM.abEMa = false; AB_MM.abEM = false; AB_MM.abEG = false; render(); }
 function abCancel(){ AB_EDIT = null; render(); }
 async function abSauver(id){
-  const type = abSelVal("abET").trim(), marque = abSelVal("abEMa").trim(), modele = abSelVal("abEM").trim();
+  const type = abSelVal("abET").trim(), marque = abSelVal("abEMa").trim(), base = abSelVal("abEM").trim();
   if (!type) { toast("Choisis un type."); return; }
   if (!marque) { toast("La marque est obligatoire."); return; }
-  if (!modele) { toast("Le modèle est obligatoire."); return; }
+  if (!base) { toast("Le modèle est obligatoire."); return; }
+  const modele = abComp(abSelVal("abEG").trim(), base);
   const { error } = await SB.from("appareils_base").update({type: type, marque: marque, modele: modele}).eq("id", id);
   if (error) { toast(msgErr(error)); return; }
   AB_EDIT = null; toast("Appareil modifié");
@@ -2380,7 +2535,8 @@ async function abSupprimer(id){
 function abLigne(x){
   if (AB_EDIT === x.id) return '<div class="card" style="margin:4px 0"><div class="two"><div><label>Type *</label>' + abSelHtml('abET', x.type, abTypes(), '— Choisir un type —', 'Nouveau type', true) + '</div>'
     + '<div><label>Marque *</label>' + abSelHtml('abEMa', x.marque || '', abMarquesFor(x.type), '— Choisir une marque —', 'Nouvelle marque', true) + '</div></div>'
-    + '<label>Modèle *</label>' + abSelHtml('abEM', x.modele, abModelesFor(x.type, x.marque), '— Choisir un modèle —', 'Nouveau modèle', true)
+    + '<label>Gamme (facultatif)</label>' + abSelHtml('abEG', abSplit(x.modele).g, abGammesFor(x.type, x.marque), '— Aucune gamme —', 'Nouvelle gamme', true)
+    + '<label>Modèle *</label>' + abSelHtml('abEM', abSplit(x.modele).g ? abSplit(x.modele).base : x.modele, abSplit(x.modele).g ? abBasesFor(x.type, x.marque, abSplit(x.modele).g) : abModelesFor(x.type, x.marque), '— Choisir un modèle —', 'Nouveau modèle', true)
     + '<div style="display:flex;gap:6px;margin-top:6px"><button class="chip ok" onclick="abSauver(\'' + x.id + '\')">Enregistrer</button><button class="chip" onclick="abCancel()">Annuler</button></div></div>';
   return '<div class="row" style="align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(128,128,128,.25)">'
     + '<div style="flex:1;min-width:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.3fr);gap:8px"><span class="ab-cell">' + esc(x.type) + '</span><span class="ab-cell">' + esc(x.marque || "Sans marque") + '</span><b class="ab-cell">' + esc(x.modele) + '</b></div>'
@@ -2394,7 +2550,7 @@ function abListe(){
     marque: (a, b) => abNorm(a.marque).localeCompare(abNorm(b.marque), "fr") || abNorm(a.modele).localeCompare(abNorm(b.modele), "fr"),
     nom: (a, b) => abNorm(a.modele).localeCompare(abNorm(b.modele), "fr") || abNorm(a.type).localeCompare(abNorm(b.type), "fr")
   };
-  const list = (S.appBase || []).filter(x => abOk(x.type, AB_FV.abFT) && abOk(x.marque, AB_FV.abFM) && abOk(x.modele, AB_FV.abFMo)
+  const list = (S.appBase || []).filter(x => abOk(x.type, AB_FV.abFT) && abOk(x.marque, AB_FV.abFM)
       && (!q || [x.type, x.marque, x.modele].some(v => abNorm(v).indexOf(q) > -1)))
     .sort(cmp[AB_SORT] || cmp.nom);
   let h = "", last = null;
@@ -2422,9 +2578,9 @@ function abAddToggle(){
   $("abAdd").classList.toggle("hide", !ouvrir);
 }
 function appareilsHtml(){
-  const head = '<h1>Appareils</h1><p class="m">Base générale des appareils (type · marque · modèle). Elle sert à classer les pièces.</p>';
+  const head = '<h1>Appareils</h1><p class="m">Base générale des appareils (type · marque · modèle). Elle sert à classer les pièces.</p>' + orphanBtn();
   if (S.appBaseErr) return head + '<div class="card"><div class="t">Base non créée</div><div class="m">La table « appareils_base » n’existe pas encore dans la base de données. Elle doit être créée une fois (voir le message d’installation).</div></div>';
-  AB_MM.abT = false; AB_MM.abM = false; AB_MM.abMo = false;
+  AB_MM.abT = false; AB_MM.abM = false; AB_MM.abMo = false; AB_MM.abG = false;
   return head
     + '<div class="row" style="gap:8px;align-items:center;flex-wrap:nowrap;margin-top:4px">'
     + abAddHtml()
@@ -2432,6 +2588,7 @@ function appareilsHtml(){
     + '<div id="abAdd" class="card' + (AB_MM.abAdd ? '' : ' hide') + '">'
     + '<label>Type *</label>' + abSelHtml('abT', '', abTypes(), '— Choisir un type —', 'Nouveau type', true)
     + '<label>Marque *</label>' + abSelHtml('abM', '', [], '— Choisir une marque —', 'Nouvelle marque', false)
+    + '<label>Gamme (facultatif)</label>' + abSelHtml('abG', '', [], '— Aucune gamme —', 'Nouvelle gamme', false)
     + '<label>Modèle *</label>' + abSelHtml('abMo', '', [], '— Choisir un modèle —', 'Nouveau modèle', false)
     + '<button class="btn" onclick="abAjouter()">Ajouter à la base</button><div class="err" id="abErr"></div></div>'
     + abImportHtml()
@@ -2443,22 +2600,35 @@ function appareilsHtml(){
 function cliHtml(q){
   const list = S.clients.filter(c => (CLI_TRASH ? !!c.deleted_at : !c.deleted_at) && (!q || nz(fullName(c)).indexOf(q) > -1) && cliPasFiltre(c))
     .sort((a,b) => cliCmp(a, b));
-  return list.map(c => {
-    const inv = S.inv.find(i => i.client_id === c.id && !i.used_at);
+  const DOWN = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>';
+  const UP = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"></path></svg>';
+  const rows = list.map(c => {
+    const open = CLI_OPEN === c.id;
+    const alerte = cliAlerte(c);
+    const row = '<div class="cli-row" style="cursor:pointer" onclick="toggleCli(\'' + c.id + '\')">'
+      + '<div><b>' + esc(fullName(c)) + '</b>' + (c.deleted_at ? ' <span class="chip late">Supprimé</span>' : '') + '</div>'
+      + '<div class="cli-c" data-l="Numéro">' + esc(c.tel || "") + '</div>'
+      + '<div class="cli-c" data-l="Mail">' + esc(c.mail || "") + '</div>'
+      + '<div class="cli-c" data-l="Adresse">' + esc([c.adr, c.ville].filter(Boolean).join(", ")) + '</div>'
+      + '<div class="cli-c" data-l="CP">' + esc(c.cp || "") + '</div>'
+      + '<div class="cli-c" data-l="Créé le">' + (c.created_at ? fr(String(c.created_at).slice(0, 10)) : "–") + '</div>'
+      + '<button class="cli-caret" aria-label="' + (open ? "Replier" : "Dérouler") + '" title="' + (open ? "Replier" : "Dérouler") + '">' + (open ? UP : DOWN) + '</button>'
+      + '</div>'
+      + (alerte ? '<span class="cli-alert" title="Un appareil de ce client n’est plus dans la base Appareils">!</span>' : '');
+    if (!open) return '<div class="card cli-card">' + row + '</div>';
     const acc = c.auth_user_id ? '<span class="chip ok">Compte créé</span> ' + (c.infos_verifiees_at ? '<span class="chip ok">Infos vérifiées</span>' : '<span class="chip warn">Infos à vérifier</span>')
-      : inv ? 'Code : <span class="code">' + esc(inv.code) + '</span>'
-      : '<button class="chip" onclick="newCode(\'' + c.id + '\')">Générer un code</button>';
-    const head = '<div style="cursor:pointer" onclick="toggleCli(\'' + c.id + '\')"><div class="t">' + esc(fullName(c)) + (c.deleted_at ? ' <span class="chip late">Supprimé</span>' : '') + '</div><div class="m">' + esc(c.tel) + ' · ' + esc(c.mail) + (c.created_at ? ' · créé le ' + fr(String(c.created_at).slice(0, 10)) : '') + '</div></div>';
-    if (CLI_OPEN !== c.id) return '<div class="card">' + head + '</div>';
+      : (S.inv.find(i => i.client_id === c.id && !i.used_at) ? 'Code : <span class="code">' + esc(S.inv.find(i => i.client_id === c.id && !i.used_at).code) + '</span>'
+      : '<button class="chip" onclick="newCode(\'' + c.id + '\')">Générer un code</button>');
     const actions = c.deleted_at
       ? '<button class="btn" onclick="restoreCli(\'' + c.id + '\')">Restaurer</button><button class="btn ghost" style="color:var(--bad);border-color:var(--bad)" onclick="purgeCli(\'' + c.id + '\')">Supprimer définitivement</button>'
       : '<button class="btn" onclick="editCli(\'' + c.id + '\')">Modifier</button><button class="btn ghost" onclick="softDelCli(\'' + c.id + '\')">Supprimer</button>';
-    return '<div class="card">' + head
-      + '<div class="m" style="margin-top:8px">' + esc(c.adr) + ', ' + esc(c.cp) + ' ' + esc(c.ville) + '</div>'
-      + (c.notes ? '<div class="m">' + esc(c.notes) + '</div>' : '')
+    return '<div class="card cli-card">' + row
+      + '<div class="cli-body-wrap" data-cli-body="' + c.id + '"><div class="cli-body"><div class="cli-in">' + (c.notes ? '<div class="m">' + esc(c.notes) + '</div>' : '')
       + '<div style="margin-top:6px">' + acc + '</div>'
-      + '<div id="cEd"></div>' + devHtml(c) + actions + '<div class="err" id="cliErr"></div></div>';
-  }).join("") || '<p class="m">' + (CLI_TRASH ? 'La corbeille est vide.' : 'Aucun client.') + '</p>';
+      + '<div id="cEd"></div>' + devHtml(c) + actions + '<div class="err" id="cliErr"></div></div></div></div></div>';
+  }).join("");
+  if (!rows) return '<p class="m">' + (CLI_TRASH ? 'La corbeille est vide.' : 'Aucun client.') + '</p>';
+  return (list.length ? '<div class="cli-head"><div>Prénom Nom</div><div>Numéro</div><div>Mail</div><div>Adresse</div><div>CP</div><div>Créé le</div><div></div></div>' : '') + rows;
 }
 function devOpts(cid){
   const ds = S.devices.filter(d => d.client_id === cid);
@@ -2650,13 +2820,38 @@ function devRepsHtml(devId){
   const rep = ROLE === "rep";
   return '<div class="m" style="margin-top:8px;font-weight:600">Réparations</div>' + ds.map(d => repCardHtml(d, rep)).join("");
 }
+/* Photo d’un modèle de la base, par nom de modèle (« Redmi · Note 5 » ou « Redmi Note 5 ») */
+var MODELE_PHOTOS = {"redmi note 5": "data:image/jpeg;base64,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"};
+function modelePhoto(m){ const k = nz(m).replace(/·/g, " ").replace(/\s+/g, " ").trim(); return MODELE_PHOTOS[k] || ""; }
+/* Dernière réparation de l’appareil, avec le nombre de photos */
+function lastRepHtml(d, nPh){
+  const ds = S.dossiers.filter(x => x.device_id === d.id).sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")));
+  const r = ds[0];
+  return '<div class="m">Dernière réparation</div>'
+    + (r ? '<div style="font-weight:600;margin-top:2px">' + esc(r.panne || r.type || "–") + '</div><div class="m">' + (r.created_at ? fr(String(r.created_at).slice(0, 10)) : "Date inconnue") + ' · ' + esc(r.statut || "") + '</div>'
+      : '<div class="m" style="margin-top:2px">Aucune réparation</div>')
+    + '<button class="chip" style="margin-top:8px;display:inline-flex;align-items:center;gap:6px" onclick="openGalerie(\'device\',\'' + d.id + '\')">' + ICON_IMG + ' ' + nPh + ' photo(s)</button>';
+}
 function devLine(d, rep){
   const tel = d.type === "Téléphone";
   let codes = "";
   if (tel && d.pin) codes += '<div class="m">Code PIN : <span class="code">' + esc(d.pin) + '</span></div>';
   if (tel && d.schema_code) codes += '<div class="m">Schéma : <span class="code">' + esc(d.schema_code) + '</span></div>';
   const nPh = photosFor("device", d.id).length;
-  return '<div class="card" data-page="' + (ROLE === "rep" ? "Espace réparateur · Clients" : "Espace client") + '" style="margin:6px 0"><button class="chip" style="float:right;display:inline-flex;align-items:center;gap:6px" title="Photos de l’appareil" onclick="openGalerie(\'device\',\'' + d.id + '\')">' + ICON_IMG + ' ' + nPh + '</button><div class="t">' + esc(d.modele) + (d.couleur ? ' · ' + esc(d.couleur) : '') + '</div><div class="m">' + esc(d.type) + '</div>'
+  const who = ROLE === "rep" ? "Espace réparateur · Clients" : "Espace client";
+  const couleur = d.couleur ? ' · ' + esc(d.couleur) : "";
+  const photoBtn = '<button class="chip" style="float:right;display:inline-flex;align-items:center;gap:6px" title="Photos de l’appareil" onclick="openGalerie(\'device\',\'' + d.id + '\')">' + ICON_IMG + ' ' + nPh + '</button>';
+  const head = rep
+    ? '<div style="display:flex;gap:12px;align-items:stretch;margin-top:4px">'
+      + '<div style="flex:0 0 84px;min-width:0">'
+      + '<button onclick="openGalerie(\'device\',\'' + d.id + '\')" title="Photos de l’appareil" style="display:block;width:84px;height:84px;padding:0;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center">'
+      + (modelePhoto(d.modele) ? '<img src="' + modelePhoto(d.modele) + '" alt="' + esc(d.modele) + '" style="width:100%;height:100%;object-fit:cover">' : ICON_IMG)
+      + '</button>'
+      + '<div class="t" style="font-size:12px;margin-top:4px;line-height:1.25;word-break:break-word">' + esc(d.modele) + couleur + '</div></div>'
+      + '<div style="flex:1;min-width:0;border:1px solid var(--line);border-radius:12px;padding:10px 12px">' + lastRepHtml(d, nPh) + '</div>'
+      + '</div>'
+    : '<div class="t">' + esc(d.modele) + couleur + '</div>';
+  return '<div class="card" data-page="' + who + '" style="margin:6px 0">' + (rep ? '' : photoBtn) + head
     + '<div class="m" style="margin-top:4px">' + (tel ? 'IMEI' : 'N° de série') + ' : <span class="code">' + esc((tel ? d.imei : d.sn) || '–') + '</span></div>' + codes
     + (d.etat ? '<div class="m">État : ' + esc(d.etat) + '</div>' : '')
     + '<div style="margin-top:6px;display:flex;gap:6px"><button class="chip" title="Modifier" onclick="showDevForm(\'' + d.id + '\')">✏️</button>'
@@ -2757,6 +2952,11 @@ async function saveDev(devId, cid){
     ? await SB.from("devices").update(row).eq("id", devId)
     : await SB.from("devices").insert(Object.assign({client_id: cid}, row));
   if (res.error) { err.textContent = msgErr(res.error); return; }
+  if (ROLE === "rep" && !S.appBaseErr && !baseHasTrio(t, ma, mo)) {
+    const rb = await SB.from("appareils_base").insert({type: t, marque: ma, modele: mo});
+    if (rb.error) toast("Appareil enregistré, mais pas ajouté à la base : " + msgErr(rb.error));
+    else toast("Appareil ajouté à la base");
+  }
   toast(devId ? "Appareil modifié" : "Appareil ajouté");
   await reload();
 }
@@ -2767,7 +2967,18 @@ async function delDev(id){
   toast("Appareil effacé");
   await reload();
 }
-function toggleCli(id){ CLI_OPEN = CLI_OPEN === id ? null : id; render(); }
+var CLI_BUSY = false;
+/* Déroule ou replie une fiche client avec une animation ; l’ancienne fiche se replie avant d’ouvrir la nouvelle */
+function toggleCli(id){
+  if (CLI_BUSY) return;
+  const cur = CLI_OPEN, next = cur === id ? null : id;
+  if (!cur) { CLI_OPEN = next; render(); return; }
+  const w = document.querySelector('[data-cli-body="' + cur + '"]');
+  if (!w) { CLI_OPEN = next; render(); return; }
+  CLI_BUSY = true;
+  w.classList.add("cli-out");
+  setTimeout(() => { CLI_BUSY = false; CLI_OPEN = next; render(); }, 200);
+}
 function editCli(id){
   const c = S.clients.find(x => x.id === id);
   $("cEd").innerHTML = '<div class="card" style="margin:8px 0 0"><div class="two"><div><label>Prénom *</label><input id="eP" value="' + esc(c.prenom) + '"></div><div><label>Nom *</label><input id="eN" value="' + esc(c.nom) + '"></div></div>'
@@ -2969,20 +3180,71 @@ async function deleteIdee(id){
   await reload();
 }
 
+/* Nouvelle prestation : les réparations viennent du catalogue, pour l’appareil choisi */
+function nCPick(cid){
+  $("nD").innerHTML = cid ? devOpts(cid) : '<option value="">- choisis d’abord un client -</option>';
+  nDPick();
+}
+function nRepOpts(dv){
+  const nm = nz(dv.modele);
+  let rows = S.catalogue.filter(r => r.appareil !== "Mods" && nz(r.modele) === nm), lib = r => r.reparation;
+  if (!rows.length) { rows = S.catalogue.filter(r => r.appareil === dv.type); lib = r => r.reparation + (r.modele ? " · " + r.modele : ""); }
+  return rows.slice().sort((a, b) => String(a.reparation).localeCompare(String(b.reparation), "fr"))
+    .map(r => '<option value="' + esc(r.id) + '">' + esc(lib(r)) + (r.prix != null && !isNaN(+r.prix) ? " — " + eur(r.prix) : "") + '</option>').join("");
+}
+function nDPick(){
+  const dv = S.devices.find(d => d.id === $("nD").value);
+  $("nR").innerHTML = '<option value="">' + (dv ? "- choisir une réparation -" : "- choisis d’abord un appareil -") + '</option>'
+    + (dv ? nRepOpts(dv) : "") + '<option value="autre">Autre (saisie libre)…</option>';
+  $("nW").style.display = "none"; $("nW").value = "";
+  $("nP").value = ""; $("nDu").value = ""; $("nRm").value = "";
+  nFinal();
+}
+function nRPick(){
+  const v = $("nR").value, w = $("nW");
+  if (v === "autre") { w.style.display = ""; w.value = ""; $("nP").value = ""; $("nDu").value = ""; }
+  else {
+    const r = S.catalogue.find(x => String(x.id) === v);
+    w.style.display = "none"; w.value = r ? r.reparation : "";
+    $("nP").value = r && r.prix != null && !isNaN(+r.prix) ? String(+r.prix) : "";
+    $("nDu").value = r && r.duree ? r.duree : "";
+  }
+  nFinal();
+}
+/* Prix après remise (€ ou %) */
+function nRemise(base, rm, pct){
+  if (isNaN(base)) return NaN;
+  if (!(rm > 0)) return base;
+  return Math.max(0, Math.round((pct ? base * (1 - rm / 100) : base - rm) * 100) / 100);
+}
+function nFinal(){
+  const base = parseFloat(String($("nP").value).replace(",", "."));
+  const rm = parseFloat(String($("nRm").value).replace(",", ".")) || 0, pct = $("nRu").value === "pct";
+  const fin = nRemise(base, rm, pct);
+  $("nFinal").textContent = isNaN(fin) ? "Prix final : à définir" : "Prix final : " + eur(fin) + (rm > 0 ? " (remise " + rm + (pct ? " %" : " €") + ")" : "");
+}
 async function createD(){
   const err = $("nErr"); err.textContent = "";
   if (!$("nC").value) { err.textContent = "Choisis un client."; return; }
-  const dv = S.devices.find(d => d.id === $("nD").value), W = $("nW").value.trim();
+  const dv = S.devices.find(d => d.id === $("nD").value), rv = $("nR").value;
+  const W = rv === "autre" ? $("nW").value.trim() : (rv ? String((S.catalogue.find(x => String(x.id) === rv) || {}).reparation || "") : "");
   if (!dv) { err.textContent = "Choisis un appareil. Ajoute-le d’abord dans la fiche du client."; return; }
-  if (!W) { err.textContent = "Indique la panne."; return; }
+  if (!W) { err.textContent = "Choisis une réparation ou saisis la prestation."; return; }
   const px = $("nP").value.trim().replace(",", ".");
   if (px !== "" && isNaN(parseFloat(px))) { err.textContent = "Prix invalide."; return; }
+  const rmTxt = $("nRm").value.trim().replace(",", "."), rm = rmTxt === "" ? 0 : parseFloat(rmTxt), pct = $("nRu").value === "pct";
+  if (isNaN(rm) || rm < 0 || (pct && rm > 100)) { err.textContent = "Remise invalide."; return; }
+  let fin = px === "" ? null : parseFloat(px), notes = $("nNo").value.trim();
+  if (fin !== null && rm > 0) {
+    notes = "Remise : " + rm + (pct ? " %" : " €") + " (prix avant remise : " + fin + " €)" + (notes ? "\n" + notes : "");
+    fin = nRemise(fin, rm, pct);
+  }
   const { data, error } = await SB.from("dossiers").insert({
     client_id: $("nC").value, type: $("nT").value,
     appareil: dv.modele + (dv.couleur ? " " + dv.couleur : ""), device_id: dv.id, panne: W,
-    statut: "Devis en cours", prix: px === "" ? null : parseFloat(px),
+    statut: "Devis en cours", prix: fin,
     duree: durNorm($("nDu").value), echeance: $("nE").value || null,
-    notes: $("nNo").value.trim() || null
+    notes: notes || null
   }).select().single();
   if (error) { err.textContent = msgErr(error); return; }
   await loadAll();
@@ -3013,7 +3275,24 @@ function devisOk(d){ return d.prix != null && !!d.duree; }
 /* Photos : réparations et appareils (bucket Supabase « photos », table « photos ») */
 const PHOTO_BUCKET = "photos";
 const ICON_IMG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><circle cx="9" cy="10" r="2"></circle><path d="M21 16l-5-5-8 8"></path></svg>';
-function photosFor(kind, id){ return (S.photos || []).filter(p => kind === "dossier" ? p.dossier_id === id : p.device_id === id); }
+/* Photo Qualirépar : rattachée à l’appareil du client, dans le dossier « qualirepar/ » du stockage */
+function isQuali(p){ return p.quali === true || String(p.path || "").indexOf("qualirepar/") === 0; }
+function photosFor(kind, id){
+  const all = S.photos || [];
+  if (kind === "dossier") return all.filter(p => p.dossier_id === id);
+  if (kind === "quali") return all.filter(p => p.device_id === id && isQuali(p));
+  if (kind === "device") {
+    const dids = (S.dossiers || []).filter(x => x.device_id === id).map(x => x.id);
+    return all.filter(p => p.device_id === id || (p.dossier_id && dids.indexOf(p.dossier_id) > -1));
+  }
+  return all.filter(p => p.device_id === id);
+}
+/* Origine d’une photo, affichée dans la galerie de l’appareil */
+function photoOrigine(p){
+  if (isQuali(p)) return "Qualirépar";
+  if (p.dossier_id) { const d = (S.dossiers || []).find(x => x.id === p.dossier_id); return "Réparation" + (d && d.panne ? " · " + d.panne : ""); }
+  return "Galerie de l’appareil";
+}
 function photoUrl(p){ return p.demo ? p.path : SB.storage.from(PHOTO_BUCKET).getPublicUrl(p.path).data.publicUrl; }
 async function reloadPhotos(){
   if (DEMO) return;
@@ -3039,12 +3318,12 @@ async function addPhotos(kind, id, input){
   if (!files.length) return;
   PHOTO_ERR = "";
   if (DEMO) {
-    S.photos = (S.photos || []).concat(files.map(f => ({ id: "demo-p-" + Math.random().toString(36).slice(2), dossier_id: kind === "dossier" ? id : null, device_id: kind === "device" ? id : null, path: URL.createObjectURL(f), demo: true })));
+    S.photos = (S.photos || []).concat(files.map(f => ({ id: "demo-p-" + Math.random().toString(36).slice(2), dossier_id: kind === "dossier" ? id : null, device_id: kind === "dossier" ? null : id, quali: kind === "quali", path: URL.createObjectURL(f), demo: true })));
   } else {
     for (const f of files) {
       const rawExt = ((f.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "")) || "jpg";
       const prep = (await photoPrep(f)) || { body: f, ext: rawExt, type: f.type || "image/jpeg" };
-      const path = (kind === "dossier" ? "dossiers/" : "appareils/") + id + "/" + Date.now() + "-" + Math.random().toString(36).slice(2, 8) + "." + prep.ext;
+      const path = (kind === "dossier" ? "dossiers/" : kind === "quali" ? "qualirepar/" : "appareils/") + id + "/" + Date.now() + "-" + Math.random().toString(36).slice(2, 8) + "." + prep.ext;
       const up = await SB.storage.from(PHOTO_BUCKET).upload(path, prep.body, { contentType: prep.type });
       if (up.error) { PHOTO_ERR = "Photo non envoyée (" + (up.error.message || "erreur inconnue") + "). Vérifie que le bucket « photos » existe dans Supabase et que ses droits l’autorisent."; toast("Photo non envoyée"); break; }
       const row = { path }; row[kind === "dossier" ? "dossier_id" : "device_id"] = id;
@@ -3090,7 +3369,7 @@ function openGalerie(kind, id){
   const list = photosFor(kind, id);
   o.innerHTML = '<div class="copy-card" style="width:min(760px,100%);max-height:90vh;overflow:auto">'
     + '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div class="t">Photos' + (d ? " · " + esc(d.modele || d.type) : "") + '</div><button class="chip" onclick="closeGalerie()">Fermer</button></div>'
-    + '<div class="gal-grid">' + list.map(p => '<div class="gal-item"><a href="#" onclick="openImg(\'' + esc(photoUrl(p)) + '\');return false"><img src="' + esc(photoUrl(p)) + '" alt="Photo"></a>'
+    + '<div class="gal-grid">' + list.map(p => '<div class="gal-item"><a href="#" onclick="openImg(\'' + esc(photoUrl(p)) + '\');return false"><img src="' + esc(photoUrl(p)) + '" alt="Photo"></a><div class="m" style="font-size:12px;margin:4px 0">' + esc(photoOrigine(p)) + '</div>'
       + (ROLE === "rep" ? '<button class="chip late" onclick="delPhoto(\'' + p.id + '\',\'' + kind + '\',\'' + id + '\')">Supprimer</button>' : '') + '</div>').join("") + '</div>'
     + (list.length ? "" : '<p class="m">Aucune photo pour cet appareil.</p>')
     + (PHOTO_ERR ? '<div class="err">' + esc(PHOTO_ERR) + '</div>' : '')
@@ -3119,20 +3398,31 @@ function estManette(d){
 }
 function qualireparHtml(){
   const ds = S.dossiers.filter(d => !estManette(d));
-  const photosDev = d => d.device_id ? photosFor("device", d.device_id) : [];
-  return '<h1>Qualirépar</h1><p class="m">Photos des réparations éligibles. Les manettes de jeu ne sont pas éligibles au label et n’apparaissent pas ici.</p>'
-    + (ds.length ? ds.map(d => '<div class="card"><div class="t">' + esc(d.appareil) + ' · ' + esc(d.panne || "") + '</div><div class="m">' + esc(d.statut || "") + ' · ' + (photosFor("dossier", d.id).length + photosDev(d).length) + ' photo(s)</div>' + photosBloc("dossier", d.id, photosDev(d)) + '</div>').join("") : '<p class="m">Aucune réparation.</p>');
+  const groups = {}, order = [];
+  ds.forEach(d => {
+    const k = d.device_id ? "dev:" + d.device_id : "dos:" + d.id;
+    if (!groups[k]) { groups[k] = {dev: d.device_id || null, dossier: d.device_id ? null : d, dossiers: []}; order.push(k); }
+    groups[k].dossiers.push(d);
+  });
+  return '<h1>Qualirépar</h1><p class="m">Photos des réparations éligibles, rattachées à l’appareil du client. Les manettes de jeu ne sont pas éligibles au label et n’apparaissent pas ici.</p>'
+    + (order.length ? order.map(k => {
+      const g = groups[k], d0 = g.dossiers[0];
+      const repairs = g.dossiers.map(d => esc(d.panne || "") + ' · ' + esc(d.statut || "")).join("<br>");
+      if (g.dev) return '<div class="card"><div class="t">' + esc(d0.appareil) + '</div><div class="m">' + repairs + '</div><div class="m">' + photosFor("quali", g.dev).length + ' photo(s) Qualirépar</div>' + photosBloc("quali", g.dev) + '</div>';
+      return '<div class="card"><div class="t">' + esc(d0.appareil) + ' · ' + esc(d0.panne || "") + '</div><div class="m">' + esc(d0.statut || "") + ' · appareil non lié</div>' + photosBloc("dossier", d0.id) + '</div>';
+    }).join("") : '<p class="m">Aucune réparation.</p>');
 }
 function detailView(){
   const d = S.dossiers.find(x => x.id === DOSSIER);
   if (!d) { DOSSIER = null; return REP.dossiers(); }
   const devis = d.statut === "Devis en cours", termine = d.statut === "Terminé", remis = d.statut === "Remis";
+  const nomOk = devis && (d.type === "Réparation" || d.type === "Mod");
   const c = d.clients ? fullName(d.clients) : "";
   return `<button class="btn ghost small" onclick="closeD()">← Retour</button>
   <h2>${esc(d.appareil)}</h2>
   <div class="card">
     <div class="t">${esc(c)}</div>
-    ${devis ? `<label id="lbl-panne">Nom de la réparation *</label>
+    ${nomOk ? `<label id="lbl-panne">Nom de la réparation *</label>
     <input id="dNom" value="${esc(d.panne || "")}" placeholder="Ex. Remplacement écran" onchange="fSave('panne', this.value)">` : `<div class="m">${esc(d.type)} · ${esc(d.panne)}</div>`}
     ${stepsHtml(d.statut)}
     ${d.statut === "Terminé" || d.statut === "Remis" ? "" : dateBarHtml(d)}
@@ -3405,15 +3695,67 @@ async function addPieceCmd(did, sku){
   toast("Pièce ajoutée à commander");
   await reload();
 }
-var STK_Q = "", STK_SORT = "nom", STK_TYPE = "", STK_ST = "";
+var STK_Q = "", STK_SORT = "nom", STK_TYPE = "", STK_ST = "", STK_MQ = "", STK_MO = "", STK_ADD = false;
 var ASORT = "nom", ATYPE = "", AST = "", AGRADE = "";
 function selOpts(pairs, cur){ return pairs.map(p => '<option value="' + esc(p[0]) + '"' + (String(p[0]) === String(cur) ? ' selected' : '') + '>' + esc(p[1]) + '</option>').join(""); }
+/* Une pièce peut avoir plusieurs modèles « Type · Marque · Modèle » */
+function stkPartsOf(s){
+  const ms = s.modeles && s.modeles.length ? s.modeles : (s.modele ? [s.modele] : []);
+  return ms.map(m => { const a = String(m).split(" · "); return a.length >= 3 ? {t: a[0], m: a[1], mo: a.slice(2).join(" · ")} : {t: s.type || "", m: "", mo: String(m)}; });
+}
+/* Listes en cascade : type → marque → modèle */
+function stkListes(){
+  const fr = (a, b) => a.localeCompare(b, "fr");
+  const types = [...new Set(S.stock.map(s => s.type).filter(Boolean))].sort(fr);
+  const dans = S.stock.filter(s => !STK_TYPE || s.type === STK_TYPE);
+  const marques = [...new Set(dans.flatMap(s => stkPartsOf(s).map(p => p.m)).filter(Boolean))].sort(fr);
+  const modeles = [...new Set(dans.flatMap(s => stkPartsOf(s).filter(p => !STK_MQ || p.m === STK_MQ).map(p => p.mo)).filter(Boolean))].sort(fr);
+  return {types, marques, modeles};
+}
+/* Filtres et tri : même place et même principe que dans Appareils (sous le formulaire, au-dessus du tri) */
 function stkControls(){
-  const types = [...new Set(S.stock.map(x => x.type).filter(Boolean))].sort().map(t => [t, t]);
-  return '<div class="row" style="gap:6px;flex-wrap:wrap;margin:0 0 8px">'
-    + '<select onchange="STK_SORT=this.value;render()">' + selOpts([["nom", "Trier : nom"], ["type", "Trier : type"], ["qte", "Trier : quantité dispo"], ["res", "Trier : réservé"]], STK_SORT) + '</select>'
-    + '<select onchange="STK_TYPE=this.value;render()">' + selOpts([["", "Tous les types"]].concat(types), STK_TYPE) + '</select>'
-    + '<select onchange="STK_ST=this.value;render()">' + selOpts([["", "Tous"], ["dispo", "En stock"], ["rupture", "Rupture"]], STK_ST) + '</select></div>';
+  const L = stkListes(), lbl = t => '<div class="m" style="margin:8px 0 2px;font-weight:600">' + t + '</div>';
+  return '<div style="margin:8px 0">'
+    + lbl('Filtrer par type') + '<select onchange="STK_TYPE=this.value;STK_MQ=\'\';STK_MO=\'\';render()">' + optList(L.types, STK_TYPE, 'Tous les types') + '</select>'
+    + lbl('Filtrer par marque') + '<select onchange="STK_MQ=this.value;STK_MO=\'\';render()">' + optList(L.marques, STK_MQ, 'Toutes les marques') + '</select>'
+    + lbl('Filtrer par modèle') + '<select onchange="STK_MO=this.value;render()">' + optList(L.modeles, STK_MO, 'Tous les modèles') + '</select>'
+    + lbl('Filtrer par stock') + '<select onchange="STK_ST=this.value;render()">' + selOpts([["", "Tous"], ["dispo", "En stock"], ["rupture", "Rupture"]], STK_ST) + '</select>'
+    + '</div>'
+    + '<div class="row" style="gap:6px;flex-wrap:wrap;margin:0 0 8px"><select onchange="STK_SORT=this.value;render()">' + selOpts([["nom", "Trier : nom"], ["type", "Trier : type"], ["qte", "Trier : quantité dispo"], ["res", "Trier : réservé"]], STK_SORT) + '</select></div>';
+}
+function stkAddToggle(){
+  STK_ADD = !STK_ADD;
+  const b = $("stkAddB");
+  b.querySelector(".ic").classList.toggle("minus", STK_ADD);
+  b.title = STK_ADD ? "Fermer le formulaire" : "Ajouter une pièce"; b.setAttribute("aria-label", b.title);
+  $("stkAdd").classList.toggle("hide", !STK_ADD);
+}
+/* Largeurs des colonnes du stock (px), choisies en glissant le bord d’un titre */
+var STK_W = null;
+function stkLoadW(){
+  if (STK_W) return;
+  try { const v = JSON.parse(localStorage.getItem("sv_stk_w") || "null"); if (Array.isArray(v) && v.length === 5) STK_W = v; } catch (e) {}
+}
+function stkApplyW(){
+  if (STK_W) document.documentElement.style.setProperty("--stk-cols", STK_W.map(w => Math.round(w) + "px").join(" ") + " 300px");
+  else document.documentElement.style.removeProperty("--stk-cols");
+}
+function stkResize(e, i){
+  e.preventDefault(); e.stopPropagation();
+  if (!STK_W) STK_W = [...document.querySelector(".stk-head").children].slice(0, 5).map(c => c.getBoundingClientRect().width);
+  const x0 = e.clientX, start = STK_W.slice();
+  const move = ev => { STK_W[i] = Math.max(60, start[i] + ev.clientX - x0); stkApplyW(); };
+  const up = () => {
+    window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up);
+    try { localStorage.setItem("sv_stk_w", JSON.stringify(STK_W)); } catch (err) {}
+    render();
+  };
+  window.addEventListener("pointermove", move); window.addEventListener("pointerup", up);
+}
+function stkResetW(){
+  STK_W = null;
+  try { localStorage.removeItem("sv_stk_w"); } catch (e) {}
+  stkApplyW(); render();
 }
 function stkHtml(q){
   const term = nz(q).trim();
@@ -3425,17 +3767,24 @@ function stkHtml(q){
   const list = S.stock
     .filter(s => !term || [s.sku, s.nom, s.type, s.modele].some(v => nz(v).indexOf(term) > -1))
     .filter(s => !STK_TYPE || s.type === STK_TYPE)
+    .filter(s => !STK_MQ || stkPartsOf(s).some(p => p.m === STK_MQ))
+    .filter(s => !STK_MO || stkPartsOf(s).some(p => p.mo === STK_MO))
     .filter(s => !STK_ST || (STK_ST === "dispo" ? s.qte > 0 : !(s.qte > 0)))
     .sort(cmp);
-  return list.map(s => `<div id="s-${esc(s.sku)}">
-    <div class="row" style="align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(128,128,128,.25);flex-wrap:wrap">
-      <div class="stk-grid" style="flex:1 1 260px;min-width:0;display:grid;gap:8px">
-        <b class="ab-cell">${esc(s.nom)}</b><span class="ab-cell">${esc(s.type)}</span><span class="ab-cell">${esc(s.modele)}</span><span class="ab-cell code stk-x">${esc(s.sku)}</span><span class="ab-cell stk-x">Réservé : ${s.res}</span>
-      </div>
-      <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;flex-wrap:wrap"><button class="chip" onclick="adjStock('${esc(s.sku)}',-1)">−</button><span class="chip ${s.qte > 0 ? "ok" : "late"}">${s.qte > 0 ? s.qte + " dispo" : "Rupture"}</span><button class="chip" onclick="adjStock('${esc(s.sku)}',1)">+</button><button class="chip" onclick="editPiece('${esc(s.sku)}')">Modifier</button><button class="chip late" onclick="deleteStock('${esc(s.sku)}')">Supprimer</button></div>
+  if (!list.length) return '<p class="m">Aucune pièce trouvée.</p>';
+  stkLoadW(); stkApplyW();
+  const rz = i => '<span class="stk-rz" title="Glisser pour élargir" onpointerdown="stkResize(event,' + i + ')"></span>';
+  const head = '<div class="stk-row stk-head">'
+    + '<span class="m ab-cell" style="font-weight:600">Nom' + rz(0) + '</span><span class="m ab-cell" style="font-weight:600">Type' + rz(1) + '</span><span class="m ab-cell" style="font-weight:600">Modèle' + rz(2) + '</span>'
+    + '<span class="m ab-cell stk-x" style="font-weight:600">Référence' + rz(3) + '</span><span class="m ab-cell stk-x" style="font-weight:600">Réservé' + rz(4) + '</span><div class="stk-act"></div></div>';
+  const rows = list.map(s => `<div id="s-${esc(s.sku)}">
+    <div class="stk-row">
+      <b class="ab-cell">${esc(s.nom)}</b><span class="ab-cell">${esc(s.type)}</span><span class="ab-cell">${esc(s.modele)}</span>
+      <span class="ab-cell code stk-x">${esc(s.sku)}</span><span class="ab-cell stk-x">Réservé : ${s.res}</span>
+      <div class="stk-act"><button class="chip" onclick="adjStock('${esc(s.sku)}',-1)">−</button><span class="chip ${s.qte > 0 ? "ok" : "late"}">${s.qte > 0 ? s.qte + " dispo" : "Rupture"}</span><button class="chip" onclick="adjStock('${esc(s.sku)}',1)">+</button><button class="btn sq ghost" title="Modifier cette pièce" aria-label="Modifier cette pièce" onclick="editPiece('${esc(s.sku)}')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button><button class="btn sq ghost" title="Supprimer cette pièce" aria-label="Supprimer cette pièce" onclick="deleteStock('${esc(s.sku)}')"><span class="ic" style="transform:rotate(45deg)"></span></button></div>
     </div>
-    <div id="pe-${esc(s.sku)}"></div></div>`).join("")
-    || '<p class="m">Aucune pièce trouvée.</p>';
+    <div id="pe-${esc(s.sku)}"></div></div>`).join("");
+  return '<div class="stk-wrap">' + (STK_W ? '<div class="m" style="text-align:right;margin-bottom:4px"><button class="chip" onclick="stkResetW()">Largeurs par défaut</button></div>' : '') + head + rows + '</div>';
 }
 async function addStock(){
   const err = $("sErr"); err.textContent = "";
@@ -3444,7 +3793,7 @@ async function addStock(){
   const max = S.stock.reduce((t, s) => Math.max(t, parseInt(String(s.sku).replace(/\D/g, ""), 10) || 0), 1000);
   const { error } = await SB.from("stock").insert({ sku: "PC-" + (max + 1), nom, type: typeOf(modeles), modeles, modele: modeles.join(", "), qte: q, res: 0 });
   if (error) { err.textContent = msgErr(error); return; }
-  MP.n = [];
+  MP.n = []; STK_ADD = false;
   await reload();
 }
 async function adjStock(sku, d){
