@@ -191,11 +191,11 @@ body.lg .cli-head{padding:0 14px 4px}
 .stk-act{display:flex;gap:6px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
 @media (max-width:600px){.stk-row{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1.3fr);min-width:0}.stk-x,.stk-rz{display:none}.stk-act{grid-column:1/-1;justify-content:flex-start}.stk-head .stk-act{display:none}}
 .ab-cell{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ab-grid{flex:1;min-width:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.3fr);gap:8px}
-.ab-acts{display:flex;gap:6px;align-items:center;flex-shrink:0}
+.ab-grid{flex:1;min-width:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.3fr) minmax(0,.8fr);gap:8px}
+.ab-acts{display:flex;gap:6px;align-items:center;justify-content:flex-end;flex-shrink:0;width:176px}
 /* Liste des appareils : défilement horizontal quand la ligne ne tient pas à l’écran */
 .ab-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
-.ab-scroll > .row{min-width:600px}
+.ab-scroll > .row{min-width:680px}
 .sq{display:flex;align-items:center;justify-content:center;width:44px;height:44px;min-width:44px;margin:0;padding:0;line-height:1}
 .ic{position:relative;display:block;width:16px;height:16px;transition:transform .6s ease;pointer-events:none}
 .ic::before,.ic::after{content:"";position:absolute;left:50%;top:50%;background:currentColor;border-radius:2px;transform:translate(-50%,-50%)}
@@ -359,8 +359,14 @@ body:not(.rep-nav).lg .app{margin-left:auto !important;margin-right:auto !import
 .copy-card{background:#FFFFFF;border-radius:14px;padding:20px;width:min(520px,100%);box-shadow:0 12px 40px rgba(0,0,0,.25)}
 .copy-card textarea{width:100%;height:240px;box-sizing:border-box;margin-top:8px;font:inherit;font-size:13px;padding:10px;border:1px solid #DCD7CB;border-radius:10px}
 .gal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin:10px 0}
-.gal-grid img{width:100%;height:140px;object-fit:cover;border-radius:10px;display:block;background:#EEF1EC}
+.gal-grid img{width:100%;height:140px;object-fit:cover;border-radius:10px;display:block;background:#fff}
 .gal-item{display:flex;flex-direction:column;gap:6px}
+.gal-cell{position:relative;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+.gal-cell a{display:block}
+.gal-del{position:absolute;top:6px;right:6px;width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--bad);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;z-index:1}
+.ph-add{position:relative;display:flex;flex-direction:column;gap:8px;padding:10px 44px 10px 12px;border:1px dashed var(--line);border-radius:12px}
+.ph-add-h{display:flex;align-items:center;min-height:28px}
+.ph-x{position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;border:1px solid var(--line);background:transparent;color:inherit;cursor:pointer;font-size:14px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
 .cl-back{font:inherit;font-size:14px;font-weight:600;color:#2F6B4F;background:none;border:0;padding:0;cursor:pointer;margin-bottom:8px}
 /* Écran affiché pendant le chargement de l'application */
 .boot{min-height:60vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:var(--mut);font-size:14px}
@@ -1233,7 +1239,7 @@ const REP = {
     ${DEV_EDIT ? "" : `<details style="margin-top:10px"><summary class="btn ghost small" style="display:inline-block;list-style:none;cursor:pointer">+ Ajouter un appareil à vendre</summary><div class="card" style="margin-top:8px">
       <label>Type / marque / modèle</label><div id="mp-a"></div>
       <label>Modèle exact (si absent de la liste)</label><input id="aExact" placeholder="Ex. PS5 Slim Blanc" oninput="aExactChange(this.value)">
-      <div id="aCouleurBox" style="display:none"><label>Couleur</label><select id="aCouleur"></select></div>
+      <div id="aCouleurBox" style="display:none"><label>Couleur</label><input id="aCouleur" list="aCouleurDl" placeholder="Ex. Bleu" autocomplete="off"><datalist id="aCouleurDl"></datalist></div>
       <label>Quantité</label><input id="aQt" inputmode="numeric" value="1">
       <label>Grade</label><select id="aGrade"><option value="">- Aucun -</option><option>A</option><option>B</option><option>C</option><option>HS</option></select>
       <button class="btn" onclick="addAppareil()">Ajouter au stock</button>
@@ -1340,6 +1346,51 @@ function setFbHidden(v){ if (v) closeFeedback(); FB_HIDDEN = v; try { localStora
 /* ---------- Mises à jour (cloche en haut à droite) ----------
    Ajouter une entrée en haut de la liste à chaque mise en ligne. */
 var UPDATES = [
+  {id: "2026-11-16-be", date: "16/11/2026", titre: "Fond blanc à l’envoi des photos", items: [
+    "Les photos détourées sont converties sur fond blanc (et non noir) au moment de l’envoi.",
+    "Les photos déjà envoyées gardent leur fond noir : il suffit de les retirer puis de les réenvoyer."]},
+  {id: "2026-11-16-bd", date: "16/11/2026", titre: "Fond blanc pour les images", items: [
+    "Les photos détourées (sans fond) s’affichent sur fond blanc : fiches appareils, galeries, vignettes et fiches clients."]},
+  {id: "2026-11-16-bc", date: "16/11/2026", titre: "Ajouter une couleur depuis la fiche", items: [
+    "« Ajouter une couleur » ouvre maintenant un petit formulaire dans la fiche : nom, code hexa ou couleur, image facultative.",
+    "La couleur est enregistrée tout de suite et la fiche reste ouverte."]},
+  {id: "2026-11-16-bb", date: "16/11/2026", titre: "Fiche d’un appareil par couleur", items: [
+    "En cliquant sur un appareil de la liste, sa fiche se déroule : image par défaut, puis une section par couleur avec ses photos.",
+    "Le bouton « + Ajouter une couleur » ouvre l’édition des couleurs.",
+    "Sur les fiches clients, la photo de la couleur de l’appareil est prise en premier."]},
+  {id: "2026-11-16-ba", date: "16/11/2026", titre: "Photos : retirer et changer l’ordre", items: [
+    "Chaque photo a une petite poubelle en haut à droite pour la retirer.",
+    "On peut glisser une photo pour changer l’ordre. Le nouvel ordre est enregistré."]},
+  {id: "2026-11-16-az", date: "16/11/2026", titre: "Couleurs en cases avec code hexa ou image", items: [
+    "Chaque couleur d’un modèle est une case : nom, code hexa ou image. Le code hexa, s’il existe, s’affiche à la place de l’image.",
+    "La colonne Couleur de la liste Appareils montre les cases."]},
+  {id: "2026-11-16-ay", date: "16/11/2026", titre: "Plusieurs couleurs par appareil", items: [
+    "Dans la liste Appareils, un modèle peut avoir plusieurs couleurs. Ajoute-les une par une avec « + Ajouter » : elles s’affichent en pastilles que tu peux retirer.",
+    "La colonne Couleur les affiche séparées par « · »."]},
+  {id: "2026-11-16-ax", date: "16/11/2026", titre: "Couleurs saisies pour manettes et téléphones", items: [
+    "Pour les manettes et les téléphones, la couleur se saisit à chaque fois. Les couleurs déjà utilisées sont proposées en suggestion.",
+    "Vente et stock sont concernés."]},
+  {id: "2026-11-16-aw", date: "16/11/2026", titre: "Noms des colonnes dans la liste Appareils", items: [
+    "La liste Appareils affiche maintenant le nom de chaque colonne : Type, Marque, Modèle, Couleur."]},
+  {id: "2026-11-15-av", date: "15/11/2026", titre: "Couleur dans la liste Appareils", items: [
+    "La liste Appareils a une colonne Couleur. Elle se remplit à l’ajout ou à la modification d’un modèle (liste ou nouvelle couleur, facultatif).",
+    "La recherche prend aussi la couleur en compte."]},
+  {id: "2026-11-15-au", date: "15/11/2026", titre: "Envoi direct de photos", items: [
+    "Le pictogramme d’ajout devient une flèche d’envoi : un clic ouvre directement le choix du fichier.",
+    "La galerie d’un modèle ouverte dans la liste Appareils a une croix en haut à droite pour la fermer."]},
+  {id: "2026-11-15-at", date: "15/11/2026", titre: "Pictogramme galerie dans la liste Appareils", items: [
+    "Le bouton « Photos (n) » de la liste Appareils devient un pictogramme galerie, comme le crayon et la corbeille. Le nombre de photos s’affiche en petit."]},
+  {id: "2026-11-15-as", date: "15/11/2026", titre: "Pictogramme pour ajouter des photos", items: [
+    "Le bouton « + Ajouter des photos » devient un pictogramme appareil photo. Un clic déplie le champ d’envoi, avec sa croix en haut à droite."]},
+  {id: "2026-11-15-ar", date: "15/11/2026", titre: "Croix de fermeture uniformisée", items: [
+    "Les croix de fermeture des photos ont la même taille partout, quel que soit le navigateur."]},
+  {id: "2026-11-15-aq", date: "15/11/2026", titre: "Croix pour fermer la galerie de l’appareil", items: [
+    "Dans la galerie qui s’ouvre avec le bouton photo, « Fermer » devient une croix en haut à droite."]},
+  {id: "2026-11-15-ap", date: "15/11/2026", titre: "Croix de fermeture déplacée", items: [
+    "La croix pour fermer le champ d’ajout de photos est maintenant dans le coin haut droit du cadre."]},
+  {id: "2026-11-15-ao", date: "15/11/2026", titre: "Ajout de photos plus discret", items: [
+    "Le champ d’ajout de photos est replié : un bouton « + Ajouter des photos » l’ouvre, et une croix le referme.",
+    "Une fois la photo envoyée, le champ se referme tout seul."]},
   {id: "2026-11-15-an", date: "15/11/2026", titre: "Défilement dans la liste Appareils", items: [
     "Sur petit écran, la liste des appareils se fait défiler de gauche à droite quand une ligne ne tient pas en entier."]},
   {id: "2026-11-15-am", date: "15/11/2026", titre: "Nom du modèle seul dans les fiches clients", items: [
@@ -1850,8 +1901,8 @@ function vLigneFromForm(){
   }
   const qte = parseInt($("vQte").value, 10);
   if (isNaN(qte) || qte < 1) return {error: "Quantité invalide."};
-  const coulOn = $("vCouleurRow").style.display !== "none", ct = $("vCouleur").value;
-  if (coulOn && !ct) return {error: "Choisis la couleur."};
+  const coulOn = $("vCouleurRow").style.display !== "none", ct = $("vCouleur").value.trim();
+  if (coulOn && !ct) return {error: "Saisis la couleur."};
   l.quantite = qte;
   l.couleur = coulOn ? ct : null;
   l.appareil_id = $("vAppId").value || null;
@@ -1870,7 +1921,7 @@ function resetPicker(){
   VT_SEL = null; MP.v = []; PKS.v = {app:"", cat:""}; VT_COMPAT = false;
   $("vCompat").checked = false; $("vCompatBox").style.display = "none"; $("vCompatTxt").value = "";
   if ($("vExact")) $("vExact").value = "";
-  $("vQte").value = "1"; $("vCouleurRow").style.display = "none"; $("vCouleur").innerHTML = ""; $("vAppId").value = ""; if ($("vAchat")) $("vAchat").checked = false;
+  $("vQte").value = "1"; $("vCouleurRow").style.display = "none"; $("vCouleur").value = ""; $("vAppId").value = ""; if ($("vAchat")) $("vAchat").checked = false;
   mpDraw("v");
 }
 function vAddLigne(){
@@ -1918,7 +1969,7 @@ function ventesFormHtml(ed){
       <label style="font-weight:400;display:flex;align-items:center;gap:6px;margin-top:6px"><input type="checkbox" id="vCompat" style="width:auto;margin:0" onchange="vCompatChange(this.checked)"> Compatible : je précise le modèle</label>
       <div id="vCompatBox" style="display:none"><input id="vCompatTxt" placeholder="De quel modèle s’agit-il ? Ex. PS4 Slim"></div>
       <label>Modèle exact (si absent de la liste)</label><input id="vExact" placeholder="Ex. iPhone 14 Pro 256 Go" oninput="vExactChange(this.value)">
-      <div id="vCouleurRow" style="display:none"><label>Couleur</label><select id="vCouleur" onchange="vAutoDev()"></select></div>
+      <div id="vCouleurRow" style="display:none"><label>Couleur</label><input id="vCouleur" list="vCouleurDl" placeholder="Ex. Bleu" autocomplete="off" oninput="vAutoDev()"><datalist id="vCouleurDl"></datalist></div>
       <label>Appareil du stock (réservé automatiquement)</label><select id="vAppId" onchange="vAchatChange(false)"><option value="">- Aucun -</option>${apOpts}</select>
       <label style="font-weight:400;display:flex;align-items:center;gap:6px;margin-top:6px"><input type="checkbox" id="vAchat" style="width:auto;margin:0" onchange="vAchatChange(this.checked)"> Pas en stock : mettre dans « Appareils à acheter »</label>
       <label>Quantité de ce modèle</label><input id="vQte" inputmode="numeric" oninput="numOnly(this)" value="1">
@@ -2061,12 +2112,12 @@ function appControls(){
 function devEditHtml(x){
   const list = couleursFor(x.appareil, x.modele);
   const coul = list ? (String(x.nom).split(" · ")[3] || "") : "";
-  const opts = list ? '<option value="">- Sélectionner -</option>' + list.map(c => '<option' + (c === coul ? ' selected' : '') + '>' + c + '</option>').join("") : "";
+  const dl = list ? coulDlHtml(list) : "";
   return '<div class="card" style="border:2px solid var(--brand)">'
     + '<div class="t">Modifier « ' + esc(x.nom) + ' »</div>'
     + '<label>Type / marque / modèle</label><div id="mp-a"></div>'
     + '<label>Modèle exact (si absent de la liste)</label><input id="aExact" placeholder="Ex. PS5 Slim Blanc" oninput="aExactChange(this.value)">'
-    + '<div id="aCouleurBox" style="display:' + (list ? "block" : "none") + '"><label>Couleur</label><select id="aCouleur">' + opts + '</select></div>'
+    + '<div id="aCouleurBox" style="display:' + (list ? "block" : "none") + '"><label>Couleur</label><input id="aCouleur" list="aCouleurDl" value="' + esc(coul) + '" placeholder="Ex. Bleu" autocomplete="off"><datalist id="aCouleurDl">' + dl + '</datalist></div>'
     + '<label>Quantité disponible (hors réservés)</label><input id="aQt" inputmode="numeric" value="' + x.qte + '">'
     + '<label>Grade</label><select id="aGrade">' + ["", "A", "B", "C", "HS"].map(g => '<option value="' + g + '"' + ((x.grade || "") === g ? " selected" : "") + '>' + (g || "- Aucun -") + '</option>').join("") + '</select>'
     + '<p class="m">Réservé : ' + (x.res || 0) + '</p>'
@@ -2091,8 +2142,8 @@ async function saveAppareil(){
   if (!SEL || !SEL.mod) { err.textContent = "Choisis le type et la marque, puis le modèle (ou écris le modèle exact)."; return; }
   const dispo = parseInt($("aQt").value, 10);
   if (isNaN(dispo) || dispo < 0) { err.textContent = "Quantité invalide."; return; }
-  const coul = $("aCouleurBox") && $("aCouleurBox").style.display !== "none" ? $("aCouleur").value : "";
-  if (couleursFor(SEL.app, SEL.mod) && !coul) { err.textContent = "Choisis la couleur."; return; }
+  const coul = $("aCouleurBox") && $("aCouleurBox").style.display !== "none" ? $("aCouleur").value.trim() : "";
+  if (couleursFor(SEL.app, SEL.mod) && !coul) { err.textContent = "Saisis la couleur."; return; }
   const nom = [SEL.app, SEL.cat, SEL.mod, coul].filter(Boolean).join(" · ");
   if ((S.stockApp || []).some(y => y.nom === nom && y.id !== x.id)) { err.textContent = "Cet appareil existe déjà dans le stock."; return; }
   const { error } = await SB.from("stock_appareils").update({ nom, appareil: SEL.app, categorie: SEL.cat, modele: SEL.mod, qte: dispo, grade: $("aGrade").value || null }).eq("id", x.id);
@@ -2107,8 +2158,8 @@ async function addAppareil(){
   const q = parseInt($("aQt").value, 10);
   if (!SEL || !SEL.mod) { err.textContent = "Choisis le type et la marque, puis le modèle (ou écris le modèle exact)."; return; }
   if (isNaN(q) || q < 1) { err.textContent = "Quantité invalide."; return; }
-  const coul = $("aCouleurBox") && $("aCouleurBox").style.display !== "none" ? $("aCouleur").value : "";
-  if (couleursFor(SEL.app, SEL.mod) && !coul) { err.textContent = "Choisis la couleur."; return; }
+  const coul = $("aCouleurBox") && $("aCouleurBox").style.display !== "none" ? $("aCouleur").value.trim() : "";
+  if (couleursFor(SEL.app, SEL.mod) && !coul) { err.textContent = "Saisis la couleur."; return; }
   const nom = [SEL.app, SEL.cat, SEL.mod, coul].filter(Boolean).join(" · ");
   if ((S.stockApp || []).some(x => x.nom === nom)) { err.textContent = "Cet appareil est déjà dans le stock : modifie sa quantité avec « Modifier » dans la liste."; return; }
   const { error } = await SB.from("stock_appareils").insert({ nom, appareil: SEL.app, categorie: SEL.cat, modele: SEL.mod, qte: q, grade: $("aGrade").value || null });
@@ -2536,6 +2587,10 @@ function abSelMode(pre){
   abRefreshFor(pre);
 }
 function abSelVal(pre){ return AB_MM[pre] ? $(pre).value : $(pre + "S").value; }
+/* Couleurs des modèles de la base : liste connue + couleurs déjà saisies. La colonne « couleur » peut être absente en base : elle n’est alors envoyée que si une couleur est saisie. */
+var AB_COULEURS = ["Blanc", "Noir", "Bleu", "Rouge", "Vert", "Rose", "Violet", "Jaune", "Gris", "Argent", "Or"];
+function abCouleurs(){ return [...new Set(AB_COULEURS.concat((S.appBase || []).flatMap(x => abCoulParse(x.couleur).map(c => c.nom))))].sort((a, b) => a.localeCompare(b, "fr")); }
+function abHasCouleur(){ return (S.appBase || []).some(x => "couleur" in x); }
 function abSetOk(pre, ok){
   const b = $(pre + "P"), sel = $(pre + "S");
   if (!b || !sel) return;
@@ -2591,6 +2646,103 @@ function abFiltreRefresh(){
   $("abFMS").innerHTML = optList(L.marques, L.marques.indexOf(AB_FV.abFM.raw) >= 0 ? AB_FV.abFM.raw : "", "Toutes les marques");
   abFiltreSave("abFM");
 }
+/* Couleurs d’un modèle : une case par couleur (nom + code hexa ou image). Enregistrées en JSON dans la colonne « couleur ». L’ancien format « Blanc, Noir » reste lu. Le code hexa, s’il existe, remplace l’image. */
+var AB_CL = {add: [], edit: []};
+var AB_DRAFT = {add: {nom: "", hex: "", img: ""}, edit: {nom: "", hex: "", img: ""}};
+var AB_HEX = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
+function abCoulParse(v){
+  const t = String(v || "").trim();
+  if (!t) return [];
+  if (t.charAt(0) === "[") {
+    try {
+      const a = JSON.parse(t);
+      return Array.isArray(a) ? a.filter(x => x && x.nom).map(x => ({nom: String(x.nom), hex: x.hex || "", img: x.img || ""})) : [];
+    } catch (e) { return []; }
+  }
+  return t.split(",").map(x => x.trim()).filter(Boolean).map(n => ({nom: n, hex: "", img: ""}));
+}
+function abCoulJSON(list){ return JSON.stringify(list.map(c => ({nom: c.nom, hex: c.hex || "", img: c.img || ""}))); }
+function abCoulImgUrl(p){
+  if (/^(blob:|data:|https?:)/.test(p)) return p;
+  return SB.storage.from(PHOTO_BUCKET).getPublicUrl(p).data.publicUrl;
+}
+function abCoulSwatch(c, px){
+  const n = px || 18;
+  const fond = c.hex ? c.hex
+    : c.img ? "#fff url('" + abCoulImgUrl(c.img) + "') center/cover"
+    : "repeating-conic-gradient(#ddd 0 25%, #fff 0 50%) 0 0/10px 10px";
+  return '<span title="' + esc(c.nom) + '" style="display:inline-block;width:' + n + 'px;height:' + n + 'px;border-radius:6px;border:1px solid var(--line);flex:none;background:' + fond + '"></span>';
+}
+/* Lecture du formulaire de la couleur en cours de saisie */
+function abCoulDraft(key){
+  const d = AB_DRAFT[key];
+  const n = $("abCN_" + key), h = $("abCH_" + key);
+  if (n) d.nom = n.value;
+  if (h) { const v = h.value.trim(); d.hex = AB_HEX.test(v) ? v.toLowerCase() : (v ? v : ""); }
+}
+function abCoulPick(key, v){ const t = $("abCH_" + key); if (t) t.value = v; abCoulDraft(key); }
+function abCoulBox(key){
+  const list = AB_CL[key], d = AB_DRAFT[key];
+  const cases = list.length ? list.map((c, i) =>
+      '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--line);border-radius:12px">'
+      + abCoulSwatch(c, 40)
+      + '<div style="min-width:0;flex:1"><div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(c.nom) + '</div>'
+      + '<div class="m" style="font-size:12px">' + esc(c.hex || (c.img ? "Image" : "Sans code")) + '</div></div>'
+      + '<button type="button" aria-label="Retirer ' + esc(c.nom) + '" onclick="abCoulDel(\'' + key + '\',' + i + ')" style="border:0;background:transparent;cursor:pointer;color:inherit;padding:4px;display:flex">' + ICON_X + '</button></div>').join("")
+    : '<p class="m" style="margin:0">Aucune couleur pour ce modèle.</p>';
+  const apercu = d.img ? '<span style="display:inline-flex;align-items:center;gap:6px" class="m">' + abCoulSwatch({nom: "Image", img: d.img}, 28) + ' Image prête</span>' : '';
+  const hexOk = d.hex && AB_HEX.test(d.hex);
+  return '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-bottom:10px">' + cases + '</div>'
+    + '<div style="display:grid;gap:8px;padding:10px;border:1px dashed var(--line);border-radius:12px">'
+    + '<div class="row" style="gap:8px;align-items:center;flex-wrap:nowrap">'
+    + '<input id="abCN_' + key + '" value="' + esc(d.nom) + '" placeholder="Nom (ex. Bleu nuit)" autocomplete="off" oninput="abCoulDraft(\'' + key + '\')" style="flex:1;min-width:0;margin:0">'
+    + '<input id="abCP_' + key + '" type="color" value="' + (hexOk ? d.hex : "#cccccc") + '" title="Choisir la couleur" oninput="abCoulPick(\'' + key + '\',this.value)" style="width:44px;height:38px;padding:2px;border-radius:8px;flex:none;margin:0">'
+    + '</div>'
+    + '<div class="row" style="gap:8px;align-items:center;flex-wrap:nowrap">'
+    + '<input id="abCH_' + key + '" value="' + esc(d.hex) + '" placeholder="Code hexa (ex. #1a2b3c)" autocomplete="off" oninput="abCoulDraft(\'' + key + '\')" style="flex:1;min-width:0;margin:0">'
+    + '<label class="btn ghost small" style="cursor:pointer;margin:0;white-space:nowrap">Image<input type="file" accept="image/*" onchange="abCoulImg(\'' + key + '\',this)" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"></label>'
+    + '</div>'
+    + '<div class="row" style="gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap">' + apercu
+    + '<button type="button" class="btn ghost small" onclick="abCoulAdd(\'' + key + '\')">+ Ajouter la couleur</button></div>'
+    + '</div>';
+}
+function abCoulRefresh(key){ const el = $("abCB_" + key); if (el) el.innerHTML = abCoulBox(key); }
+function abCoulAdd(key){
+  abCoulDraft(key);
+  const d = AB_DRAFT[key], nom = d.nom.trim();
+  if (!nom) { toast("Donne un nom à la couleur."); return; }
+  if (d.hex && !AB_HEX.test(d.hex)) { toast("Code hexa invalide (ex. #1a2b3c)."); return; }
+  if (AB_CL[key].some(c => nz(c.nom) === nz(nom))) { toast("Cette couleur est déjà ajoutée."); return; }
+  AB_CL[key].push({nom: nom, hex: d.hex || "", img: d.img || ""});
+  AB_DRAFT[key] = {nom: "", hex: "", img: ""};
+  abCoulRefresh(key);
+}
+function abCoulDel(key, i){ AB_CL[key].splice(i, 1); abCoulRefresh(key); }
+async function abCoulImg(key, input){
+  const f = input.files && input.files[0];
+  if (!f) return;
+  abCoulDraft(key);
+  if (DEMO) { AB_DRAFT[key].img = URL.createObjectURL(f); abCoulRefresh(key); return; }
+  const prep = (await photoPrep(f)) || {body: f, ext: "jpg", type: f.type || "image/jpeg"};
+  const path = "couleurs/" + Date.now() + "-" + Math.random().toString(36).slice(2, 8) + "." + prep.ext;
+  const up = await SB.storage.from(PHOTO_BUCKET).upload(path, prep.body, {contentType: prep.type});
+  if (up.error) { toast("Image non envoyée : " + msgErr(up.error)); return; }
+  AB_DRAFT[key].img = path;
+  abCoulRefresh(key);
+}
+/* Couleurs à enregistrer : celles de la liste + celle encore saisie (si elle a un nom) */
+function abCoulFinal(key){
+  abCoulDraft(key);
+  const cl = AB_CL[key].slice(), d = AB_DRAFT[key], nom = d.nom.trim();
+  if (nom && !cl.some(c => nz(c.nom) === nz(nom))) cl.push({nom: nom, hex: d.hex && AB_HEX.test(d.hex) ? d.hex : "", img: d.img || ""});
+  return cl;
+}
+/* Affichage dans la liste : case + nom pour chaque couleur */
+function abCoulCell(v){
+  const l = abCoulParse(v);
+  if (!l.length) return '<span class="m">–</span>';
+  return l.map(c => '<span style="display:inline-flex;align-items:center;gap:4px;margin-right:6px">' + abCoulSwatch(c, 14) + esc(c.nom) + '</span>').join("");
+}
 async function abAjouter(){
   const err = $("abErr"); err.textContent = "";
   const type = abSelVal("abT").trim(), marque = abSelVal("abM").trim(), base = abSelVal("abMo").trim();
@@ -2599,13 +2751,16 @@ async function abAjouter(){
   if (!base) { err.textContent = "Le modèle est obligatoire."; return; }
   const modele = abComp(abSelVal("abG").trim(), base);
   if ((S.appBase || []).some(x => abKey(x) === abKey({type: type, marque: marque, modele: modele}))) { err.textContent = "Cet appareil est déjà dans la base."; return; }
-  const { error } = await SB.from("appareils_base").insert({type: type, marque: marque, modele: modele});
+  const cl = abCoulFinal("add");
+  const row = {type: type, marque: marque, modele: modele};
+  if (cl.length) row.couleur = abCoulJSON(cl);
+  const { error } = await SB.from("appareils_base").insert(row);
   if (error) { err.textContent = msgErr(error); return; }
-  AB_MM.abT = false; AB_MM.abM = false; AB_MM.abMo = false; AB_MM.abG = false;
+  AB_MM.abT = false; AB_MM.abM = false; AB_MM.abMo = false; AB_MM.abG = false; AB_MM.abC = false; AB_CL.add = []; AB_DRAFT.add = {nom: "", hex: "", img: ""};
   toast("Appareil ajouté à la base");
   await reload();
 }
-function abEdit(id){ AB_EDIT = id; AB_MM.abET = false; AB_MM.abEMa = false; AB_MM.abEM = false; AB_MM.abEG = false; render(); }
+function abEdit(id){ AB_EDIT = id; AB_MM.abET = false; AB_MM.abEMa = false; AB_MM.abEM = false; AB_MM.abEG = false; AB_MM.abEC = false; const xb = (S.appBase || []).find(b => b.id === id); AB_CL.edit = xb ? abCoulParse(xb.couleur) : []; AB_DRAFT.edit = {nom: "", hex: "", img: ""}; render(); }
 function abCancel(){ AB_EDIT = null; render(); }
 async function abSauver(id){
   const type = abSelVal("abET").trim(), marque = abSelVal("abEMa").trim(), base = abSelVal("abEM").trim();
@@ -2613,9 +2768,12 @@ async function abSauver(id){
   if (!marque) { toast("La marque est obligatoire."); return; }
   if (!base) { toast("Le modèle est obligatoire."); return; }
   const modele = abComp(abSelVal("abEG").trim(), base);
-  const { error } = await SB.from("appareils_base").update({type: type, marque: marque, modele: modele}).eq("id", id);
+  const cl = abCoulFinal("edit");
+  const row = {type: type, marque: marque, modele: modele};
+  if (cl.length || abHasCouleur()) row.couleur = cl.length ? abCoulJSON(cl) : null;
+  const { error } = await SB.from("appareils_base").update(row).eq("id", id);
   if (error) { toast(msgErr(error)); return; }
-  AB_EDIT = null; toast("Appareil modifié");
+  AB_EDIT = null; AB_CL.edit = []; AB_DRAFT.edit = {nom: "", hex: "", img: ""}; toast("Appareil modifié");
   await reload();
 }
 async function abSupprimer(id){
@@ -2632,16 +2790,99 @@ function abLigne(x){
     + '<div><label>Marque *</label>' + abSelHtml('abEMa', x.marque || '', abMarquesFor(x.type), '— Choisir une marque —', 'Nouvelle marque', true) + '</div></div>'
     + '<label>Gamme (facultatif)</label>' + abSelHtml('abEG', abSplit(x.modele).g, abGammesFor(x.type, x.marque), '— Aucune gamme —', 'Nouvelle gamme', true)
     + '<label>Modèle *</label>' + abSelHtml('abEM', abSplit(x.modele).g ? abSplit(x.modele).base : x.modele, abSplit(x.modele).g ? abBasesFor(x.type, x.marque, abSplit(x.modele).g) : abModelesFor(x.type, x.marque), '— Choisir un modèle —', 'Nouveau modèle', true)
+    + '<label>Couleurs (facultatif)</label><div id="abCB_edit">' + abCoulBox('edit') + '</div>'
     + '<div style="display:flex;gap:6px;margin-top:6px"><button class="chip ok" onclick="abSauver(\'' + x.id + '\')">Enregistrer</button><button class="chip" onclick="abCancel()">Annuler</button></div></div>';
-  const nPh = photosFor("modele", x.id).length, ouvert = AB_PHOTO_OPEN === x.id;
-  const vignette = nPh ? '<img src="' + esc(photoUrl(photosFor("modele", x.id)[0])) + '" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:8px;flex:none;display:block">'
+  const nPh = (S.photos || []).filter(p => p.appareil_base_id === x.id).length, ouvert = AB_PHOTO_OPEN === x.id;
+  const vignette = nPh ? '<img src="' + esc(photoUrl(photosFor("modele", x.id)[0])) + '" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:8px;flex:none;display:block;background:#fff">'
     : '<span style="width:44px;height:44px;border-radius:8px;flex:none;display:flex;align-items:center;justify-content:center;background:#EEF1EC">' + ICON_IMG + '</span>';
-  return '<div class="row" style="align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(128,128,128,.25);flex-wrap:nowrap">'
+  return '<div class="row" onclick="abRowClick(event,\'' + x.id + '\')" style="align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(128,128,128,.25);flex-wrap:nowrap;cursor:pointer">'
     + vignette
-    + '<div class="ab-grid"><span class="ab-cell">' + esc(x.type) + '</span><span class="ab-cell">' + esc(x.marque || "Sans marque") + '</span><b class="ab-cell">' + esc(x.modele) + '</b></div>'
-    + '<div class="ab-acts"><button class="chip" onclick="abPhotos(\'' + x.id + '\')">' + (ouvert ? "Fermer" : "Photos" + (nPh ? " (" + nPh + ")" : "")) + '</button><button class="chip" onclick="abEdit(\'' + x.id + '\')">Modifier</button>'
+    + '<div class="ab-grid"><span class="ab-cell">' + esc(x.type) + '</span><span class="ab-cell">' + esc(x.marque || "Sans marque") + '</span><b class="ab-cell">' + esc(x.modele) + '</b><span class="ab-cell' + (x.couleur ? '' : ' m') + '">' + abCoulCell(x.couleur) + '</span></div>'
+    + '<div class="ab-acts"><button class="btn sq ghost" title="' + (ouvert ? "Fermer la galerie" : "Photos du modèle") + '" aria-label="' + (ouvert ? "Fermer la galerie" : "Photos du modèle (" + nPh + ")") + '" aria-pressed="' + (ouvert ? "true" : "false") + '" style="position:relative" onclick="abPhotos(\'' + x.id + '\')">' + ICON_IMG
+    + (nPh ? '<span style="position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:var(--line);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center">' + nPh + '</span>' : '') + '</button><button class="chip" onclick="abEdit(\'' + x.id + '\')">Modifier</button>'
     + '<button class="btn sq ghost" title="Retirer cet appareil" aria-label="Retirer cet appareil" onclick="abSupprimer(\'' + x.id + '\')"><span class="ic" style="transform:rotate(45deg)"></span></button></div></div>'
-    + (ouvert ? '<div class="card" style="margin:6px 0 10px"><div class="t" style="margin-bottom:4px">Photos · ' + esc(x.marque || "") + " " + esc(x.modele) + '</div>' + photosBloc("modele", x.id) + '</div>' : "");
+    + (ouvert ? abFicheHtml(x) : "");
+}
+/* Fiche d’un appareil : image par défaut, puis une section par couleur (avec ses photos) */
+function colId(baseId, nom){ return baseId + "::" + encodeURIComponent(nom); }
+function colKey(id){ const i = String(id).indexOf("::"); return {base: String(id).slice(0, i), nom: decodeURIComponent(String(id).slice(i + 2))}; }
+function baseOfKey(kind, id){ return kind === "modcol" ? colKey(id).base : id; }
+function abRowClick(ev, id){
+  if (ev.target.closest && ev.target.closest("button, a, input, label, select, textarea")) return;
+  abPhotos(id);
+}
+function abFicheHtml(x){
+  const titre = esc((x.marque ? x.marque + " " : "") + x.modele);
+  const sec = (entete, inner) => '<div style="margin-top:12px"><div class="t" style="margin-bottom:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">' + entete + '</div>' + inner + '</div>';
+  let h = '<div class="card" style="margin:6px 0 10px">'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div class="t">' + titre + '</div>'
+    + '<button class="ph-x" style="position:static;flex:none" title="Fermer" aria-label="Fermer" onclick="abPhotos(\'' + x.id + '\')">' + ICON_X + '</button></div>';
+  h += sec('Image par défaut', photosBloc("modele", x.id));
+  abCoulParse(x.couleur).forEach(c => {
+    h += sec(abCoulSwatch(c, 22) + '<span>' + esc(c.nom) + '</span>' + (c.hex ? '<span class="m" style="font-size:12px;font-weight:400">' + esc(c.hex) + '</span>' : ''), photosBloc("modcol", colId(x.id, c.nom)));
+  });
+  h += abNewColorForm(x.id);
+  return h + '</div>';
+}
+function baseModelePhoto(base, coul){
+  const ph = (S.photos || []).filter(x => x.appareil_base_id === base.id).slice().sort((a, b) => photoOrdre(a) - photoOrdre(b));
+  const pick = coul ? ph.find(x => x.couleur && nz(x.couleur) === nz(coul)) : null;
+  const p = pick || ph.find(x => !x.couleur);
+  return p ? photoUrl(p) : "";
+}
+/* Ajouter une couleur, directement dans la fiche de l’appareil : enregistrée tout de suite, la fiche reste ouverte */
+var AB_NC = {};
+function abNCget(id){ return AB_NC[id] || (AB_NC[id] = {nom: "", hex: "", img: ""}); }
+function abNCread(id){
+  const d = abNCget(id), n = $("ncN_" + id), h = $("ncH_" + id);
+  if (n) d.nom = n.value;
+  if (h) { const v = h.value.trim(); d.hex = AB_HEX.test(v) ? v.toLowerCase() : v; }
+  return d;
+}
+function abNCPick(id, v){ const t = $("ncH_" + id); if (t) t.value = v; abNCread(id); }
+function abNewColorForm(id){
+  const d = abNCget(id), ok = !!d.hex && AB_HEX.test(d.hex);
+  const apercu = abCoulSwatch({nom: d.nom || "Nouvelle", hex: ok ? d.hex : "", img: d.img || ""}, 40);
+  return '<div style="margin-top:14px;padding:12px;border:1px dashed var(--line);border-radius:12px;display:grid;gap:8px">'
+    + '<div class="t">Ajouter une couleur</div>'
+    + '<div style="display:flex;gap:10px;align-items:center">' + apercu
+    + '<input id="ncN_' + id + '" value="' + esc(d.nom) + '" placeholder="Nom (ex. Bleu nuit)" autocomplete="off" oninput="abNCread(\'' + id + '\')" style="flex:1;min-width:0;margin:0">'
+    + '<input id="ncP_' + id + '" type="color" value="' + (ok ? d.hex : "#cccccc") + '" title="Choisir la couleur" oninput="abNCPick(\'' + id + '\',this.value)" style="width:44px;height:38px;padding:2px;border-radius:8px;flex:none;margin:0"></div>'
+    + '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'
+    + '<input id="ncH_' + id + '" value="' + esc(d.hex) + '" placeholder="Code hexa (ex. #1a2b3c)" autocomplete="off" oninput="abNCread(\'' + id + '\')" style="flex:1;min-width:200px;margin:0">'
+    + '<label class="btn ghost small" style="cursor:pointer;margin:0;white-space:nowrap;position:relative">' + ICON_UPLOAD + ' Image<input type="file" accept="image/*" onchange="abNCImg(\'' + id + '\',this)" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"></label>'
+    + (d.img ? '<span class="m" style="font-size:12px">Image prête</span>' : '')
+    + '</div>'
+    + '<div><button class="btn" onclick="abNCSave(\'' + id + '\')">Enregistrer la couleur</button></div>'
+    + '</div>';
+}
+async function abNCImg(id, input){
+  const f = input.files && input.files[0];
+  if (!f) return;
+  abNCread(id);
+  if (DEMO) { abNCget(id).img = URL.createObjectURL(f); abRefresh(); return; }
+  const prep = (await photoPrep(f)) || {body: f, ext: "jpg", type: f.type || "image/jpeg"};
+  const path = "couleurs/" + Date.now() + "-" + Math.random().toString(36).slice(2, 8) + "." + prep.ext;
+  const up = await SB.storage.from(PHOTO_BUCKET).upload(path, prep.body, {contentType: prep.type});
+  if (up.error) { toast("Image non envoyée : " + msgErr(up.error)); return; }
+  abNCget(id).img = path;
+  abRefresh();
+}
+async function abNCSave(id){
+  const d = abNCread(id), nom = d.nom.trim();
+  if (!nom) { toast("Donne un nom à la couleur."); return; }
+  if (d.hex && !AB_HEX.test(d.hex)) { toast("Code hexa invalide (ex. #1a2b3c)."); return; }
+  const base = (S.appBase || []).find(b => b.id === id);
+  if (!base) return;
+  const cur = abCoulParse(base.couleur);
+  if (cur.some(c => nz(c.nom) === nz(nom))) { toast("Cette couleur existe déjà pour ce modèle."); return; }
+  const list = cur.concat([{nom: nom, hex: d.hex || "", img: d.img || ""}]);
+  if (DEMO) { base.couleur = abCoulJSON(list); AB_NC[id] = null; abRefresh(); toast("Couleur ajoutée"); return; }
+  const { error } = await SB.from("appareils_base").update({couleur: abCoulJSON(list)}).eq("id", id);
+  if (error) { toast(msgErr(error)); return; }
+  AB_NC[id] = null;
+  toast("Couleur ajoutée");
+  await reload();
 }
 function abListe(){
   const q = abNorm(AB_F.q);
@@ -2651,15 +2892,22 @@ function abListe(){
     nom: (a, b) => abNorm(a.modele).localeCompare(abNorm(b.modele), "fr") || abNorm(a.type).localeCompare(abNorm(b.type), "fr")
   };
   const list = (S.appBase || []).filter(x => abOk(x.type, AB_FV.abFT) && abOk(x.marque, AB_FV.abFM)
-      && (!q || [x.type, x.marque, x.modele].some(v => abNorm(v).indexOf(q) > -1)))
+      && (!q || [x.type, x.marque, x.modele, x.couleur].some(v => abNorm(v).indexOf(q) > -1)))
     .sort(cmp[AB_SORT] || cmp.nom);
-  let h = "", last = null;
+  let h = list.length ? abHeadHtml() : "", last = null;
   list.forEach(x => {
     const g = AB_SORT === "type" ? x.type : AB_SORT === "marque" ? (x.marque || "Sans marque") : null;
     if (g !== null && g !== last) { h += '<div class="t" style="margin:14px 0 2px">' + esc(g) + '</div>'; last = g; }
     h += abLigne(x);
   });
   return h || '<p class="m">' + ((S.appBase || []).length ? 'Aucun appareil ne correspond.' : 'La base est vide pour le moment.') + '</p>';
+}
+/* En-tête des colonnes : mêmes largeurs que les lignes (vignette, grille, actions) */
+function abHeadHtml(){
+  return '<div class="row" style="align-items:center;gap:8px;padding:6px 0;flex-wrap:nowrap;border-bottom:1px solid var(--line)">'
+    + '<span style="width:44px;flex:none"></span>'
+    + '<div class="ab-grid m" style="font-weight:600"><span class="ab-cell">Type</span><span class="ab-cell">Marque</span><span class="ab-cell">Modèle</span><span class="ab-cell">Couleur</span></div>'
+    + '<div class="ab-acts"></div></div>';
 }
 function abRefresh(){ $("abL").innerHTML = abListe(); }
 /* Bouton « + » de création : devient « − » en ouvrant le formulaire, sans rotation */
@@ -2680,7 +2928,7 @@ function abAddToggle(){
 function appareilsHtml(){
   const head = '<h1>Appareils</h1><p class="m">Base générale des appareils (type · marque · modèle). Elle sert à classer les pièces.</p>' + orphanBtn();
   if (S.appBaseErr) return head + '<div class="card"><div class="t">Base non créée</div><div class="m">La table « appareils_base » n’existe pas encore dans la base de données. Elle doit être créée une fois (voir le message d’installation).</div></div>';
-  AB_MM.abT = false; AB_MM.abM = false; AB_MM.abMo = false; AB_MM.abG = false;
+  AB_MM.abT = false; AB_MM.abM = false; AB_MM.abMo = false; AB_MM.abG = false; AB_MM.abC = false;
   return head
     + '<div class="row" style="gap:8px;align-items:center;flex-wrap:nowrap;margin-top:4px">'
     + abAddHtml()
@@ -2690,6 +2938,7 @@ function appareilsHtml(){
     + '<label>Marque *</label>' + abSelHtml('abM', '', [], '— Choisir une marque —', 'Nouvelle marque', false)
     + '<label>Gamme (facultatif)</label>' + abSelHtml('abG', '', [], '— Aucune gamme —', 'Nouvelle gamme', false)
     + '<label>Modèle *</label>' + abSelHtml('abMo', '', [], '— Choisir un modèle —', 'Nouveau modèle', false)
+    + '<label>Couleurs (facultatif)</label><div id="abCB_add">' + abCoulBox('add') + '</div>'
     + '<button class="btn" onclick="abAjouter()">Ajouter à la base</button><div class="err" id="abErr"></div></div>'
     + abImportHtml()
     + abFiltresHtml()
@@ -2698,6 +2947,8 @@ function appareilsHtml(){
     + '<div class="ab-scroll" id="abL">' + abListe() + '</div>';
 }
 var ICON_EDIT = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>';
+var ICON_UPLOAD = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4"></path><path d="M7 9l5-5 5 5"></path><path d="M5 20h14"></path></svg>';
+var ICON_X = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg>';
 var ICON_TRASH = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M6 6l1 14h10l1-14"></path><path d="M10 11v6M14 11v6"></path></svg>';
 /* Appareil dans la fiche client : photo (carré) avec le modèle dessous, à droite la dernière réparation */
 function devCompact(d){
@@ -2705,7 +2956,7 @@ function devCompact(d){
   const couleur = d.couleur ? ' · ' + esc(d.couleur) : "";
   return '<div style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:stretch;padding:8px 0;border-bottom:1px solid var(--line)">'
     + '<div style="min-width:0;display:flex;flex-direction:column"><button class="dev-sq" onclick="openDevPage(\'' + d.id + '\')" title="Ouvrir l’appareil" style="flex:none;align-self:flex-start;height:230px;aspect-ratio:1/1;width:230px;display:flex;align-items:center;justify-content:center;padding:0;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#fff">'
-    + (modelePhoto(d) ? '<img src="' + modelePhoto(d) + '" alt="' + esc(devNom(d)) + '" style="width:100%;height:100%;object-fit:cover">' : ICON_IMG)
+    + (modelePhoto(d) ? '<img src="' + modelePhoto(d) + '" alt="' + esc(devNom(d)) + '" style="width:100%;height:100%;object-fit:cover;background:#fff">' : ICON_IMG)
     + '</button><div class="t" style="font-size:12px;margin-top:4px;line-height:14px;height:14px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(devNom(d)) + '</div></div>'
     + '<div class="cli-dev-last" style="min-width:0;display:flex;flex-direction:column">' + (r ? repCardHtml(r, true, true) : devEmptyHtml(d)) + '</div>'
     + '</div>';
@@ -2774,19 +3025,22 @@ var STOCK_TAB = "pieces";
 function setStockTab(t){ STOCK_TAB = t; render(); }
 /* Couleur proposée seulement pour certaines manettes (Blanc ou Noir) */
 var COULEURS_MODELE = {"360":["Blanc","Noir"],"One":["Blanc","Noir"],"One S / X":["Blanc","Noir"],"Series X|S":["Blanc","Noir"],"DualShock 3 (PS3)":["Blanc","Noir"],"DualShock 4 (PS4)":["Blanc","Noir"],"DualSense (PS5)":["Blanc","Noir"],"GamePad Wii U":["Blanc","Noir"]};
-function couleursFor(app, mod){ return app === "Manette" && COULEURS_MODELE[mod] ? COULEURS_MODELE[mod] : null; }
+/* Manettes et téléphones : couleur saisie à chaque fois, avec les couleurs déjà connues en suggestion */
+function couleursFor(app, mod){ return (app === "Manette" || app === "Téléphone") ? abCouleurs() : null; }
+function coulDlHtml(list){ return list.map(c => '<option value="' + esc(c) + '">').join(""); }
 function coulOptsHtml(list){ return '<option value="">- Sélectionner -</option>' + list.map(c => '<option>' + c + '</option>').join(""); }
 function vCouleurRefresh(app, mod){
   const list = couleursFor(app, mod);
   $("vCouleurRow").style.display = list ? "block" : "none";
-  $("vCouleur").innerHTML = list ? coulOptsHtml(list) : "";
+  $("vCouleurDl").innerHTML = list ? coulDlHtml(list) : "";
+  $("vCouleur").value = "";
 }
 /* Choisir le modèle (et la couleur) sélectionne l’appareil de stock correspondant */
 function vAutoDev(){
   const app = $("vAppId"); if (!app) return;
   if (VT_COMPAT || !VT_SEL || !VT_SEL.mod) { app.value = ""; return; }
   const coulOn = $("vCouleurRow").style.display !== "none";
-  const coul = coulOn ? $("vCouleur").value : "";
+  const coul = coulOn ? $("vCouleur").value.trim() : "";
   if (coulOn && !coul) { app.value = ""; return; }
   const nom = [VT_SEL.app, VT_SEL.cat, VT_SEL.mod, coul].filter(Boolean).join(" · ");
   const x = (S.stockApp || []).find(y => y.nom === nom);
@@ -2813,7 +3067,8 @@ function aCouleurRefresh(app, mod){
   const box = $("aCouleurBox"); if (!box) return;
   const list = couleursFor(app, mod);
   box.style.display = list ? "block" : "none";
-  $("aCouleur").innerHTML = list ? coulOptsHtml(list) : "";
+  $("aCouleurDl").innerHTML = list ? coulDlHtml(list) : "";
+  $("aCouleur").value = "";
 }
 var MODELES_CONSOLE={XBOX:["360","360 S","360 E","One","One S","One X","Series X","Series S"],PlayStation:["PS1","PS2","PS2 Slim","PS3 Rétrocompatible","PS3","PS3 Slim","PS3 Ultra Slim","PS4","PS4 Slim","PS4 Pro","PS5","PS5 Slim","PS5 Pro"],Nintendo:["DS Tank", "DS Lite", "DSi", "DSi XL", "2DS", "3DS", "3DS XL", "NEW 3DS", "NEW 2DS XL", "NEW 3DS XL", "SWITCH", "SWITCH LITE", "SWITCH OLED", "GAME BOY", "GAME BOY COLOR", "GAME BOY POCKET", "GAME BOY ADVANCED", "GAME BOY ADVANCED SP", "GAME BOY MICRO", "GAME CUBE", "WII", "WII U", "N64", "NES", "SUPER NES"]};
 /* Gammes des téléphones (tout sauf iPhone). Un modèle de gamme est enregistré sous « gamme · modèle ». */
@@ -2959,14 +3214,10 @@ function modeleCorrespond(txt, key){
 }
 /* Photo du modèle d’un appareil : cherche dans le modèle de l’appareil, la marque + modèle de la base, puis le nom des réparations */
 /* Première photo d’un modèle de la base (ajoutée dans la page Appareils) */
-function baseModelePhoto(base){
-  const p = (S.photos || []).find(x => x.appareil_base_id === base.id);
-  return p ? photoUrl(p) : "";
-}
 function modelePhoto(d){
   const base = (S.appBase || []).find(b => b.type === d.type && b.modele === d.modele)
     || (S.appBase || []).find(b => b.type === d.type && modeleKey(b.modele) === modeleKey(d.modele));
-  if (base && baseModelePhoto(base)) return baseModelePhoto(base);
+  if (base && baseModelePhoto(base, d.couleur)) return baseModelePhoto(base, d.couleur);
   const cands = [d.modele, base ? (base.marque || "") + " " + (base.modele || "") : ""]
     .concat(S.dossiers.filter(x => x.device_id === d.id).map(x => x.appareil || ""));
   for (const key of Object.keys(MODELE_PHOTOS)) {
@@ -2996,7 +3247,7 @@ function devLine(d, rep){
     ? '<div style="display:flex;gap:12px;align-items:stretch;margin-top:4px">'
       + '<div style="flex:0 0 84px;min-width:0">'
       + '<button onclick="openDevPage(\'' + d.id + '\')" title="Ouvrir l’appareil" style="display:block;width:84px;height:84px;padding:0;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center">'
-      + (modelePhoto(d) ? '<img src="' + modelePhoto(d) + '" alt="' + esc(devNom(d)) + '" style="width:100%;height:100%;object-fit:cover">' : ICON_IMG)
+      + (modelePhoto(d) ? '<img src="' + modelePhoto(d) + '" alt="' + esc(devNom(d)) + '" style="width:100%;height:100%;object-fit:cover;background:#fff">' : ICON_IMG)
       + '</button>'
       + '<div class="t" style="font-size:12px;margin-top:4px;line-height:1.25;word-break:break-word">' + esc(devNom(d)) + couleur + '</div></div>'
       + '<div style="flex:1;min-width:0;border:1px solid var(--line);border-radius:12px;padding:10px 12px">' + lastRepHtml(d, nPh) + '</div>'
@@ -3136,7 +3387,7 @@ function devPage(d){
       + (rep ? '<button class="chip late" onclick="delPhoto(\'' + p.id + '\',\'device\',\'' + d.id + '\')">Supprimer</button>' : '') + '</div>').join("") + '</div>'
     : '<p class="m">Aucune photo pour cet appareil.</p>';
   return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><button class="chip" onclick="closeDevPage()">← Retour au client</button><span class="m">Appareil</span></div>'
-    + '<div style="display:flex;gap:12px;align-items:center;margin-top:10px"><div style="flex:0 0 84px">' + (modelePhoto(d) ? '<img src="' + modelePhoto(d) + '" alt="' + esc(devNom(d)) + '" style="width:84px;height:84px;object-fit:cover;border-radius:12px;border:1px solid var(--line)">' : '<div style="width:84px;height:84px;border-radius:12px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center">' + ICON_IMG + '</div>') + '</div>'
+    + '<div style="display:flex;gap:12px;align-items:center;margin-top:10px"><div style="flex:0 0 84px">' + (modelePhoto(d) ? '<img src="' + modelePhoto(d) + '" alt="' + esc(devNom(d)) + '" style="width:84px;height:84px;object-fit:cover;border-radius:12px;border:1px solid var(--line);background:#fff">' : '<div style="width:84px;height:84px;border-radius:12px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center">' + ICON_IMG + '</div>') + '</div>'
     + '<div style="min-width:0"><div class="t">' + esc(devNom(d)) + (d.couleur ? ' · ' + esc(d.couleur) : '') + '</div><div class="m">' + esc(d.type || "") + '</div></div></div>'
     + '<div class="m" style="margin-top:10px">' + (tel ? 'IMEI' : 'N° de série') + ' : <span class="code">' + esc((tel ? d.imei : d.sn) || '–') + '</span></div>'
     + (tel && d.pin ? '<div class="m">Code PIN : <span class="code">' + esc(d.pin) + '</span></div>' : '')
@@ -3146,7 +3397,7 @@ function devPage(d){
     + (rep ? '<button class="chip late" onclick="delDev(\'' + d.id + '\')">Effacer</button>' : '') + '</div>'
     + '<div id="de-' + d.id + '"></div>'
     + '<h2 style="font-size:15px;margin:12px 0 6px">Photos</h2>' + grille
-    + (rep ? '<label style="margin-top:8px">Ajouter des photos</label><input type="file" accept="image/*" multiple onchange="addPhotos(\'device\',\'' + d.id + '\',this)">' : '')
+    + photoAddHtml('device', d.id, 8)
     + devRepsBloc(d);
 }
 /* Réparations de l’appareil : « + » qui devient « - » pour ouvrir ou fermer le formulaire */
@@ -3577,11 +3828,12 @@ const PHOTO_BUCKET = "photos";
 const ICON_IMG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><circle cx="9" cy="10" r="2"></circle><path d="M21 16l-5-5-8 8"></path></svg>';
 /* Photo Qualirépar : rattachée à l’appareil du client, dans le dossier « qualirepar/ » du stockage */
 function isQuali(p){ return p.quali === true || String(p.path || "").indexOf("qualirepar/") === 0; }
-function photosFor(kind, id){
+function photosForRaw(kind, id){
   const all = S.photos || [];
   if (kind === "dossier") return all.filter(p => p.dossier_id === id);
   if (kind === "quali") return all.filter(p => p.device_id === id && isQuali(p));
-  if (kind === "modele") return all.filter(p => p.appareil_base_id === id);
+  if (kind === "modele") return all.filter(p => p.appareil_base_id === id && !p.couleur);
+  if (kind === "modcol") { const k = colKey(id); return all.filter(p => p.appareil_base_id === k.base && (p.couleur || "") === k.nom); }
   if (kind === "device") {
     const dids = (S.dossiers || []).filter(x => x.device_id === id).map(x => x.id);
     return all.filter(p => p.device_id === id || (p.dossier_id && dids.indexOf(p.dossier_id) > -1));
@@ -3608,7 +3860,9 @@ async function photoPrep(f){
     const k = Math.min(1, 1600 / Math.max(bmp.width, bmp.height));
     const c = document.createElement("canvas");
     c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
-    c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+    const ctx = c.getContext("2d");
+    ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, c.width, c.height); /* JPEG n’a pas de transparence : le fond devient blanc, pas noir */
+    ctx.drawImage(bmp, 0, 0, c.width, c.height);
     if (bmp.close) bmp.close();
     const blob = await new Promise(r => c.toBlob(r, "image/jpeg", 0.85));
     return blob ? { body: blob, ext: "jpg", type: "image/jpeg" } : null;
@@ -3619,7 +3873,7 @@ function photoSlug(t){ return nz(t).replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$
 function modelePhotoPath(baseId, ext, taken){
   const base = (S.appBase || []).find(b => b.id === baseId);
   const slug = photoSlug(base ? (base.marque || "") + " " + (base.modele || "") : "") || "appareil";
-  const used = photosFor("modele", baseId).map(p => String(p.path || "")).concat(taken || []);
+  const used = (S.photos || []).filter(p => p.appareil_base_id === baseId).map(p => String(p.path || "")).concat(taken || []);
   let n = used.length + 1;
   while (used.indexOf("modeles/" + baseId + "/" + slug + "-" + n + "." + ext) > -1) n++;
   return "modeles/" + baseId + "/" + slug + "-" + n + "." + ext;
@@ -3629,18 +3883,20 @@ async function addPhotos(kind, id, input){
   if (!files.length) return;
   PHOTO_ERR = "";
   if (DEMO) {
-    S.photos = (S.photos || []).concat(files.map(f => ({ id: "demo-p-" + Math.random().toString(36).slice(2), dossier_id: kind === "dossier" ? id : null, device_id: (kind === "dossier" || kind === "modele") ? null : id, appareil_base_id: kind === "modele" ? id : null, quali: kind === "quali", path: URL.createObjectURL(f), demo: true })));
+    S.photos = (S.photos || []).concat(files.map(f => ({ id: "demo-p-" + Math.random().toString(36).slice(2), dossier_id: kind === "dossier" ? id : null, device_id: (kind === "dossier" || kind === "modele" || kind === "modcol") ? null : id, appareil_base_id: (kind === "modele" || kind === "modcol") ? baseOfKey(kind, id) : null, couleur: kind === "modcol" ? colKey(id).nom : null, quali: kind === "quali", path: URL.createObjectURL(f), demo: true })));
   } else {
     const taken = [];
     for (const f of files) {
       const rawExt = ((f.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "")) || "jpg";
       const prep = (await photoPrep(f)) || { body: f, ext: rawExt, type: f.type || "image/jpeg" };
       const dossierPh = kind === "dossier" ? "dossiers/" : kind === "quali" ? "qualirepar/" : kind === "modele" ? "modeles/" : "appareils/";
-      const path = kind === "modele" ? modelePhotoPath(id, prep.ext, taken) : dossierPh + id + "/" + Date.now() + "-" + Math.random().toString(36).slice(2, 8) + "." + prep.ext;
+      const path = (kind === "modele" || kind === "modcol") ? modelePhotoPath(baseOfKey(kind, id), prep.ext, taken) : dossierPh + id + "/" + Date.now() + "-" + Math.random().toString(36).slice(2, 8) + "." + prep.ext;
       taken.push(path);
       const up = await SB.storage.from(PHOTO_BUCKET).upload(path, prep.body, { contentType: prep.type });
       if (up.error) { PHOTO_ERR = "Photo non envoyée (" + (up.error.message || "erreur inconnue") + "). Vérifie que le bucket « photos » existe dans Supabase et que ses droits l’autorisent."; toast("Photo non envoyée"); break; }
-      const row = { path }; row[kind === "dossier" ? "dossier_id" : kind === "modele" ? "appareil_base_id" : "device_id"] = id;
+      const row = { path };
+      if (kind === "modele" || kind === "modcol") { row.appareil_base_id = baseOfKey(kind, id); if (kind === "modcol") row.couleur = colKey(id).nom; }
+      else row[kind === "dossier" ? "dossier_id" : "device_id"] = id;
       const ins = await SB.from("photos").insert(row);
       if (ins.error) {
         await SB.storage.from(PHOTO_BUCKET).remove([path]);
@@ -3652,6 +3908,8 @@ async function addPhotos(kind, id, input){
     }
     await reloadPhotos();
   }
+  if (!PHOTO_ERR) PH_ADD[kind + ":" + id] = false;
+  CLI_NOANIM = true;
   input.value = "";
   refreshPhotos(kind, id);
 }
@@ -3671,12 +3929,77 @@ function refreshPhotos(kind, id){
   if (kind === "device" && $("galerie") && $("galerie").style.display === "flex") openGalerie(kind, id);
   else render();
 }
+/* Ajout de photos : replié par défaut, une croix pour fermer, et refermé tout seul une fois l’envoi réussi */
+var PH_ADD = {};
+function photoAddToggle(kind, id){ const k = kind + ":" + id; PH_ADD[k] = !PH_ADD[k]; CLI_NOANIM = true; refreshPhotos(kind, id); }
+function photoAddHtml(kind, id, mt){
+  if (ROLE !== "rep") return "";
+  return '<label class="btn ghost sq" title="Envoyer des photos" aria-label="Envoyer des photos" style="margin-top:' + mt + 'px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;position:relative">' + ICON_UPLOAD
+    + '<input type="file" accept="image/*" multiple onchange="addPhotos(\'' + kind + '\',\'' + id + '\',this)" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"></label>';
+}
+/* Ordre des photos : colonne « ordre » de la table photos (sans valeur = à la fin) */
+function photoOrdre(p){ return (p.ordre === null || p.ordre === undefined || isNaN(+p.ordre)) ? 1e9 : +p.ordre; }
+function photosFor(kind, id){ return photosForRaw(kind, id).slice().sort((a, b) => photoOrdre(a) - photoOrdre(b)); }
 function photosBloc(kind, id, extra){
   const list = photosFor(kind, id).concat(extra || []);
-  return '<div class="gal-grid">' + list.map(p => '<a href="#" onclick="openImg(\'' + esc(photoUrl(p)) + '\');return false"><img src="' + esc(photoUrl(p)) + '" alt="Photo"></a>').join("")
+  const rep = ROLE === "rep";
+  return '<div class="gal-grid" data-gal-kind="' + kind + '" data-gal-id="' + id + '">'
+    + list.map(p => '<div class="gal-cell" data-pid="' + p.id + '"><a href="#" draggable="false" onclick="openImg(\'' + esc(photoUrl(p)) + '\');return false"><img src="' + esc(photoUrl(p)) + '" alt="Photo" draggable="false"></a>'
+      + (rep ? '<button type="button" class="gal-del" title="Retirer la photo" aria-label="Retirer la photo" onclick="delPhoto(\'' + p.id + '\',\'' + kind + '\',\'' + id + '\')">' + ICON_TRASH + '</button>' : '')
+      + '</div>').join("")
     + '</div>' + (list.length ? "" : '<p class="m">Aucune photo pour le moment.</p>')
+    + (rep && list.length > 1 ? '<p class="m" style="margin:2px 0 0;font-size:12px">Glisse une photo pour changer l’ordre.</p>' : '')
     + (PHOTO_ERR ? '<div class="err">' + esc(PHOTO_ERR) + '</div>' : '')
-    + (ROLE === "rep" ? '<label style="margin-top:8px">Ajouter des photos</label><input type="file" accept="image/*" multiple onchange="addPhotos(\'' + kind + '\',\'' + id + '\',this)">' : "");
+    + photoAddHtml(kind, id, 8);
+}
+/* Glisser pour réordonner (souris ou doigt). L’ordre est enregistré à la fin du glissement. */
+var GAL_DRAG = null, GAL_JUST = false;
+document.addEventListener("pointerdown", e => {
+  if (ROLE !== "rep" || e.button > 0) return;
+  const t = e.target.closest && e.target.closest(".gal-cell[data-pid]");
+  if (!t || e.target.closest(".gal-del")) return;
+  GAL_DRAG = {el: t, grid: t.parentElement, x: e.clientX, y: e.clientY, moved: false};
+});
+document.addEventListener("pointermove", e => {
+  if (!GAL_DRAG) return;
+  if (!GAL_DRAG.moved) {
+    if (Math.hypot(e.clientX - GAL_DRAG.x, e.clientY - GAL_DRAG.y) < 6) return;
+    GAL_DRAG.moved = true;
+    GAL_DRAG.el.style.opacity = ".6";
+  }
+  e.preventDefault();
+  const under = document.elementFromPoint(e.clientX, e.clientY);
+  const tgt = under && under.closest ? under.closest(".gal-cell[data-pid]") : null;
+  if (!tgt || tgt === GAL_DRAG.el || tgt.parentElement !== GAL_DRAG.grid) return;
+  const kids = [...GAL_DRAG.grid.children];
+  if (kids.indexOf(GAL_DRAG.el) < kids.indexOf(tgt)) GAL_DRAG.grid.insertBefore(GAL_DRAG.el, tgt.nextSibling);
+  else GAL_DRAG.grid.insertBefore(GAL_DRAG.el, tgt);
+});
+function galEnd(save){
+  const g = GAL_DRAG; GAL_DRAG = null;
+  if (!g) return;
+  g.el.style.opacity = "";
+  if (!g.moved) return;
+  GAL_JUST = true; setTimeout(() => { GAL_JUST = false; }, 300);
+  if (!save) { refreshPhotos(g.grid.dataset.galKind, g.grid.dataset.galId); return; }
+  const pids = [...g.grid.querySelectorAll(".gal-cell[data-pid]")].map(c => c.dataset.pid);
+  galSaveOrder(g.grid.dataset.galKind, g.grid.dataset.galId, pids);
+}
+document.addEventListener("pointerup", () => galEnd(true));
+document.addEventListener("pointercancel", () => galEnd(false));
+document.addEventListener("click", e => { if (GAL_JUST) { GAL_JUST = false; e.preventDefault(); e.stopPropagation(); } }, true);
+document.addEventListener("dragstart", e => { if (e.target.closest && e.target.closest(".gal-cell")) e.preventDefault(); });
+async function galSaveOrder(kind, id, pids){
+  pids.forEach((pid, i) => { const p = (S.photos || []).find(x => x.id === pid); if (p) p.ordre = i; });
+  if (!DEMO) {
+    const res = await Promise.all(pids.map((pid, i) => SB.from("photos").update({ordre: i}).eq("id", pid)));
+    if (res.some(r => r.error)) {
+      PHOTO_ERR = "Ordre non enregistré : ajoute la colonne « ordre » à la table « photos ». Dans Supabase (SQL), exécute : alter table photos add column ordre integer;";
+      toast("Ordre non enregistré");
+      await reloadPhotos();
+    }
+  }
+  refreshPhotos(kind, id);
 }
 function openGalerie(kind, id){
   let o = $("galerie");
@@ -3688,12 +4011,12 @@ function openGalerie(kind, id){
   const d = kind === "device" ? S.devices.find(x => x.id === id) : null;
   const list = photosFor(kind, id);
   o.innerHTML = '<div class="copy-card" style="width:min(760px,100%);max-height:90vh;overflow:auto">'
-    + '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div class="t">Photos' + (d ? " · " + esc(d.modele || d.type) : "") + '</div><button class="chip" onclick="closeGalerie()">Fermer</button></div>'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div class="t">Photos' + (d ? " · " + esc(d.modele || d.type) : "") + '</div><button class="ph-x" style="position:static;flex:none" title="Fermer" aria-label="Fermer" onclick="closeGalerie()">' + ICON_X + '</button></div>'
     + '<div class="gal-grid">' + list.map(p => '<div class="gal-item"><a href="#" onclick="openImg(\'' + esc(photoUrl(p)) + '\');return false"><img src="' + esc(photoUrl(p)) + '" alt="Photo"></a><div class="m" style="font-size:12px;margin:4px 0">' + esc(photoOrigine(p)) + '</div>'
       + (ROLE === "rep" ? '<button class="chip late" onclick="delPhoto(\'' + p.id + '\',\'' + kind + '\',\'' + id + '\')">Supprimer</button>' : '') + '</div>').join("") + '</div>'
     + (list.length ? "" : '<p class="m">Aucune photo pour cet appareil.</p>')
     + (PHOTO_ERR ? '<div class="err">' + esc(PHOTO_ERR) + '</div>' : '')
-    + (ROLE === "rep" ? '<label style="margin-top:12px">Ajouter des photos</label><input type="file" accept="image/*" multiple onchange="addPhotos(\'' + kind + '\',\'' + id + '\',this)">' : "")
+    + photoAddHtml(kind, id, 12)
     + '</div>';
   o.style.display = "flex";
 }
