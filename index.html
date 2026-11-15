@@ -1346,6 +1346,9 @@ function setFbHidden(v){ if (v) closeFeedback(); FB_HIDDEN = v; try { localStora
 /* ---------- Mises à jour (cloche en haut à droite) ----------
    Ajouter une entrée en haut de la liste à chaque mise en ligne. */
 var UPDATES = [
+  {id: "2026-11-16-bf", date: "16/11/2026", titre: "Galerie dans Bases de données", items: [
+    "Nouvelle entrée « Galerie (photos) » : toutes les photos, avec des filtres par origine (modèle, couleur, appareil client, réparation, Qualirépar).",
+    "Supprimer une photo la retire vraiment de la base, et un message s’affiche si la base refuse."]},
   {id: "2026-11-16-be", date: "16/11/2026", titre: "Fond blanc à l’envoi des photos", items: [
     "Les photos détourées sont converties sur fond blanc (et non noir) au moment de l’envoi.",
     "Les photos déjà envoyées gardent leur fond noir : il suffit de les retirer puis de les réenvoyer."]},
@@ -3916,14 +3919,21 @@ async function addPhotos(kind, id, input){
 async function delPhoto(pid, kind, id){
   if (!confirm("Supprimer cette photo ?")) return;
   const p = (S.photos || []).find(x => x.id === pid);
-  if (p && !DEMO) {
-    const st = await SB.storage.from(PHOTO_BUCKET).remove([p.path]);
-    if (st.error) { toast("Photo : " + msgErr(st.error)); return; }
-    const del = await SB.from("photos").delete().eq("id", pid);
-    if (del.error) { toast("Photo : " + msgErr(del.error)); return; }
-    await reloadPhotos();
-  } else S.photos = (S.photos || []).filter(x => x.id !== pid);
+  if (p) { if (!(await photoSupprimer(p))) return; }
+  else S.photos = (S.photos || []).filter(x => x.id !== pid);
+  if (!DEMO) await reloadPhotos();
   refreshPhotos(kind, id);
+}
+/* Retire la photo de la table « photos » (et du stockage). Renvoie true si la base l’a bien supprimée. */
+async function photoSupprimer(p){
+  if (DEMO) { S.photos = (S.photos || []).filter(x => x.id !== p.id); return true; }
+  const del = await SB.from("photos").delete().eq("id", p.id).select();
+  if (del.error) { toast("Photo : " + msgErr(del.error)); return false; }
+  if (!del.data || !del.data.length) { toast("Photo non supprimée : la base a refusé la suppression (droits sur la table « photos »)."); return false; }
+  S.photos = (S.photos || []).filter(x => x.id !== p.id);
+  const st = await SB.storage.from(PHOTO_BUCKET).remove([p.path]);
+  if (st.error) toast("Photo retirée de la base, mais le fichier n’a pas été effacé : " + msgErr(st.error));
+  return true;
 }
 function refreshPhotos(kind, id){
   if (kind === "device" && $("galerie") && $("galerie").style.display === "flex") openGalerie(kind, id);
@@ -4669,7 +4679,7 @@ function makeDemoSB(){
       if (op === "select") data = rows.filter(match).map(clone);
       else if (op === "insert") data = payload.map(p => { const r = Object.assign({id: "demo-" + (++seq)}, p); rows.push(r); return clone(r); });
       else if (op === "update") rows.filter(match).forEach(r => { Object.assign(r, payload); data.push(clone(r)); });
-      else if (op === "delete") { for (let i = rows.length - 1; i >= 0; i--) if (match(rows[i])) rows.splice(i, 1); }
+      else if (op === "delete") { data = rows.filter(match).map(clone); for (let i = rows.length - 1; i >= 0; i--) if (match(rows[i])) rows.splice(i, 1); }
       if (one) data = data[0] || null;
       return Promise.resolve({data, error: null});
     };
@@ -4708,7 +4718,7 @@ function endDemo(){
 }
 /* ---------- Bases de données (administration) : lecture seule tant qu’on ne déverrouille pas ---------- */
 var DBA = {table: null, rows: null, edit: null, err: "", lock: true, q: "", f: {}, sort: null, dir: 1};
-const DBA_TABLES = [["clients","Clients"],["dossiers","Réparations"],["pieces_dossier","Pièces des réparations"],["devices","Appareils des clients"],["appareils_base","Appareils (base)"],["ventes","Ventes"],["stock","Stock (pièces)"],["stock_appareils","Appareils à vendre"],["catalogue","Catalogue"],["sav","SAV"],["idees","Idées"],["feedback","Suggestions & Bugs"],["depenses","Dépenses"]];
+const DBA_TABLES = [["clients","Clients"],["dossiers","Réparations"],["pieces_dossier","Pièces des réparations"],["devices","Appareils des clients"],["appareils_base","Appareils (base)"],["ventes","Ventes"],["stock","Stock (pièces)"],["stock_appareils","Appareils à vendre"],["catalogue","Catalogue"],["sav","SAV"],["idees","Idées"],["feedback","Suggestions & Bugs"],["depenses","Dépenses"],["galerie","Galerie (photos)"]];
 const DBA_HIDE = ["id", "created_at"];
 function dbaHtml(){
   const opts = '<option value="">- Choisir une table -</option>' + DBA_TABLES.map(([k, l]) => '<option value="' + k + '"' + (DBA.table === k ? ' selected' : '') + '>' + esc(l) + ' (' + k + ')</option>').join("");
@@ -4719,10 +4729,11 @@ function dbaHtml(){
     + '<label>Table</label><select onchange="dbaOpen(this.value)">' + opts + '</select>';
   if (!DBA.table) return h;
   h += '<div class="row" style="align-items:center;margin:8px 0"><div class="m" style="flex:1">' + (DBA.rows ? DBA.rows.length + ' ligne(s)' : 'Chargement…') + '</div>'
-    + (DBA.lock ? '' : '<button class="btn small" onclick="dbaNew()">+ Ajouter une ligne</button>')
+    + (DBA.lock || DBA.table === "galerie" ? '' : '<button class="btn small" onclick="dbaNew()">+ Ajouter une ligne</button>')
     + '<button class="btn ghost small" onclick="dbaLoad()">Actualiser</button></div>';
   if (DBA.err) h += '<div class="err">' + esc(DBA.err) + '</div>';
   if (DBA.edit !== null && !DBA.lock) h += dbaEditorHtml();
+  if (DBA.table === "galerie") return h + (DBA.rows ? dbaGalerieHtml() : "");
   if (DBA.rows) h += '<input id="dbaQ" placeholder="Rechercher dans la table" value="' + esc(DBA.q) + '" oninput="dbaSearch(this.value)" style="margin:8px 0">'
     + '<div id="dbaTab">' + dbaTableHtml() + '</div>';
   return h;
@@ -4812,7 +4823,7 @@ async function dbaOpen(t){ DBA = {table: t || null, rows: null, edit: null, err:
 async function dbaLoad(){
   if (!DBA.table) return;
   const t = DBA.table;
-  const { data, error } = await SB.from(t).select("*");
+  const { data, error } = await SB.from(t === "galerie" ? "photos" : t).select("*");
   if (DBA.table !== t) return;
   DBA.rows = error ? [] : (data || []);
   DBA.err = error ? "Lecture impossible : " + msgErr(error) : "";
@@ -4845,6 +4856,46 @@ async function dbaDel(i){
   if (error) { DBA.err = "Suppression impossible : " + msgErr(error); render(); return; }
   toast("Ligne supprimée");
   DBA.lock = true; DBA.edit = null;
+  await dbaLoad();
+}
+/* Galerie : toutes les photos, filtrées par origine */
+var DBA_ORIG = [["modele","Modèle · image par défaut"],["modcol","Modèle · couleur"],["device","Appareil client"],["dossier","Réparation"],["quali","Qualirépar"],["autre","Autre"]];
+function dbaOrigineCle(p){
+  if (isQuali(p)) return "quali";
+  if (p.dossier_id) return "dossier";
+  if (p.device_id) return "device";
+  if (p.appareil_base_id) return p.couleur ? "modcol" : "modele";
+  return "autre";
+}
+function dbaOrigineDetail(p){
+  const k = dbaOrigineCle(p);
+  if (k === "modele" || k === "modcol") {
+    const b = (S.appBase || []).find(x => x.id === p.appareil_base_id);
+    return (b ? (b.marque ? b.marque + " " : "") + b.modele : "Modèle supprimé") + (p.couleur ? " · " + p.couleur : "");
+  }
+  if (k === "device") { const d = (S.devices || []).find(x => x.id === p.device_id); return d ? devNom(d) : "Appareil client"; }
+  return photoOrigine(p);
+}
+function dbaOrigine(k){ DBA.origine = k; render(); }
+function dbaGalerieHtml(){
+  const rows = DBA.rows || [], cur = DBA.origine || "";
+  const n = {}; rows.forEach(p => { const k = dbaOrigineCle(p); n[k] = (n[k] || 0) + 1; });
+  const chip = (k, l, c) => '<button class="chip ' + (cur === k ? "ok" : "") + '" onclick="dbaOrigine(\'' + k + '\')">' + esc(l) + ' (' + c + ')</button>';
+  const filtres = '<div class="row" style="gap:6px;flex-wrap:wrap;margin:8px 0">' + chip("", "Toutes", rows.length) + DBA_ORIG.map(([k, l]) => chip(k, l, n[k] || 0)).join("") + '</div>';
+  if (!rows.length) return filtres + '<p class="m">Aucune photo dans la base.</p>';
+  const list = rows.filter(p => !cur || dbaOrigineCle(p) === cur);
+  if (!list.length) return filtres + '<p class="m">Aucune photo pour cette origine.</p>';
+  return filtres + '<div class="gal-grid">' + list.map(p => '<div class="gal-item"><a href="#" onclick="openImg(\'' + esc(photoUrl(p)) + '\');return false"><img src="' + esc(photoUrl(p)) + '" alt="Photo"></a>'
+    + '<div class="m" style="font-size:12px;margin:4px 0">' + esc(dbaOrigineDetail(p)) + '</div>'
+    + (DBA.lock ? '' : '<button class="chip late" onclick="dbaGalDel(\'' + p.id + '\')">Supprimer</button>') + '</div>').join("") + '</div>';
+}
+async function dbaGalDel(pid){
+  if (DBA.lock) return;
+  const p = (DBA.rows || []).find(x => x.id === pid); if (!p) return;
+  if (!confirm("Supprimer définitivement cette photo ? Elle disparaît de la base et du stockage.")) return;
+  if (!(await photoSupprimer(p))) { render(); return; }
+  toast("Photo supprimée");
+  DBA.lock = true;
   await dbaLoad();
 }
 /* Client connecté sans fiche : code d’invitation facultatif, sinon ses informations créent sa fiche. */
