@@ -121,6 +121,16 @@ body.lg .dash-page > h2:first-of-type{margin-top:6px}
 
 /* ---------- Logo d'en-tête ---------- */
 .logo-h{display:block;width:180px;height:auto;flex:none}
+.dba-w{overflow:auto;max-height:62vh;max-width:100%;border:1px solid var(--line);border-radius:12px;background:var(--surf)}
+.dba-t{border-collapse:separate;border-spacing:0;font-size:13px;min-width:100%}
+.dba-t th,.dba-t td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap;max-width:240px;overflow:hidden;text-overflow:ellipsis;vertical-align:middle}
+.dba-t th{position:sticky;top:0;z-index:1;background:var(--surf);cursor:pointer;user-select:none;font-weight:600;border-bottom:2px solid var(--line)}
+.dba-t td.nul{color:var(--mut)}
+.dba-t td.act{white-space:nowrap}
+.dba-t tr.dba-fr th{position:static;cursor:default;border-bottom:1px solid var(--line);padding:5px 6px;background:var(--surf)}
+.dba-t tr.dba-fr input{width:100%;min-width:90px;margin:0;padding:5px 7px;font-size:12px;font-weight:400;border-radius:8px}
+.stk-grid{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1.3fr) minmax(0,.9fr) minmax(0,.9fr)}
+@media (max-width:600px){.stk-grid{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1.3fr)}.stk-x{display:none}}
 .ab-cell{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sq{display:flex;align-items:center;justify-content:center;width:44px;height:44px;min-width:44px;margin:0;padding:0;line-height:1}
 .ic{position:relative;display:block;width:16px;height:16px;transition:transform .6s ease;pointer-events:none}
@@ -1257,6 +1267,18 @@ function setFbHidden(v){ if (v) closeFeedback(); FB_HIDDEN = v; try { localStora
 /* ---------- Mises à jour (cloche en haut à droite) ----------
    Ajouter une entrée en haut de la liste à chaque mise en ligne. */
 var UPDATES = [
+  {id: "2026-11-15-a", date: "15/11/2026", titre: "Liste du stock", items: [
+    "Stock : les pièces s’affichent en liste alignée comme l’onglet Appareils (nom, type, modèle, référence, réservé), avec les boutons à droite."]},
+  {id: "2026-11-14-c", date: "14/11/2026", titre: "Filtres des bases de données", items: [
+    "Bases de données : une case « Filtrer » sous chaque colonne pour ne garder que les lignes qui contiennent le texte.",
+    "Les filtres se combinent avec la recherche ; « Effacer les filtres » remet tout à zéro."]},
+  {id: "2026-11-14-b", date: "14/11/2026", titre: "Bases de données en tableau", items: [
+    "Bases de données : les lignes s’affichent dans un vrai tableau, une colonne par champ.",
+    "Recherche dans la table et tri en cliquant sur le nom d’une colonne (une seconde fois pour inverser).",
+    "Modifier et Supprimer sont dans la dernière colonne, uniquement une fois la base déverrouillée."]},
+  {id: "2026-11-14-a", date: "14/11/2026", titre: "Appareil d’un client", items: [
+    "Clients : « Ajouter un appareil » reprend la même saisie que l’onglet Appareils : type, marque et modèle dans les listes de la base, avec le « + » pour saisir.",
+    "Type, marque et modèle sont obligatoires. Le modèle choisi est enregistré pour l’appareil du client."]},
   {id: "2026-11-13-g", date: "13/11/2026", titre: "Colonnes des appareils", items: [
     "Appareils : type, marque et modèle sont alignés en colonnes dans la liste."]},
   {id: "2026-11-13-f", date: "13/11/2026", titre: "Fondu de la case", items: [
@@ -2288,11 +2310,12 @@ function abFormRefresh(T, M, Mo){
   abSetOk(Mo, !!t && !!mv);
 }
 /* Chaque formulaire : type → marque → modèle */
-var AB_GROUPES = [["abT", "abM", "abMo"], ["abET", "abEMa", "abEM"]];
+var AB_GROUPES = [["abT", "abM", "abMo"], ["abET", "abEMa", "abEM"], ["dvT", "dvMa", "dvM"]];
 function abRefreshFor(pre){
   if (AB_FILTRE.indexOf(pre) >= 0) { abFiltreRefresh(); abRefresh(); return; }
   const g = AB_GROUPES.find(x => x.indexOf(pre) >= 0);
   if (g) abFormRefresh(g[0], g[1], g[2]);
+  if (pre === "dvT") devTypeHook();
 }
 /* Filtres : même principe que le formulaire (liste + « + » pour saisir), mais tout est facultatif */
 var AB_FV = {abFT: {raw: "", exact: true}, abFM: {raw: "", exact: true}, abFMo: {raw: "", exact: true}};
@@ -2668,15 +2691,18 @@ function showDevForm(devId, cid){
   const box = devId ? $("de-" + devId) : $("devForm");
   if (!box) return;
   const owner = cid || (d && d.client_id);
-  const tel = !d || d.type === "Téléphone";
   const unk = !!d && (d.imei === "Non renseigné" || d.sn === "Non renseigné");
   const idv = d ? (d.type === "Téléphone" ? d.imei : d.sn) : "";
   const v = x => esc(x == null ? "" : x);
+  const tv = d ? (d.type || "") : "", mq = d ? devMarqueOf(d) : "", mv = d ? (d.modele || "") : "";
+  AB_MM.dvT = false; AB_MM.dvMa = false; AB_MM.dvM = false;
+  DEV_TEL_LAST = tv === "Téléphone";
   box.innerHTML = '<div class="card" style="margin:8px 0 0">'
-    + '<label>Type</label><select id="dvT" onchange="devIdLbl()">' + ["Téléphone","Console","Manette","Enceinte","PC portable","Autre"].map(t => '<option' + (d && d.type === t ? ' selected' : '') + '>' + t + '</option>').join("") + '</select>'
-    + '<label>Modèle *</label><input id="dvM" value="' + v(d && d.modele) + '" placeholder="Ex. iPhone 13">'
+    + '<label>Type *</label>' + abSelHtml('dvT', tv, abTypes(), '— Choisir un type —', 'Nouveau type', true)
+    + '<label>Marque *</label>' + abSelHtml('dvMa', mq, tv ? abMarquesFor(tv) : [], '— Choisir une marque —', 'Nouvelle marque', !!tv)
+    + '<label>Modèle *</label>' + abSelHtml('dvM', mv, (tv && mq) ? abModelesFor(tv, mq) : [], '— Choisir un modèle —', 'Nouveau modèle', !!(tv && mq))
     + '<label>Couleur</label><input id="dvC" value="' + v(d && d.couleur) + '" placeholder="Ex. Bleu">'
-    + '<label id="dvIdL">' + (tel ? 'IMEI *' : 'N° de série *') + '</label><input id="dvI" inputmode="numeric" value="' + (unk ? '' : v(idv)) + '"' + (unk ? ' disabled' : '') + '>'
+    + '<label id="dvIdL">' + devIdText(tv) + '</label><input id="dvI" inputmode="numeric" value="' + (unk ? '' : v(idv)) + '"' + (unk ? ' disabled' : '') + '>'
     + '<label style="font-weight:400;display:flex;gap:8px;align-items:center;margin-top:6px"><input type="checkbox" id="dvU" onchange="devUnk()" style="width:auto;margin:0"' + (unk ? ' checked' : '') + '> Je ne sais pas où le trouver</label>'
     + '<div id="dvCode"></div>'
     + '<label>État</label><input id="dvE" value="' + v(d && d.etat) + '" placeholder="Ex. rayure sur le dos">'
@@ -2684,9 +2710,21 @@ function showDevForm(devId, cid){
     + '<button class="btn ghost" onclick="render()">Annuler</button><div class="err" id="dvErr"></div></div>';
   devCodeFields(d);
 }
+/* Marque d’un appareil client : retrouvée dans la base (le client n’a pas de colonne marque) */
+function devMarqueOf(d){ const x = (S.appBase || []).find(b => b.type === d.type && b.modele === d.modele); return x ? x.marque : ""; }
+function devIdText(t){ return t === "Téléphone" ? "IMEI *" : t ? "N° de série *" : "IMEI ou N° de série *"; }
+var DEV_TEL_LAST = null;
+/* Appelée à chaque changement du type : étiquette IMEI / série, et champs de déverrouillage seulement pour un téléphone */
+function devTypeHook(){
+  const t = abSelVal("dvT"), tel = t === "Téléphone";
+  const l = $("dvIdL"); if (l) l.textContent = devIdText(t);
+  if (DEV_TEL_LAST === tel) return;
+  DEV_TEL_LAST = tel;
+  devCodeFields(null);
+}
 function devCodeFields(d){
   const box = $("dvCode"); if (!box) return;
-  if ($("dvT").value !== "Téléphone") { box.innerHTML = ""; return; }
+  if (abSelVal("dvT") !== "Téléphone") { box.innerHTML = ""; return; }
   const sch = !!(d && d.schema_code);
   const aucun = !!d && !d.pin && !d.schema_code;
   box.innerHTML = '<label>Déverrouillage</label><select id="dvK" onchange="devKLbl()"><option value="pin"' + (sch || aucun ? '' : ' selected') + '>Code PIN</option><option value="sch"' + (sch ? ' selected' : '') + '>Schéma</option><option value="none"' + (aucun ? ' selected' : '') + '>Pas de code</option></select>'
@@ -2700,17 +2738,16 @@ function devKLbl(){
   $("dvK2").style.display = none ? "none" : "";
 }
 function devUnk(){ const u = $("dvU").checked; $("dvI").disabled = u; if (u) $("dvI").value = ""; }
-function devIdLbl(){
-  const tel = $("dvT").value === "Téléphone";
-  $("dvIdL").textContent = tel ? "IMEI *" : "N° de série *";
-  devCodeFields(null);
-}
 async function saveDev(devId, cid){
   const v = x => $(x).value.trim(), err = $("dvErr"); err.textContent = "";
-  const t = $("dvT").value, unk = $("dvU").checked, id = unk ? "Non renseigné" : v("dvI").replace(/\s/g, "");
-  if (!v("dvM") || (!unk && !id)) { err.textContent = "Modèle et " + (t === "Téléphone" ? "IMEI" : "numéro de série") + " sont obligatoires."; return; }
+  const t = abSelVal("dvT").trim(), ma = abSelVal("dvMa").trim(), mo = abSelVal("dvM").trim();
+  const unk = $("dvU").checked, id = unk ? "Non renseigné" : v("dvI").replace(/\s/g, "");
+  if (!t) { err.textContent = "Choisis d’abord un type."; return; }
+  if (!ma) { err.textContent = "La marque est obligatoire."; return; }
+  if (!mo) { err.textContent = "Le modèle est obligatoire."; return; }
+  if (!unk && !id) { err.textContent = "Le " + (t === "Téléphone" ? "IMEI" : "numéro de série") + " est obligatoire."; return; }
   if (t === "Téléphone" && !unk && !/^\d{15}$/.test(id)) { err.textContent = "L’IMEI doit comporter 15 chiffres."; return; }
-  const row = {type: t, modele: v("dvM"), couleur: v("dvC") || null, etat: v("dvE") || null, imei: null, sn: null, pin: null, schema_code: null};
+  const row = {type: t, modele: mo, couleur: v("dvC") || null, etat: v("dvE") || null, imei: null, sn: null, pin: null, schema_code: null};
   if (t === "Téléphone") {
     row.imei = id;
     const mode = $("dvK").value;
@@ -3390,11 +3427,13 @@ function stkHtml(q){
     .filter(s => !STK_TYPE || s.type === STK_TYPE)
     .filter(s => !STK_ST || (STK_ST === "dispo" ? s.qte > 0 : !(s.qte > 0)))
     .sort(cmp);
-  return list.map(s => `<div class="card" id="s-${esc(s.sku)}">
-    <div class="row"><div><div class="t">${esc(s.nom)}</div><div class="m">${esc(s.type)} · ${esc(s.modele)}</div>
-    <div class="m"><span class="code">${esc(s.sku)}</span></div><div class="m">Réservé : ${s.res}</div></div>
-    <div style="display:flex;align-items:center;gap:6px"><button class="chip" onclick="adjStock('${esc(s.sku)}',-1)">−</button><span class="chip ${s.qte > 0 ? "ok" : "late"}">${s.qte > 0 ? s.qte + " dispo" : "Rupture"}</span><button class="chip" onclick="adjStock('${esc(s.sku)}',1)">+</button></div></div>
-    <div style="margin-top:6px;display:flex;gap:6px"><button class="chip" onclick="editPiece('${esc(s.sku)}')">Modifier</button><button class="chip late" onclick="deleteStock('${esc(s.sku)}')">Supprimer</button></div>
+  return list.map(s => `<div id="s-${esc(s.sku)}">
+    <div class="row" style="align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(128,128,128,.25);flex-wrap:wrap">
+      <div class="stk-grid" style="flex:1 1 260px;min-width:0;display:grid;gap:8px">
+        <b class="ab-cell">${esc(s.nom)}</b><span class="ab-cell">${esc(s.type)}</span><span class="ab-cell">${esc(s.modele)}</span><span class="ab-cell code stk-x">${esc(s.sku)}</span><span class="ab-cell stk-x">Réservé : ${s.res}</span>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;flex-wrap:wrap"><button class="chip" onclick="adjStock('${esc(s.sku)}',-1)">−</button><span class="chip ${s.qte > 0 ? "ok" : "late"}">${s.qte > 0 ? s.qte + " dispo" : "Rupture"}</span><button class="chip" onclick="adjStock('${esc(s.sku)}',1)">+</button><button class="chip" onclick="editPiece('${esc(s.sku)}')">Modifier</button><button class="chip late" onclick="deleteStock('${esc(s.sku)}')">Supprimer</button></div>
+    </div>
     <div id="pe-${esc(s.sku)}"></div></div>`).join("")
     || '<p class="m">Aucune pièce trouvée.</p>';
 }
@@ -3676,7 +3715,7 @@ function endDemo(){
   render();
 }
 /* ---------- Bases de données (administration) : lecture seule tant qu’on ne déverrouille pas ---------- */
-var DBA = {table: null, rows: null, edit: null, err: "", lock: true};
+var DBA = {table: null, rows: null, edit: null, err: "", lock: true, q: "", f: {}, sort: null, dir: 1};
 const DBA_TABLES = [["clients","Clients"],["dossiers","Réparations"],["pieces_dossier","Pièces des réparations"],["devices","Appareils des clients"],["appareils_base","Appareils (base)"],["ventes","Ventes"],["stock","Stock (pièces)"],["stock_appareils","Appareils à vendre"],["catalogue","Catalogue"],["sav","SAV"],["idees","Idées"],["feedback","Suggestions & Bugs"],["depenses","Dépenses"]];
 const DBA_HIDE = ["id", "created_at"];
 function dbaHtml(){
@@ -3692,14 +3731,75 @@ function dbaHtml(){
     + '<button class="btn ghost small" onclick="dbaLoad()">Actualiser</button></div>';
   if (DBA.err) h += '<div class="err">' + esc(DBA.err) + '</div>';
   if (DBA.edit !== null && !DBA.lock) h += dbaEditorHtml();
-  if (DBA.rows) h += DBA.rows.map((r, i) => dbaRowHtml(r, i)).join("") || '<p class="m">Aucune ligne dans cette table.</p>';
+  if (DBA.rows) h += '<input id="dbaQ" placeholder="Rechercher dans la table" value="' + esc(DBA.q) + '" oninput="dbaSearch(this.value)" style="margin:8px 0">'
+    + '<div id="dbaTab">' + dbaTableHtml() + '</div>';
   return h;
 }
-function dbaRowHtml(r, i){
-  const champs = Object.keys(r).filter(k => !DBA_HIDE.includes(k) && r[k] !== null && r[k] !== "" && typeof r[k] !== "object").slice(0, 4);
-  const boutons = DBA.lock ? '' : '<div class="row" style="gap:6px;margin-top:8px"><button class="chip" onclick="dbaEdit(' + i + ')">Modifier</button><button class="chip late" onclick="dbaDel(' + i + ')">Supprimer</button></div>';
-  return '<div class="card"><div class="m" style="word-break:break-all">id : ' + esc(String(r.id)) + '</div>'
-    + champs.map(k => '<div class="m">' + esc(k + ' : ' + String(r[k]).slice(0, 60)) + '</div>').join("") + boutons + '</div>';
+/* Colonnes : id en premier, created_at en dernier, les autres dans l’ordre de la base */
+function dbaCols(rows){
+  const set = [];
+  rows.forEach(r => Object.keys(r).forEach(k => { if (set.indexOf(k) < 0) set.push(k); }));
+  return set.filter(k => k === "id").concat(set.filter(k => k !== "id" && k !== "created_at"), set.filter(k => k === "created_at"));
+}
+function dbaCellHtml(v){
+  if (v === null || v === undefined || v === "") return '<td class="nul">—</td>';
+  const txt = typeof v === "object" ? JSON.stringify(v) : String(v);
+  return '<td title="' + esc(txt) + '">' + esc(txt) + '</td>';
+}
+function dbaTxt(v){ return v == null ? "" : typeof v === "object" ? JSON.stringify(v) : String(v); }
+/* Lignes affichées : recherche globale, filtres par colonne, puis tri */
+function dbaListe(){
+  const q = nz(DBA.q).trim();
+  const fk = Object.keys(DBA.f).filter(k => nz(DBA.f[k]).trim());
+  let list = DBA.rows.map((r, i) => ({r: r, i: i}));
+  if (q) list = list.filter(x => Object.keys(x.r).some(k => nz(dbaTxt(x.r[k])).indexOf(q) > -1));
+  fk.forEach(k => { const f = nz(DBA.f[k]).trim(); list = list.filter(x => nz(dbaTxt(x.r[k])).indexOf(f) > -1); });
+  if (DBA.sort) {
+    const k = DBA.sort.k;
+    list.sort((a, b) => {
+      const x = a.r[k], y = b.r[k];
+      if (x == null || x === "") return 1;
+      if (y == null || y === "") return -1;
+      const c = typeof x === "number" && typeof y === "number" ? x - y : String(x).localeCompare(String(y), "fr", {numeric: true});
+      return c * DBA.dir;
+    });
+  }
+  return list;
+}
+function dbaActif(){ return !!nz(DBA.q).trim() || Object.keys(DBA.f).some(k => nz(DBA.f[k]).trim()); }
+function dbaCompteHtml(list){
+  if (!dbaActif()) return '';
+  return '<span>Affichées : ' + list.length + ' sur ' + DBA.rows.length + '</span> <button class="chip" onclick="dbaResetFiltres()">Effacer les filtres</button>';
+}
+function dbaBodyHtml(cols, list){
+  if (!list.length) return '<tr><td colspan="' + (cols.length + (DBA.lock ? 0 : 1)) + '" class="m">Aucune ligne ne correspond.</td></tr>';
+  return list.map(x => '<tr>' + cols.map(k => dbaCellHtml(x.r[k])).join("")
+    + (DBA.lock ? '' : '<td class="act"><button class="chip" onclick="dbaEdit(' + x.i + ')">Modifier</button> <button class="chip late" onclick="dbaDel(' + x.i + ')">Supprimer</button></td>') + '</tr>').join("");
+}
+function dbaTableHtml(){
+  if (!DBA.rows) return '';
+  if (!DBA.rows.length) return '<p class="m">Aucune ligne dans cette table.</p>';
+  const cols = dbaCols(DBA.rows), list = dbaListe();
+  const head = cols.map(k => '<th onclick="dbaSortBy(\'' + k + '\')">' + esc(k) + (DBA.sort && DBA.sort.k === k ? (DBA.dir > 0 ? ' ▲' : ' ▼') : '') + '</th>').join("")
+    + (DBA.lock ? '' : '<th>Actions</th>');
+  const filtres = cols.map(k => '<th class="dba-fl"><input value="' + esc(DBA.f[k] || "") + '" placeholder="Filtrer" oninput="dbaFilter(\'' + k + '\', this.value)"></th>').join("")
+    + (DBA.lock ? '' : '<th></th>');
+  return '<div class="m" id="dbaCount" style="margin:6px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap">' + dbaCompteHtml(list) + '</div>'
+    + '<div class="dba-w"><table class="dba-t"><thead><tr>' + head + '</tr><tr class="dba-fr">' + filtres + '</tr></thead><tbody id="dbaBody">' + dbaBodyHtml(cols, list) + '</tbody></table></div>';
+}
+/* Mise à jour sans reconstruire les champs de saisie (le curseur reste dans le champ) */
+function dbaUpdate(){
+  const cols = dbaCols(DBA.rows), list = dbaListe();
+  $("dbaBody").innerHTML = dbaBodyHtml(cols, list);
+  $("dbaCount").innerHTML = dbaCompteHtml(list);
+}
+function dbaSearch(v){ DBA.q = v; dbaUpdate(); }
+function dbaFilter(k, v){ DBA.f[k] = v; dbaUpdate(); }
+function dbaResetFiltres(){ DBA.f = {}; DBA.q = ""; render(); }
+function dbaSortBy(k){
+  if (DBA.sort && DBA.sort.k === k) DBA.dir = -DBA.dir;
+  else { DBA.sort = {k: k}; DBA.dir = 1; }
+  render();
 }
 function dbaEditorHtml(){
   const isNew = DBA.edit === "new";
@@ -3716,7 +3816,7 @@ function dbaUnlock(){
   DBA.lock = false; DBA.err = ""; render();
 }
 function dbaLock(){ DBA.lock = true; DBA.edit = null; DBA.err = ""; render(); }
-async function dbaOpen(t){ DBA = {table: t || null, rows: null, edit: null, err: "", lock: true}; render(); if (t) dbaLoad(); }
+async function dbaOpen(t){ DBA = {table: t || null, rows: null, edit: null, err: "", lock: true, q: "", f: {}, sort: null, dir: 1}; render(); if (t) dbaLoad(); }
 async function dbaLoad(){
   if (!DBA.table) return;
   const t = DBA.table;
