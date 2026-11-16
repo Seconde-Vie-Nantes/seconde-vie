@@ -1228,7 +1228,6 @@ const REP = {
       <button class="btn" onclick="addStock()">Ajouter au stock</button>
       <div class="err" id="sErr"></div>
     </div>
-    ${orphanBtn()}
     ${stkControls()}
     <div id="stkL">${stkHtml(STK_Q)}</div>
     ${S.stock.some(s => /Puce/.test(s.nom)) ? "" : '<button class="btn ghost" onclick="seedPuces()">Ajouter les puces Switch au stock</button>'}`;
@@ -1346,6 +1345,15 @@ function setFbHidden(v){ if (v) closeFeedback(); FB_HIDDEN = v; try { localStora
 /* ---------- Mises à jour (cloche en haut à droite) ----------
    Ajouter une entrée en haut de la liste à chaque mise en ligne. */
 var UPDATES = [
+  {id: "2026-11-16-br", date: "16/11/2026", titre: "Déplacement horizontal des photos", items: [
+    "Pendant le déplacement, la photo ne bouge que de gauche à droite, sur sa ligne, et se réordonne avec ses voisines de la même ligne."]},
+  {id: "2026-11-16-bu", date: "16/11/2026", titre: "Repère ! pour les éléments non reliés", items: ["Le bouton « À relier à la base » est retiré.", "Une pièce du stock ou un appareil de client non relié à la base Appareils porte un « ! » rouge à côté de son nom."]},
+  {id: "2026-11-16-bt", date: "16/11/2026", titre: "Envoi même si un ancien fichier porte le même nom", items: [
+    "Si un fichier du même nom existe déjà dans le stockage, la photo est envoyée sous un nom unique au lieu d’échouer."]},
+  {id: "2026-11-16-bs", date: "16/11/2026", titre: "Déplacement plus réactif", items: [
+    "La photo se déplace dès qu’elle entre au quart de la photo voisine, au lieu d’attendre le milieu."]},
+  {id: "2026-11-16-bq", date: "16/11/2026", titre: "Déplacement des photos plus fluide", items: [
+    "La photo soulevée suit le doigt ou la souris. Une case en pointillés indique où elle va se poser, et les autres photos glissent doucement."]},
   {id: "2026-11-16-bp", date: "16/11/2026", titre: "Ordre des photos enregistré", items: [
     "Le tri par glisser-déposer est vérifié dans la base : s’il n’est pas enregistré, un message rouge l’indique au lieu de revenir en silence.",
     "« Ordre enregistré » confirme la sauvegarde."]},
@@ -2456,55 +2464,9 @@ function cliSet(k, v){
 
 /* ---- Appareils : base générale (type · marque · modèle), pour classer les pièces ---- */
 var AB_F = {q: "", type: "", marque: ""}, AB_EDIT = null, AB_SORT = "nom", AB_MM = {};
-/* Accessoires et noms génériques : ce ne sont pas des appareils */
-var AB_ACCESSOIRE = /\bdock\b|accessoire|chargeur|câble|cable|adaptateur|housse|support/i;
 var AB_TYPES = ["Téléphone", "Console", "Manette", "Enceinte", "PC portable", "Autre"];
 function abNorm(v){ return nz(v).replace(/\s+/g, " ").trim(); }
 function abKey(x){ return abNorm(x.type) + "|" + abNorm(x.marque) + "|" + abNorm(x.modele); }
-function abGuessMarque(type, modele){
-  const m = nz(modele);
-  if (type === "Téléphone") return /iphone|ipad/.test(m) ? "Apple" : /galaxy|samsung/.test(m) ? "Samsung" : /redmi|xiaomi|poco|\bmi\b/.test(m) ? "Xiaomi" : "Autre";
-  if (type === "Console" || type === "Manette") return /ps\d|playstation|dualshock|dualsense/.test(m) ? "PlayStation" : /switch|nintendo|\b[23]?ds|dsi|3ds|wii|joy|gamepad/.test(m) ? "Nintendo" : /xbox|series|one|360/.test(m) ? "XBOX" : "Autre";
-  if (type === "PC portable") return /macbook|apple/.test(m) ? "Apple" : /\bhp\b|pavilion|elitebook/.test(m) ? "HP" : /dell|latitude|xps/.test(m) ? "Dell" : /lenovo|thinkpad|ideapad/.test(m) ? "Lenovo" : /asus/.test(m) ? "Asus" : "Autre";
-  return "Autre";
-}
-/* Appareils déjà présents ailleurs : pièces, appareils des clients, catalogue */
-function abCandidats(){
-  const out = [];
-  const add = (type, marque, modele) => { modele = String(modele || "").trim(); if (!type || !modele) return; if (AB_ACCESSOIRE.test(modele) || (marque && nz(marque) === nz(modele))) return; out.push({type: type, marque: marque || abGuessMarque(type, modele), modele: modele}); };
-  S.devices.forEach(d => add(d.type, null, d.modele));
-  S.stock.forEach(s => {
-    const mods = Array.isArray(s.modeles) && s.modeles.length ? s.modeles : String(s.modele || "").split(", ");
-    mods.forEach(m => {
-      const p = String(m).split(" · ");
-      if (p.length >= 3) add(p[0], p[1], p.slice(2).join(" · "));
-      else add(s.type || "Console", null, m);
-    });
-  });
-  S.catalogue.forEach(r => { if (r.appareil === "Mods") add(r.cible, r.categorie, r.modele); else add(r.appareil, r.categorie, r.modele); });
-  const seen = new Set(), res = [];
-  out.forEach(x => { const k = abKey(x); if (!seen.has(k)) { seen.add(k); res.push(x); } });
-  return res;
-}
-function abNouveaux(){
-  const have = new Set((S.appBase || []).map(abKey));
-  return abCandidats().filter(x => !have.has(abKey(x)));
-}
-function abImportHtml(){
-  const n = abNouveaux().length;
-  if (!n) return "";
-  return '<div class="card" style="margin:8px 0"><div class="t">' + n + ' appareil' + (n > 1 ? 's' : '') + ' à ajouter à la base</div>'
-    + '<div class="m">Ce sont les appareils déjà utilisés dans les pièces, les fiches clients ou le catalogue.</div>'
-    + '<button class="btn" onclick="abImporter()">Importer ces ' + n + ' appareil' + (n > 1 ? 's' : '') + '</button></div>';
-}
-async function abImporter(){
-  const rows = abNouveaux().map(x => ({type: x.type, marque: x.marque || null, modele: x.modele}));
-  if (!rows.length) return toast("Rien à importer : tout est déjà dans la base.");
-  const { error } = await SB.from("appareils_base").insert(rows);
-  if (error) { toast(msgErr(error)); return; }
-  toast(rows.length + " appareil(s) importé(s)");
-  await reload();
-}
 /* Types : liste des types connus (constante + types déjà présents dans la base) */
 function abTypes(){ return [...new Set(AB_TYPES.concat((S.appBase || []).map(x => x.type).filter(Boolean)))]; }
 /* Listes liées : marques selon le type, modèles selon le type et la marque */
@@ -2514,55 +2476,17 @@ function abModelesFor(t, m){ return (t && m) ? [...new Set((S.appBase || []).fil
 /* Liens avec la base Appareils */
 function baseHasTrio(t, m, mo){ return (S.appBase || []).some(x => abKey(x) === abKey({type: t, marque: m, modele: mo})); }
 function baseHasModele(t, mo){ return (S.appBase || []).some(x => nz(x.type) === nz(t) && nz(x.modele) === nz(mo)); }
-function orphanList(){
-  const pieces = S.stock.map(s => {
-    const parts = stkPartsOf(s), bad = parts.filter(p => !baseHasTrio(p.t, p.m, p.mo));
-    return (bad.length || !parts.length) ? {s: s, bad: bad} : null;
-  }).filter(Boolean);
-  const devs = S.devices.filter(d => { const c = S.clients.find(x => x.id === d.client_id); return c && !c.deleted_at && !baseHasModele(d.type, d.modele); });
-  return {pieces: pieces, devs: devs};
-}
 /* Un appareil du client n’est plus dans la base (ex. effacé de la base) */
 function cliAlerte(c){
   if (S.appBaseErr || c.deleted_at) return false;
   return S.devices.some(d => d.client_id === c.id && !baseHasModele(d.type, d.modele));
 }
-function orphanCount(){ const o = orphanList(); return o.pieces.length + o.devs.length; }
-function orphanBtn(){
-  const n = orphanCount();
-  return n ? '<button class="btn ghost small" style="margin:6px 0" onclick="openOrph()">À relier à la base (' + n + ')</button>' : '';
-}
-function orphanHtml(){
-  const o = orphanList();
-  const row = (titre, sous, bouton) => '<div class="row" style="align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid rgba(128,128,128,.25)"><div style="flex:1;min-width:0"><div class="t" style="font-size:14px">' + titre + '</div><div class="m">' + sous + '</div></div>' + bouton + '</div>';
-  let h = '<p class="m">Ces éléments ne sont pas reliés à la base Appareils. Clique sur « Relier » pour les corriger.</p>';
-  if (!o.pieces.length && !o.devs.length) return h + '<p class="m">Tout est relié à la base.</p>';
-  if (o.pieces.length) h += '<h2 style="font-size:15px;margin:10px 0 0">Pièces (' + o.pieces.length + ')</h2>' + o.pieces.map(x => row(esc(x.s.nom) + ' <span class="code">' + esc(x.s.sku) + '</span>',
-    x.bad.length ? 'Modèle non relié : ' + x.bad.map(p => esc([p.t, p.m, p.mo].filter(Boolean).join(" · "))).join(", ") : 'Aucun modèle',
-    '<button class="chip" onclick="orphGo(\'piece\',\'' + x.s.sku + '\')">Relier</button>')).join("");
-  if (o.devs.length) h += '<h2 style="font-size:15px;margin:10px 0 0">Appareils de clients (' + o.devs.length + ')</h2>' + o.devs.map(d => {
-    const c = S.clients.find(x => x.id === d.client_id);
-    return row(esc(d.type) + " · " + esc(devNom(d)), 'Client : ' + esc(c ? fullName(c) : "") + ' · ' + (d.type === "Téléphone" ? 'IMEI ' : 'SN ') + esc((d.type === "Téléphone" ? d.imei : d.sn) || '–'),
-      '<button class="chip" onclick="orphGo(\'dev\',\'' + d.id + '\')">Relier</button>');
-  }).join("");
-  return h;
-}
-function openOrph(){
-  closeOrph();
-  const o = document.createElement("div");
-  o.id = "orphPop";
-  o.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:60;padding:16px";
-  o.onclick = e => { if (e.target === o) closeOrph(); };
-  o.innerHTML = '<div class="card" style="max-width:560px;width:100%;max-height:85vh;overflow:auto;margin:0"><div class="row" style="align-items:center;gap:8px"><h2 style="margin:0;flex:1">À relier à la base</h2><button class="chip" onclick="closeOrph()">Fermer</button></div>' + orphanHtml() + '</div>';
-  document.body.appendChild(o);
-}
-function closeOrph(){ const o = $("orphPop"); if (o) o.remove(); }
-/* Ouvre l’élément à corriger, à l’endroit où il se modifie */
-function orphGo(kind, id){
-  closeOrph();
-  if (kind === "piece") { VIEW = "stock"; STOCK_TAB = "pieces"; render(); editPiece(id); return; }
-  const d = S.devices.find(x => x.id === id); if (!d) return;
-  VIEW = "clients"; CLI_OPEN = d.client_id; render(); showDevForm(d.id, d.client_id);
+/* Repère « ! » : élément non relié à la base Appareils */
+function repere(titre){ return '<span class="cli-alert" title="' + esc(titre) + '" style="position:static;display:inline-block;margin-left:6px;vertical-align:middle;width:18px;height:18px;line-height:18px;font-size:12px">!</span>'; }
+function stkRepere(s){
+  if (S.appBaseErr) return "";
+  const parts = stkPartsOf(s);
+  return (!parts.length || parts.some(p => !baseHasTrio(p.t, p.m, p.mo))) ? repere("Pièce non reliée à la base Appareils") : "";
 }
 /* Gamme : préfixe « Gamme · modèle » du nom du modèle (même convention que le catalogue) */
 function abSplit(modele){ const m = String(modele || ""), i = m.indexOf(" · "); return i < 0 ? {g: "", base: m} : {g: m.slice(0, i), base: m.slice(i + 3)}; }
@@ -3044,7 +2968,7 @@ function abAddToggle(){
   $("abAdd").classList.toggle("hide", !ouvrir);
 }
 function appareilsHtml(){
-  const head = '<h1>Appareils</h1><p class="m">Base générale des appareils (type · marque · modèle). Elle sert à classer les pièces.</p>' + orphanBtn();
+  const head = '<h1>Appareils</h1><p class="m">Base générale des appareils (type · marque · modèle). Elle sert à classer les pièces.</p>';
   if (S.appBaseErr) return head + '<div class="card"><div class="t">Base non créée</div><div class="m">La table « appareils_base » n’existe pas encore dans la base de données. Elle doit être créée une fois (voir le message d’installation).</div></div>';
   AB_MM.abT = false; AB_MM.abM = false; AB_MM.abMo = false; AB_MM.abG = false; AB_MM.abC = false;
   return head
@@ -3058,7 +2982,6 @@ function appareilsHtml(){
     + '<label>Modèle *</label>' + abSelHtml('abMo', '', [], '— Choisir un modèle —', 'Nouveau modèle', false)
     + '<label>Couleurs (facultatif)</label><div id="abCB_add">' + abCoulBox('add') + '</div>'
     + '<button class="btn" onclick="abAjouter()">Ajouter à la base</button><div class="err" id="abErr"></div></div>'
-    + abImportHtml()
     + abFiltresHtml()
     + '<div class="row" style="gap:6px;flex-wrap:wrap;margin:8px 0">'
     + '<select onchange="AB_SORT=this.value;abRefresh()">' + selOpts([["nom", "Trier : nom"], ["type", "Trier : type"], ["marque", "Trier : marque"]], AB_SORT) + '</select></div>'
@@ -3141,12 +3064,9 @@ var BRANDS_BY_APP={Console:["PlayStation","XBOX","Nintendo","Sega"],Manette:["Pl
 var MODELES_MANETTE={PlayStation:["DualShock 3 (PS3)","DualShock 4 (PS4)","DualSense (PS5)"],XBOX:["360","One","One S / X","Series X|S"],Nintendo:["GamePad Wii U"]};
 var STOCK_TAB = "pieces";
 function setStockTab(t){ STOCK_TAB = t; render(); }
-/* Couleur proposée seulement pour certaines manettes (Blanc ou Noir) */
-var COULEURS_MODELE = {"360":["Blanc","Noir"],"One":["Blanc","Noir"],"One S / X":["Blanc","Noir"],"Series X|S":["Blanc","Noir"],"DualShock 3 (PS3)":["Blanc","Noir"],"DualShock 4 (PS4)":["Blanc","Noir"],"DualSense (PS5)":["Blanc","Noir"],"GamePad Wii U":["Blanc","Noir"]};
 /* Manettes et téléphones : couleur saisie à chaque fois, avec les couleurs déjà connues en suggestion */
 function couleursFor(app, mod){ return (app === "Manette" || app === "Téléphone") ? abCouleurs() : null; }
 function coulDlHtml(list){ return list.map(c => '<option value="' + esc(c) + '">').join(""); }
-function coulOptsHtml(list){ return '<option value="">- Sélectionner -</option>' + list.map(c => '<option>' + c + '</option>').join(""); }
 function vCouleurRefresh(app, mod){
   const list = couleursFor(app, mod);
   $("vCouleurRow").style.display = list ? "block" : "none";
@@ -3360,6 +3280,7 @@ function devLine(d, rep){
   const nPh = photosFor("device", d.id).length;
   const who = ROLE === "rep" ? "Espace réparateur · Clients" : "Espace client";
   const couleur = d.couleur ? ' · ' + esc(d.couleur) : "";
+  const alerte = !S.appBaseErr && !baseHasModele(d.type, d.modele) ? repere("Appareil non relié à la base Appareils") : "";
   const photoBtn = '<button class="chip" style="float:right;display:inline-flex;align-items:center;gap:6px" title="Photos de l’appareil" onclick="openGalerie(\'device\',\'' + d.id + '\')">' + ICON_IMG + ' ' + nPh + '</button>';
   const head = rep
     ? '<div style="display:flex;gap:12px;align-items:stretch;margin-top:4px">'
@@ -3367,10 +3288,10 @@ function devLine(d, rep){
       + '<button onclick="openDevPage(\'' + d.id + '\')" title="Ouvrir l’appareil" style="display:block;width:84px;height:84px;padding:0;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center">'
       + (modelePhoto(d) ? '<img src="' + modelePhoto(d) + '" alt="' + esc(devNom(d)) + '" style="width:100%;height:100%;object-fit:cover;background:#fff">' : ICON_IMG)
       + '</button>'
-      + '<div class="t" style="font-size:12px;margin-top:4px;line-height:1.25;word-break:break-word">' + esc(devNom(d)) + couleur + '</div></div>'
+      + '<div class="t" style="font-size:12px;margin-top:4px;line-height:1.25;word-break:break-word">' + esc(devNom(d)) + couleur + alerte + '</div></div>'
       + '<div style="flex:1;min-width:0;border:1px solid var(--line);border-radius:12px;padding:10px 12px">' + lastRepHtml(d, nPh) + '</div>'
       + '</div>'
-    : '<div class="t">' + esc(devNom(d)) + couleur + '</div>';
+    : '<div class="t">' + esc(devNom(d)) + couleur + alerte + '</div>';
   return '<div class="card" data-page="' + who + '" style="margin:6px 0">' + (rep ? '' : photoBtn) + head
     + '<div class="m" style="margin-top:4px">' + (tel ? 'IMEI' : 'N° de série') + ' : <span class="code">' + esc((tel ? d.imei : d.sn) || '–') + '</span></div>' + codes
     + (d.etat ? '<div class="m">État : ' + esc(d.etat) + '</div>' : '')
@@ -3395,11 +3316,6 @@ function cliDevHtml(me){
   return (ds.map(d => devLine(d, false)).join("") + cliAchatsAppHtml(me) || '<p class="m">Aucun appareil pour le moment.</p>')
     + '<div id="devForm"></div><button class="btn ghost small" style="margin-top:6px" onclick="showDevForm(null,\'' + me.id + '\')">+ Ajouter un appareil</button>'
     + '<p class="m" style="margin-top:6px">Tu peux modifier tes appareils. Pour en retirer un, contacte ton réparateur.</p>';
-}
-function devHtml(c){
-  const ds = S.devices.filter(d => d.client_id === c.id);
-  return '<h2 style="font-size:15px;margin:12px 0 6px">Appareils</h2>' + (ds.map(d => devLine(d, true)).join("") || '<p class="m">Aucun appareil.</p>')
-    + '<div id="devForm"></div><button class="btn ghost small" style="margin-top:6px" onclick="showDevForm(null,\'' + c.id + '\')">+ Ajouter un appareil</button>';
 }
 function showDevForm(devId, cid){
   const d = devId ? S.devices.find(x => x.id === devId) : null;
@@ -4016,9 +3932,14 @@ async function addPhotos(kind, id, input){
       const rawExt = ((f.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "")) || "jpg";
       const prep = (await photoPrep(f)) || { body: f, ext: rawExt, type: f.type || "image/jpeg" };
       const dossierPh = kind === "dossier" ? "dossiers/" : kind === "quali" ? "qualirepar/" : kind === "modele" ? "modeles/" : "appareils/";
-      const path = (kind === "modele" || kind === "modcol") ? modelePhotoPath(baseOfKey(kind, id), prep.ext, taken) : dossierPh + id + "/" + Date.now() + "-" + Math.random().toString(36).slice(2, 8) + "." + prep.ext;
+      let path = (kind === "modele" || kind === "modcol") ? modelePhotoPath(baseOfKey(kind, id), prep.ext, taken) : dossierPh + id + "/" + Date.now() + "-" + Math.random().toString(36).slice(2, 8) + "." + prep.ext;
       taken.push(path);
-      const up = await SB.storage.from(PHOTO_BUCKET).upload(path, prep.body, { contentType: prep.type });
+      let up = await SB.storage.from(PHOTO_BUCKET).upload(path, prep.body, { contentType: prep.type });
+      /* un fichier du même nom existe déjà (ancien fichier resté dans le stockage) : on ajoute un suffixe unique */
+      if (up.error && /exist|duplicate|409/i.test((up.error.message || "") + " " + (up.error.statusCode || ""))) {
+        path = path.replace(/(\.[a-z0-9]+)$/i, "-" + Date.now().toString(36) + "$1");
+        up = await SB.storage.from(PHOTO_BUCKET).upload(path, prep.body, { contentType: prep.type });
+      }
       if (up.error) { PHOTO_ERR = "Photo non envoyée (" + (up.error.message || "erreur inconnue") + "). Vérifie que le bucket « photos » existe dans Supabase et que ses droits l’autorisent."; toast("Photo non envoyée"); break; }
       const row = { path };
       if (kind === "modele" || kind === "modcol") { row.appareil_base_id = baseOfKey(kind, id); if (kind === "modcol") row.couleur = colKey(id).nom; }
@@ -4072,7 +3993,6 @@ function refreshPhotos(kind, id){
 }
 /* Ajout de photos : replié par défaut, une croix pour fermer, et refermé tout seul une fois l’envoi réussi */
 var PH_ADD = {};
-function photoAddToggle(kind, id){ const k = kind + ":" + id; PH_ADD[k] = !PH_ADD[k]; CLI_NOANIM = true; refreshPhotos(kind, id); }
 function photoAddHtml(kind, id, mt){
   if (ROLE !== "rep") return "";
   return '<label class="btn ghost sq" title="Envoyer des photos" aria-label="Envoyer des photos" style="margin-top:' + mt + 'px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;position:relative">' + ICON_UPLOAD
@@ -4101,29 +4021,59 @@ document.addEventListener("pointerdown", e => {
   if (!t || e.target.closest(".gal-del")) return;
   GAL_DRAG = {el: t, grid: t.parentElement, x: e.clientX, y: e.clientY, moved: false};
 });
+/* La photo suit le doigt ; une case vide (emplacement) se déplace dans la grille à la place */
+function galDemarre(d){
+  const r = d.el.getBoundingClientRect();
+  d.rect = r;
+  const ph = document.createElement("div");
+  ph.className = "gal-ph";
+  ph.style.cssText = "width:" + r.width + "px;height:" + r.height + "px;border-radius:10px;border:2px dashed var(--line);box-sizing:border-box";
+  d.grid.insertBefore(ph, d.el); d.ph = ph;
+  const el = d.el;
+  el.style.position = "fixed"; el.style.left = r.left + "px"; el.style.top = r.top + "px";
+  el.style.width = r.width + "px"; el.style.height = r.height + "px"; el.style.margin = "0";
+  el.style.pointerEvents = "none"; el.style.zIndex = "1000";
+  document.body.appendChild(el);
+  galLift(el, true);
+}
 document.addEventListener("pointermove", e => {
   if (!GAL_DRAG) return;
   if (!GAL_DRAG.moved) {
     if (Math.hypot(e.clientX - GAL_DRAG.x, e.clientY - GAL_DRAG.y) < 6) return;
     GAL_DRAG.moved = true;
-    galLift(GAL_DRAG.el, true);
+    galDemarre(GAL_DRAG);
   }
   e.preventDefault();
-  const under = document.elementFromPoint(e.clientX, e.clientY);
-  const tgt = under && under.closest ? under.closest(".gal-cell[data-pid]") : null;
-  if (!tgt || tgt === GAL_DRAG.el || tgt.parentElement !== GAL_DRAG.grid) return;
-  const kids = [...GAL_DRAG.grid.children];
-  const avant = galRects(GAL_DRAG.grid);
-  if (kids.indexOf(GAL_DRAG.el) < kids.indexOf(tgt)) GAL_DRAG.grid.insertBefore(GAL_DRAG.el, tgt.nextSibling);
-  else GAL_DRAG.grid.insertBefore(GAL_DRAG.el, tgt);
-  galFlip(GAL_DRAG.grid, avant);
+  GAL_DRAG.el.style.transform = "translate(" + (e.clientX - GAL_DRAG.x) + "px,0px)"; /* mouvement horizontal seulement */
+  galSurvol(e.clientX);
 });
-/* Effet visuel du déplacement : la photo soulevée est agrandie et ombrée, les autres glissent à leur nouvelle place */
+/* Place l’emplacement à côté de la photo survolée, sur la même ligne.
+   Anti-tremblement : on ne réordonne qu’après avoir dépassé le milieu de la voisine, et une courte pause suit chaque déplacement. */
+function galSurvol(x){
+  const d = GAL_DRAG; if (!d || !d.ph) return;
+  const now = performance.now(); if (d.calme && now < d.calme) return;
+  const grid = d.grid, ph = d.ph, rp = ph.getBoundingClientRect();
+  const surLigne = [...grid.querySelectorAll(".gal-cell[data-pid]")].filter(c => Math.abs(c.getBoundingClientRect().top - rp.top) < 20);
+  const tgt = surLigne.find(c => { const r = c.getBoundingClientRect(); return x >= r.left && x <= r.right; });
+  if (!tgt) return;
+  const kids = [...grid.children];
+  const phAvant = kids.indexOf(ph) < kids.indexOf(tgt);
+  /* déclenchement après un quart de la photo voisine (plus tôt que le milieu, sans tremblement) */
+  const r = tgt.getBoundingClientRect(), seuil = phAvant ? r.left + r.width * 0.25 : r.right - r.width * 0.25;
+  if (phAvant && x < seuil) return;
+  if (!phAvant && x > seuil) return;
+  const avant = galRects(grid);
+  if (phAvant) grid.insertBefore(ph, tgt.nextSibling);
+  else grid.insertBefore(ph, tgt);
+  galFlip(grid, avant);
+  d.calme = now + 100;
+}
+/* Effet visuel : la photo soulevée est agrandie et ombrée, le curseur devient une main qui tient */
 function galLift(el, on){
-  el.style.transition = "transform .25s cubic-bezier(.2,.8,.2,1), scale .18s, box-shadow .18s";
+  el.style.transition = "scale .18s, box-shadow .18s";
   el.style.scale = on ? "1.06" : "";
   el.style.boxShadow = on ? "0 12px 28px rgba(0,0,0,.28)" : "";
-  el.style.zIndex = on ? "5" : "";
+  el.style.zIndex = on ? "1000" : "";
   document.body.style.cursor = on ? "grabbing" : "";
 }
 function galRects(grid){
@@ -4131,6 +4081,7 @@ function galRects(grid){
   grid.querySelectorAll(".gal-cell[data-pid]").forEach(c => m.set(c, c.getBoundingClientRect()));
   return m;
 }
+/* Les autres photos glissent vers leur nouvelle place */
 function galFlip(grid, avant){
   grid.querySelectorAll(".gal-cell[data-pid]").forEach(c => {
     const a = avant.get(c); if (!a) return;
@@ -4139,19 +4090,30 @@ function galFlip(grid, avant){
     c.style.transition = "none";
     c.style.transform = "translate(" + dx + "px," + dy + "px)";
     c.offsetWidth;
-    c.style.transition = "transform .25s cubic-bezier(.2,.8,.2,1), scale .18s, box-shadow .18s";
+    c.style.transition = "transform .25s cubic-bezier(.2,.8,.2,1)";
     c.style.transform = "";
   });
 }
 function galEnd(save){
-  const g = GAL_DRAG; GAL_DRAG = null;
-  if (!g) return;
-  galLift(g.el, false);
-  if (!g.moved) return;
+  const d = GAL_DRAG; GAL_DRAG = null;
+  if (d && d.defT) clearInterval(d.defT);
+  if (!d || !d.moved) return;
   GAL_JUST = true; setTimeout(() => { GAL_JUST = false; }, 300);
-  if (!save) { refreshPhotos(g.grid.dataset.galKind, g.grid.dataset.galId); return; }
-  const pids = [...g.grid.querySelectorAll(".gal-cell[data-pid]")].map(c => c.dataset.pid);
-  galSaveOrder(g.grid.dataset.galKind, g.grid.dataset.galId, pids);
+  const el = d.el, ph = d.ph;
+  const depart = el.getBoundingClientRect();
+  ph.parentNode.insertBefore(el, ph); ph.remove();
+  el.style.position = ""; el.style.left = ""; el.style.top = ""; el.style.width = ""; el.style.height = "";
+  el.style.margin = ""; el.style.pointerEvents = ""; el.style.transform = "";
+  const arrivee = el.getBoundingClientRect();
+  galLift(el, false);
+  el.style.transition = "none";
+  el.style.transform = "translate(" + (depart.left - arrivee.left) + "px," + (depart.top - arrivee.top) + "px)";
+  el.offsetWidth;
+  el.style.transition = "transform .2s cubic-bezier(.2,.8,.2,1), scale .18s, box-shadow .18s";
+  el.style.transform = "";
+  if (!save) { refreshPhotos(d.grid.dataset.galKind, d.grid.dataset.galId); return; }
+  const pids = [...d.grid.querySelectorAll(".gal-cell[data-pid]")].map(c => c.dataset.pid);
+  galSaveOrder(d.grid.dataset.galKind, d.grid.dataset.galId, pids);
 }
 document.addEventListener("pointerup", () => galEnd(true));
 document.addEventListener("pointercancel", () => galEnd(false));
@@ -4593,7 +4555,7 @@ function stkHtml(q){
     + '<span class="m ab-cell stk-x" style="font-weight:600">Référence' + rz(3) + '</span><span class="m ab-cell stk-x" style="font-weight:600">Réservé' + rz(4) + '</span><div class="stk-act"></div></div>';
   const rows = list.map(s => `<div id="s-${esc(s.sku)}">
     <div class="stk-row">
-      <b class="ab-cell">${esc(s.nom)}</b><span class="ab-cell">${esc(s.type)}</span><span class="ab-cell">${esc(s.modele)}</span>
+      <b class="ab-cell">${esc(s.nom)}${stkRepere(s)}</b><span class="ab-cell">${esc(s.type)}</span><span class="ab-cell">${esc(s.modele)}</span>
       <span class="ab-cell code stk-x">${esc(s.sku)}</span><span class="ab-cell stk-x">Réservé : ${s.res}</span>
       <div class="stk-act"><button class="chip" onclick="adjStock('${esc(s.sku)}',-1)">−</button><span class="chip ${s.qte > 0 ? "ok" : "late"}">${s.qte > 0 ? s.qte + " dispo" : "Rupture"}</span><button class="chip" onclick="adjStock('${esc(s.sku)}',1)">+</button><button class="btn sq ghost" title="Modifier cette pièce" aria-label="Modifier cette pièce" onclick="editPiece('${esc(s.sku)}')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button><button class="btn sq ghost" title="Supprimer cette pièce" aria-label="Supprimer cette pièce" onclick="deleteStock('${esc(s.sku)}')"><span class="ic" style="transform:rotate(45deg)"></span></button></div>
     </div>
