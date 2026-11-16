@@ -361,7 +361,7 @@ body:not(.rep-nav).lg .app{margin-left:auto !important;margin-right:auto !import
 .gal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin:10px 0}
 .gal-grid img{width:100%;height:140px;object-fit:cover;border-radius:10px;display:block;background:#fff}
 .gal-item{display:flex;flex-direction:column;gap:6px}
-.gal-cell{position:relative;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+.gal-cell{position:relative;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none;border-radius:10px}
 .gal-cell a{display:block}
 .gal-del{position:absolute;top:6px;right:6px;width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--bad);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;z-index:1}
 .ph-add{position:relative;display:flex;flex-direction:column;gap:8px;padding:10px 44px 10px 12px;border:1px dashed var(--line);border-radius:12px}
@@ -1346,6 +1346,29 @@ function setFbHidden(v){ if (v) closeFeedback(); FB_HIDDEN = v; try { localStora
 /* ---------- Mises à jour (cloche en haut à droite) ----------
    Ajouter une entrée en haut de la liste à chaque mise en ligne. */
 var UPDATES = [
+  {id: "2026-11-16-bp", date: "16/11/2026", titre: "Ordre des photos enregistré", items: [
+    "Le tri par glisser-déposer est vérifié dans la base : s’il n’est pas enregistré, un message rouge l’indique au lieu de revenir en silence.",
+    "« Ordre enregistré » confirme la sauvegarde."]},
+  {id: "2026-11-16-bo", date: "16/11/2026", titre: "Photos affichées à jour (cache)", items: [
+    "Chaque photo a une adresse propre à sa ligne : une photo remplacée ne réapparaît plus avec l’ancienne image mise en cache par le navigateur."]},
+  {id: "2026-11-16-bn", date: "16/11/2026", titre: "Résultat de chaque suppression de photo", items: [
+    "Après chaque suppression, la fiche indique si la ligne a bien été retirée de la base et si le fichier a été effacé.",
+    "Si la base annonce la suppression mais que la ligne existe encore, un message rouge le signale."]},
+  {id: "2026-11-16-bm", date: "16/11/2026", titre: "Photos à jour à l’ouverture d’une fiche", items: [
+    "À l’ouverture d’une fiche d’appareil, les photos sont relues depuis la base : une photo supprimée ailleurs ne reste plus affichée."]},
+  {id: "2026-11-16-bl", date: "16/11/2026", titre: "Raison du refus de suppression affichée", items: [
+    "Si une photo ne peut pas être supprimée, la raison reste affichée en rouge dans la fiche de l’appareil."]},
+  {id: "2026-11-16-bk", date: "16/11/2026", titre: "Photos sans fichier dans la galerie", items: [
+    "Dans Bases de données > Galerie, une photo dont le fichier n’existe plus est signalée.",
+    "« Retirer les lignes sans fichier » supprime ces lignes de la base (après déverrouillage)."]},
+  {id: "2026-11-16-bj", date: "16/11/2026", titre: "Image prioritaire sur le code hexa", items: [
+    "Si une couleur a une image et un code hexa, c’est l’image qui s’affiche dans la case. Le code hexa reste enregistré et sert quand il n’y a pas d’image."]},
+  {id: "2026-11-16-bi", date: "16/11/2026", titre: "Colonnes manquantes : SQL affiché", items: [
+    "Si Supabase signale une colonne manquante dans « photos », le message affiche le SQL complet à exécuter."]},
+  {id: "2026-11-16-bh", date: "16/11/2026", titre: "Image de couleur entière", items: [
+    "L’image d’une couleur tient entièrement dans sa case, sans être rognée."]},
+  {id: "2026-11-16-bg", date: "16/11/2026", titre: "Modifier, remplacer ou supprimer une couleur", items: [
+    "Dans la fiche d’un appareil, chaque couleur a trois boutons : crayon (modifier le nom et le code hexa), upload (remplacer l’image) et corbeille (supprimer la couleur et ses photos)."]},
   {id: "2026-11-16-bf", date: "16/11/2026", titre: "Galerie dans Bases de données", items: [
     "Nouvelle entrée « Galerie (photos) » : toutes les photos, avec des filtres par origine (modèle, couleur, appareil client, réparation, Qualirépar).",
     "Supprimer une photo la retire vraiment de la base, et un message s’affiche si la base refuse."]},
@@ -2671,8 +2694,8 @@ function abCoulImgUrl(p){
 }
 function abCoulSwatch(c, px){
   const n = px || 18;
-  const fond = c.hex ? c.hex
-    : c.img ? "#fff url('" + abCoulImgUrl(c.img) + "') center/cover"
+  const fond = c.img ? "#fff url('" + abCoulImgUrl(c.img) + "') center/contain no-repeat"
+    : c.hex ? c.hex
     : "repeating-conic-gradient(#ddd 0 25%, #fff 0 50%) 0 0/10px 10px";
   return '<span title="' + esc(c.nom) + '" style="display:inline-block;width:' + n + 'px;height:' + n + 'px;border-radius:6px;border:1px solid var(--line);flex:none;background:' + fond + '"></span>';
 }
@@ -2787,7 +2810,11 @@ async function abSupprimer(id){
   await reload();
 }
 var AB_PHOTO_OPEN = null;
-function abPhotos(id){ AB_PHOTO_OPEN = AB_PHOTO_OPEN === id ? null : id; abRefresh(); }
+async function abPhotos(id){
+  AB_PHOTO_OPEN = AB_PHOTO_OPEN === id ? null : id; AB_ERR = ""; AB_MSG = "";
+  abRefresh();
+  if (AB_PHOTO_OPEN && !DEMO) { await reloadPhotos(); if (AB_PHOTO_OPEN) abRefresh(); } /* photos relues depuis la base à l’ouverture */
+}
 function abLigne(x){
   if (AB_EDIT === x.id) return '<div class="card" style="margin:4px 0"><div class="two"><div><label>Type *</label>' + abSelHtml('abET', x.type, abTypes(), '— Choisir un type —', 'Nouveau type', true) + '</div>'
     + '<div><label>Marque *</label>' + abSelHtml('abEMa', x.marque || '', abMarquesFor(x.type), '— Choisir une marque —', 'Nouvelle marque', true) + '</div></div>'
@@ -2796,7 +2823,8 @@ function abLigne(x){
     + '<label>Couleurs (facultatif)</label><div id="abCB_edit">' + abCoulBox('edit') + '</div>'
     + '<div style="display:flex;gap:6px;margin-top:6px"><button class="chip ok" onclick="abSauver(\'' + x.id + '\')">Enregistrer</button><button class="chip" onclick="abCancel()">Annuler</button></div></div>';
   const nPh = (S.photos || []).filter(p => p.appareil_base_id === x.id).length, ouvert = AB_PHOTO_OPEN === x.id;
-  const vignette = nPh ? '<img src="' + esc(photoUrl(photosFor("modele", x.id)[0])) + '" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:8px;flex:none;display:block;background:#fff">'
+  const vig = baseModelePhoto(x, "");
+  const vignette = vig ? '<img src="' + esc(vig) + '" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:8px;flex:none;display:block;background:#fff">'
     : '<span style="width:44px;height:44px;border-radius:8px;flex:none;display:flex;align-items:center;justify-content:center;background:#EEF1EC">' + ICON_IMG + '</span>';
   return '<div class="row" onclick="abRowClick(event,\'' + x.id + '\')" style="align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(128,128,128,.25);flex-wrap:nowrap;cursor:pointer">'
     + vignette
@@ -2820,12 +2848,99 @@ function abFicheHtml(x){
   let h = '<div class="card" style="margin:6px 0 10px">'
     + '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div class="t">' + titre + '</div>'
     + '<button class="ph-x" style="position:static;flex:none" title="Fermer" aria-label="Fermer" onclick="abPhotos(\'' + x.id + '\')">' + ICON_X + '</button></div>';
+  if (AB_ERR) h += '<div class="err" style="margin:8px 0">' + esc(AB_ERR) + '</div>';
+  else if (AB_MSG) h += '<div class="m" style="margin:8px 0">' + esc(AB_MSG) + '</div>';
   h += sec('Image par défaut', photosBloc("modele", x.id));
-  abCoulParse(x.couleur).forEach(c => {
-    h += sec(abCoulSwatch(c, 22) + '<span>' + esc(c.nom) + '</span>' + (c.hex ? '<span class="m" style="font-size:12px;font-weight:400">' + esc(c.hex) + '</span>' : ''), photosBloc("modcol", colId(x.id, c.nom)));
-  });
+  abCoulParse(x.couleur).forEach(c => { h += abColSection(x, c); });
   h += abNewColorForm(x.id);
   return h + '</div>';
+}
+/* Actions sur une couleur de la fiche : modifier (crayon), remplacer l’image (upload), supprimer (corbeille) */
+var AB_CE = null; // clé (colId) de la couleur en cours de modification
+function abColSection(x, c){
+  const key = colId(x.id, c.nom), edition = AB_CE === key;
+  const boutons = '<span style="margin-left:auto;display:flex;gap:6px">'
+    + '<button class="btn ghost sq" title="Modifier la couleur" aria-label="Modifier la couleur" onclick="abColEdit(\'' + key + '\')">' + ICON_EDIT + '</button>'
+    + '<label class="btn ghost sq" title="Remplacer l’image" aria-label="Remplacer l’image" style="cursor:pointer;position:relative">' + ICON_UPLOAD
+    + '<input type="file" accept="image/*" onchange="abColImg(\'' + key + '\',this)" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"></label>'
+    + '<button class="btn ghost sq" title="Supprimer la couleur" aria-label="Supprimer la couleur" onclick="abColDel(\'' + key + '\')">' + ICON_TRASH + '</button></span>';
+  const entete = abCoulSwatch(c, 22) + '<span>' + esc(c.nom) + '</span>' + (c.hex ? '<span class="m" style="font-size:12px;font-weight:400">' + esc(c.hex) + '</span>' : '') + boutons;
+  return '<div style="margin-top:12px"><div class="t" style="margin-bottom:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">' + entete + '</div>'
+    + (edition ? abColEditHtml(key, c) : '') + photosBloc("modcol", key) + '</div>';
+}
+function abColEditHtml(key, c){
+  const ok = AB_HEX.test(c.hex || "");
+  return '<div style="display:grid;gap:8px;padding:10px;border:1px dashed var(--line);border-radius:12px;margin-bottom:10px">'
+    + '<div style="display:flex;gap:8px;align-items:center"><input id="ceN" value="' + esc(c.nom) + '" placeholder="Nom" autocomplete="off" style="flex:1;min-width:0;margin:0">'
+    + '<input id="ceP" type="color" value="' + (ok ? c.hex : "#cccccc") + '" title="Choisir la couleur" oninput="document.getElementById(&quot;ceH&quot;).value=this.value" style="width:44px;height:38px;padding:2px;border-radius:8px;flex:none;margin:0"></div>'
+    + '<input id="ceH" value="' + esc(c.hex || "") + '" placeholder="Code hexa (ex. #1a2b3c), facultatif" autocomplete="off" style="margin:0">'
+    + '<div style="display:flex;gap:8px"><button class="btn small" onclick="abColEditSave(\'' + key + '\')">Enregistrer</button><button class="btn ghost small" onclick="abColEditCancel()">Annuler</button></div></div>';
+}
+function abColBase(key){
+  const k = colKey(key), base = (S.appBase || []).find(b => b.id === k.base);
+  return {k: k, base: base};
+}
+function abColEdit(key){ AB_CE = key; abRefresh(); }
+function abColEditCancel(){ AB_CE = null; abRefresh(); }
+async function abColEditSave(key){
+  const {k, base} = abColBase(key); if (!base) return;
+  const nom = ($("ceN").value || "").trim(), hex = ($("ceH").value || "").trim();
+  if (!nom) { toast("Donne un nom à la couleur."); return; }
+  if (hex && !AB_HEX.test(hex)) { toast("Code hexa invalide (ex. #1a2b3c)."); return; }
+  const list = abCoulParse(base.couleur);
+  if (list.some(c => c.nom !== k.nom && nz(c.nom) === nz(nom))) { toast("Une autre couleur porte déjà ce nom."); return; }
+  const json = abCoulJSON(list.map(c => c.nom === k.nom ? {nom: nom, hex: hex ? hex.toLowerCase() : "", img: c.img || ""} : c));
+  if (DEMO) {
+    base.couleur = json;
+    (S.photos || []).forEach(p => { if (p.appareil_base_id === k.base && p.couleur === k.nom) p.couleur = nom; });
+    AB_CE = null; abRefresh(); toast("Couleur modifiée"); return;
+  }
+  const up = await SB.from("appareils_base").update({couleur: json}).eq("id", k.base);
+  if (up.error) { toast(msgErr(up.error)); return; }
+  if (nom !== k.nom) {
+    const ph = await SB.from("photos").update({couleur: nom}).eq("appareil_base_id", k.base).eq("couleur", k.nom);
+    if (ph.error) toast("Photos : " + msgErr(ph.error));
+  }
+  AB_CE = null; toast("Couleur modifiée");
+  await reload();
+}
+async function abColDel(key){
+  const {k, base} = abColBase(key); if (!base) return;
+  const mes = (S.photos || []).filter(p => p.appareil_base_id === k.base && (p.couleur || "") === k.nom);
+  if (!confirm("Supprimer la couleur « " + k.nom + " »" + (mes.length ? " et ses " + mes.length + " photo(s)" : "") + " ?")) return;
+  const json = abCoulJSON(abCoulParse(base.couleur).filter(c => c.nom !== k.nom));
+  if (DEMO) base.couleur = json;
+  else {
+    const up = await SB.from("appareils_base").update({couleur: json}).eq("id", k.base);
+    if (up.error) { toast(msgErr(up.error)); return; }
+  }
+  for (const p of mes) { if (!(await photoSupprimer(p))) break; }
+  AB_CE = null; toast("Couleur supprimée");
+  if (DEMO) abRefresh(); else await reload();
+}
+async function abColImg(key, input){
+  const f = input.files && input.files[0]; if (!f) return;
+  const {k, base} = abColBase(key); if (!base) return;
+  const list = abCoulParse(base.couleur), i = list.findIndex(c => c.nom === k.nom);
+  if (i < 0) return;
+  let img;
+  if (DEMO) img = URL.createObjectURL(f);
+  else {
+    const prep = (await photoPrep(f)) || {body: f, ext: "jpg", type: f.type || "image/jpeg"};
+    const path = "couleurs/" + Date.now() + "-" + Math.random().toString(36).slice(2, 8) + "." + prep.ext;
+    const up = await SB.storage.from(PHOTO_BUCKET).upload(path, prep.body, {contentType: prep.type});
+    if (up.error) { toast("Image non envoyée : " + msgErr(up.error)); return; }
+    img = path;
+  }
+  const ancienne = list[i].img;
+  list[i] = Object.assign({}, list[i], {img: img});
+  const json = abCoulJSON(list);
+  if (DEMO) { base.couleur = json; abRefresh(); toast("Image remplacée"); return; }
+  const r = await SB.from("appareils_base").update({couleur: json}).eq("id", k.base);
+  if (r.error) { toast(msgErr(r.error)); return; }
+  if (ancienne && String(ancienne).indexOf("couleurs/") === 0) await SB.storage.from(PHOTO_BUCKET).remove([ancienne]);
+  toast("Image remplacée");
+  await reload();
 }
 function baseModelePhoto(base, coul){
   const ph = (S.photos || []).filter(x => x.appareil_base_id === base.id).slice().sort((a, b) => photoOrdre(a) - photoOrdre(b));
@@ -3849,11 +3964,17 @@ function photoOrigine(p){
   if (p.dossier_id) { const d = (S.dossiers || []).find(x => x.id === p.dossier_id); return "Réparation" + (d && d.panne ? " · " + d.panne : ""); }
   return "Galerie de l’appareil";
 }
-function photoUrl(p){ return p.demo ? p.path : SB.storage.from(PHOTO_BUCKET).getPublicUrl(p.path).data.publicUrl; }
+/* L’adresse inclut l’identifiant de la ligne : une photo remplacée a une nouvelle adresse, donc le cache ne réaffiche pas l’ancienne image */
+function photoUrl(p){
+  if (p.demo) return p.path;
+  const u = SB.storage.from(PHOTO_BUCKET).getPublicUrl(p.path).data.publicUrl;
+  return p.id ? u + (u.indexOf("?") > -1 ? "&" : "?") + "v=" + encodeURIComponent(p.id) : u;
+}
 async function reloadPhotos(){
   if (DEMO) return;
   const r = await SB.from("photos").select("*");
   if (!r.error) S.photos = r.data || [];
+  else AB_ERR = "Lecture des photos impossible (la liste affichée peut être périmée) : " + msgErr(r.error);
 }
 var PHOTO_ERR = "";
 /* Réduit la photo (1600 px max, JPEG) avant envoi : fichiers plus légers et format accepté par le stockage. null si le navigateur ne sait pas la lire (ex. HEIC sur PC). */
@@ -3881,6 +4002,8 @@ function modelePhotoPath(baseId, ext, taken){
   while (used.indexOf("modeles/" + baseId + "/" + slug + "-" + n + "." + ext) > -1) n++;
   return "modeles/" + baseId + "/" + slug + "-" + n + "." + ext;
 }
+/* SQL à exécuter une fois dans Supabase pour les colonnes de la table « photos » (sans effet si elles existent déjà) */
+var PHOTOS_SQL = "alter table photos add column if not exists couleur text; alter table photos add column if not exists ordre integer; alter table photos add column if not exists appareil_base_id uuid references appareils_base(id) on delete cascade; alter table photos add column if not exists device_id uuid; alter table photos add column if not exists dossier_id uuid;";
 async function addPhotos(kind, id, input){
   const files = [...(input.files || [])];
   if (!files.length) return;
@@ -3905,7 +4028,9 @@ async function addPhotos(kind, id, input){
         await SB.storage.from(PHOTO_BUCKET).remove([path]);
         PHOTO_ERR = kind === "modele"
           ? "Photo non enregistrée : la colonne « appareil_base_id » manque dans la table « photos ». Dans Supabase (SQL), exécute : alter table photos add column appareil_base_id uuid references appareils_base(id) on delete cascade;"
-          : "Photo envoyée mais non enregistrée (" + (ins.error.message || "erreur inconnue") + "). Vérifie la table « photos » et ses droits.";
+          : /column/i.test(ins.error.message || "")
+            ? "Photo non enregistrée : une colonne manque dans la table « photos ». Dans Supabase (SQL), exécute : " + PHOTOS_SQL
+            : "Photo envoyée mais non enregistrée (" + (ins.error.message || "erreur inconnue") + "). Vérifie la table « photos » et ses droits.";
         toast("Photo non enregistrée"); break;
       }
     }
@@ -3919,20 +4044,26 @@ async function addPhotos(kind, id, input){
 async function delPhoto(pid, kind, id){
   if (!confirm("Supprimer cette photo ?")) return;
   const p = (S.photos || []).find(x => x.id === pid);
-  if (p) { if (!(await photoSupprimer(p))) return; }
+  if (p && !(await photoSupprimer(p))) { refreshPhotos(kind, id); return; }
   else S.photos = (S.photos || []).filter(x => x.id !== pid);
   if (!DEMO) await reloadPhotos();
   refreshPhotos(kind, id);
 }
 /* Retire la photo de la table « photos » (et du stockage). Renvoie true si la base l’a bien supprimée. */
+var AB_ERR = ""; /* dernier refus de suppression, affiché dans la fiche tant qu’il n’est pas réglé */
+var AB_MSG = ""; /* résultat de la dernière suppression (réussite ou détail) */
 async function photoSupprimer(p){
-  if (DEMO) { S.photos = (S.photos || []).filter(x => x.id !== p.id); return true; }
+  AB_ERR = ""; AB_MSG = "";
+  if (DEMO) { S.photos = (S.photos || []).filter(x => x.id !== p.id); AB_MSG = "Photo supprimée (aperçu)."; return true; }
   const del = await SB.from("photos").delete().eq("id", p.id).select();
-  if (del.error) { toast("Photo : " + msgErr(del.error)); return false; }
-  if (!del.data || !del.data.length) { toast("Photo non supprimée : la base a refusé la suppression (droits sur la table « photos »)."); return false; }
+  if (del.error) { AB_ERR = "Photo non supprimée (base) : " + msgErr(del.error); toast(AB_ERR); return false; }
+  if (!del.data || !del.data.length) { AB_ERR = "Photo non supprimée : la base a refusé la suppression (photo " + p.id + "). Vérifie les droits de suppression (RLS) sur la table « photos » dans Supabase."; toast(AB_ERR); return false; }
+  const chk = await SB.from("photos").select("id").eq("id", p.id); /* vérification : la ligne ne doit plus exister */
+  if (chk.data && chk.data.length) { AB_ERR = "La base annonce la suppression, mais la ligne existe encore (photo " + p.id + "). Préviens-moi avec ce texte."; toast(AB_ERR); return false; }
   S.photos = (S.photos || []).filter(x => x.id !== p.id);
   const st = await SB.storage.from(PHOTO_BUCKET).remove([p.path]);
-  if (st.error) toast("Photo retirée de la base, mais le fichier n’a pas été effacé : " + msgErr(st.error));
+  if (st.error) { AB_ERR = "Ligne retirée de la base, mais le fichier n’a pas été effacé (stockage) : " + msgErr(st.error); toast(AB_ERR); }
+  else AB_MSG = "Photo supprimée : ligne retirée de la base et fichier effacé du stockage.";
   return true;
 }
 function refreshPhotos(kind, id){
@@ -3975,20 +4106,47 @@ document.addEventListener("pointermove", e => {
   if (!GAL_DRAG.moved) {
     if (Math.hypot(e.clientX - GAL_DRAG.x, e.clientY - GAL_DRAG.y) < 6) return;
     GAL_DRAG.moved = true;
-    GAL_DRAG.el.style.opacity = ".6";
+    galLift(GAL_DRAG.el, true);
   }
   e.preventDefault();
   const under = document.elementFromPoint(e.clientX, e.clientY);
   const tgt = under && under.closest ? under.closest(".gal-cell[data-pid]") : null;
   if (!tgt || tgt === GAL_DRAG.el || tgt.parentElement !== GAL_DRAG.grid) return;
   const kids = [...GAL_DRAG.grid.children];
+  const avant = galRects(GAL_DRAG.grid);
   if (kids.indexOf(GAL_DRAG.el) < kids.indexOf(tgt)) GAL_DRAG.grid.insertBefore(GAL_DRAG.el, tgt.nextSibling);
   else GAL_DRAG.grid.insertBefore(GAL_DRAG.el, tgt);
+  galFlip(GAL_DRAG.grid, avant);
 });
+/* Effet visuel du déplacement : la photo soulevée est agrandie et ombrée, les autres glissent à leur nouvelle place */
+function galLift(el, on){
+  el.style.transition = "transform .25s cubic-bezier(.2,.8,.2,1), scale .18s, box-shadow .18s";
+  el.style.scale = on ? "1.06" : "";
+  el.style.boxShadow = on ? "0 12px 28px rgba(0,0,0,.28)" : "";
+  el.style.zIndex = on ? "5" : "";
+  document.body.style.cursor = on ? "grabbing" : "";
+}
+function galRects(grid){
+  const m = new Map();
+  grid.querySelectorAll(".gal-cell[data-pid]").forEach(c => m.set(c, c.getBoundingClientRect()));
+  return m;
+}
+function galFlip(grid, avant){
+  grid.querySelectorAll(".gal-cell[data-pid]").forEach(c => {
+    const a = avant.get(c); if (!a) return;
+    const b = c.getBoundingClientRect(), dx = a.left - b.left, dy = a.top - b.top;
+    if (!dx && !dy) return;
+    c.style.transition = "none";
+    c.style.transform = "translate(" + dx + "px," + dy + "px)";
+    c.offsetWidth;
+    c.style.transition = "transform .25s cubic-bezier(.2,.8,.2,1), scale .18s, box-shadow .18s";
+    c.style.transform = "";
+  });
+}
 function galEnd(save){
   const g = GAL_DRAG; GAL_DRAG = null;
   if (!g) return;
-  g.el.style.opacity = "";
+  galLift(g.el, false);
   if (!g.moved) return;
   GAL_JUST = true; setTimeout(() => { GAL_JUST = false; }, 300);
   if (!save) { refreshPhotos(g.grid.dataset.galKind, g.grid.dataset.galId); return; }
@@ -4001,14 +4159,17 @@ document.addEventListener("click", e => { if (GAL_JUST) { GAL_JUST = false; e.pr
 document.addEventListener("dragstart", e => { if (e.target.closest && e.target.closest(".gal-cell")) e.preventDefault(); });
 async function galSaveOrder(kind, id, pids){
   pids.forEach((pid, i) => { const p = (S.photos || []).find(x => x.id === pid); if (p) p.ordre = i; });
-  if (!DEMO) {
-    const res = await Promise.all(pids.map((pid, i) => SB.from("photos").update({ordre: i}).eq("id", pid)));
-    if (res.some(r => r.error)) {
-      PHOTO_ERR = "Ordre non enregistré : ajoute la colonne « ordre » à la table « photos ». Dans Supabase (SQL), exécute : alter table photos add column ordre integer;";
-      toast("Ordre non enregistré");
-      await reloadPhotos();
-    }
-  }
+  if (DEMO) { refreshPhotos(kind, id); return; }
+  /* on demande à la base la ligne modifiée : sans elle, un refus passerait inaperçu */
+  const res = await Promise.all(pids.map((pid, i) => SB.from("photos").update({ordre: i}).eq("id", pid).select("id")));
+  const err = res.find(r => r.error), refus = res.some(r => !r.error && (!r.data || !r.data.length));
+  if (err || refus) {
+    PHOTO_ERR = err
+      ? "Ordre non enregistré : " + msgErr(err.error) + ". Si la colonne « ordre » manque, exécute : alter table photos add column ordre integer;"
+      : "Ordre non enregistré : la base a refusé la modification (droits de modification sur la table « photos »).";
+    toast("Ordre non enregistré");
+    await reloadPhotos();
+  } else { PHOTO_ERR = ""; toast("Ordre enregistré"); }
   refreshPhotos(kind, id);
 }
 function openGalerie(kind, id){
@@ -4885,16 +5046,43 @@ function dbaGalerieHtml(){
   if (!rows.length) return filtres + '<p class="m">Aucune photo dans la base.</p>';
   const list = rows.filter(p => !cur || dbaOrigineCle(p) === cur);
   if (!list.length) return filtres + '<p class="m">Aucune photo pour cette origine.</p>';
-  return filtres + '<div class="gal-grid">' + list.map(p => '<div class="gal-item"><a href="#" onclick="openImg(\'' + esc(photoUrl(p)) + '\');return false"><img src="' + esc(photoUrl(p)) + '" alt="Photo"></a>'
+  const nettoyage = DBA.lock ? '' : '<div style="margin:0 0 8px"><button class="chip late" onclick="dbaGalNettoyer()">Retirer les lignes sans fichier</button></div>';
+  return filtres + nettoyage + '<div class="gal-grid">' + list.map(p => '<div class="gal-item" data-pid="' + p.id + '"><a href="#" onclick="openImg(\'' + esc(photoUrl(p)) + '\');return false"><img src="' + esc(photoUrl(p)) + '" alt="Photo" onerror="galCassee(this)"></a>'
     + '<div class="m" style="font-size:12px;margin:4px 0">' + esc(dbaOrigineDetail(p)) + '</div>'
     + (DBA.lock ? '' : '<button class="chip late" onclick="dbaGalDel(\'' + p.id + '\')">Supprimer</button>') + '</div>').join("") + '</div>';
+}
+/* Galerie : une photo dont le fichier n’existe plus dans le stockage est signalée, et on peut retirer ces lignes */
+var GAL_CASSEES = {};
+function galCassee(img){
+  const it = img.closest ? img.closest(".gal-item") : null;
+  if (!it) return;
+  GAL_CASSEES[it.dataset.pid] = true;
+  if (it.dataset.cassee) return;
+  it.dataset.cassee = "1";
+  it.insertAdjacentHTML("beforeend", '<div class="err" style="font-size:12px;margin-top:4px">Fichier introuvable dans le stockage</div>');
+}
+async function dbaGalNettoyer(){
+  if (DBA.lock) return;
+  const ids = Object.keys(GAL_CASSEES).filter(pid => (DBA.rows || []).some(x => x.id === pid));
+  if (!ids.length) { toast("Aucune ligne sans fichier affichée."); return; }
+  if (!confirm("Retirer de la base " + ids.length + " ligne(s) dont le fichier n’existe plus ?")) return;
+  let n = 0;
+  for (const pid of ids) {
+    if (DEMO) { S.photos = (S.photos || []).filter(x => x.id !== pid); n++; continue; }
+    const del = await SB.from("photos").delete().eq("id", pid).select();
+    if (del.error || !del.data || !del.data.length) { DBA.err = "Suppression refusée par la base pour la photo " + pid + " (droits sur la table « photos »)." + (del.error ? " " + msgErr(del.error) : ""); render(); break; }
+    n++;
+  }
+  toast(n + " ligne(s) retirée(s)");
+  DBA.lock = true;
+  await dbaLoad();
 }
 async function dbaGalDel(pid){
   if (DBA.lock) return;
   const p = (DBA.rows || []).find(x => x.id === pid); if (!p) return;
   if (!confirm("Supprimer définitivement cette photo ? Elle disparaît de la base et du stockage.")) return;
-  if (!(await photoSupprimer(p))) { render(); return; }
-  toast("Photo supprimée");
+  if (!(await photoSupprimer(p))) { DBA.err = AB_ERR; render(); return; }
+  DBA.err = ""; toast("Photo supprimée");
   DBA.lock = true;
   await dbaLoad();
 }
