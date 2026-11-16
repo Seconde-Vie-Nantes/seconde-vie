@@ -151,6 +151,14 @@ body.lg .cli-head{padding:0 14px 4px}
 @keyframes cliOut{from{grid-template-rows:1fr;opacity:1}to{grid-template-rows:0fr;opacity:0}}
 .cli-body-wrap.cli-still{animation:none}
 .cli-dev-last>.card{margin:0 !important;flex:1}
+/* Mes appareils (espace client) : une carte par appareil, comme la fiche du réparateur */
+.card.dev-card2{display:flex;gap:14px;align-items:stretch;padding:12px;margin-bottom:10px}
+.dev-ph{flex:0 0 130px;width:130px;height:130px;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center}
+.dev-ph img{width:100%;height:100%;object-fit:cover}
+.dev-mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.dev-st{margin-top:8px;border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center;font-size:14px}
+.dev-side{flex:0 0 auto;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end;gap:8px}
+@media (max-width:600px){ .dev-ph{flex-basis:96px;width:96px;height:96px} .card.dev-card2{padding:10px;gap:10px} }
 .dr-empty{border:1px dashed var(--line);border-radius:14px;padding:12px;background:rgba(255,255,255,.6)}
 .dr-form{margin-top:12px;border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--surf);animation:drIn .3s cubic-bezier(.2,.7,.2,1) both}
 @keyframes drIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
@@ -332,6 +340,7 @@ body .app:has(.cl-desk),body.lg .app:has(.cl-desk){max-width:none !important;mar
 .cl-link{margin-top:auto;align-self:flex-start;font-size:14px;font-weight:600;color:#2F6B4F;text-decoration:none}
 .cl-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px;margin-top:28px}
 .cl-rep-wide{margin-top:16px}
+.cl-tile-btn{border:0;width:100%;cursor:pointer;font:inherit;color:inherit}
 .cl-rep-wide .cl-tiles{grid-template-columns:repeat(auto-fill,minmax(260px,1fr))}
 .cl-accent{background:#2F6B4F;color:#FFFFFF;justify-content:space-between}
 .cl-accent .cl-muted2{font-size:14px;opacity:.85}
@@ -1347,6 +1356,10 @@ function setFbHidden(v){ if (v) closeFeedback(); FB_HIDDEN = v; try { localStora
 var UPDATES = [
   {id: "2026-11-16-br", date: "16/11/2026", titre: "Déplacement horizontal des photos", items: [
     "Pendant le déplacement, la photo ne bouge que de gauche à droite, sur sa ligne, et se réordonne avec ses voisines de la même ligne."]},
+  {id: "2026-11-16-by", date: "16/11/2026", titre: "Appareils sans menu déroulant sur ordinateur", items: ["Sur ordinateur, chaque appareil affiche directement sa fiche : plus de flèche à dérouler.", "Sur téléphone, la liste reste repliable."]},
+  {id: "2026-11-16-bx", date: "16/11/2026", titre: "Ce que le client peut modifier sur ses appareils", items: ["Le client ne peut plus ajouter ni modifier un appareil.", "Il peut renseigner l’IMEI ou le N° de série s’il manque (une seule fois), et ajouter ou modifier le code PIN de son téléphone.", "L’état et les autres informations restent visibles et sont modifiés par le réparateur."]},
+  {id: "2026-11-16-bw", date: "16/11/2026", titre: "Mes appareils plus compacts, aussi sur l’accueil", items: ["Sur ordinateur, l’accueil affiche « Mes appareils » en tuiles (deux, puis « Voir plus ») ; un clic ouvre l’appareil.", "La fiche déroulée est plus courte : photo plus petite et réparations en une ligne."]},
+  {id: "2026-11-16-bv", date: "16/11/2026", titre: "Mes appareils comme la liste des clients", items: ["Dans ton espace, « Mes appareils » est une liste : un en-tête par colonne (appareil, couleur, numéro de série ou IMEI, état, réparations).", "Clique sur un appareil pour le dérouler : photo, identifiants, réparations et bouton Modifier."]},
   {id: "2026-11-16-bu", date: "16/11/2026", titre: "Repère ! pour les éléments non reliés", items: ["Le bouton « À relier à la base » est retiré.", "Une pièce du stock ou un appareil de client non relié à la base Appareils porte un « ! » rouge à côté de son nom."]},
   {id: "2026-11-16-bt", date: "16/11/2026", titre: "Envoi même si un ancien fichier porte le même nom", items: [
     "Si un fichier du même nom existe déjà dans le stockage, la photo est envoyée sous un nom unique au lieu d’échouer."]},
@@ -3002,11 +3015,13 @@ function devCompact(d){
     + '<div class="cli-dev-last" style="min-width:0;display:flex;flex-direction:column">' + (r ? repCardHtml(r, true, true) : devEmptyHtml(d)) + '</div>'
     + '</div>';
 }
+/* Flèches déroule / replie (liste clients et liste des appareils) */
+var CLI_CARET_DOWN = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>';
+var CLI_CARET_UP = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"></path></svg>';
 function cliHtml(q){
   const list = S.clients.filter(c => (CLI_TRASH ? !!c.deleted_at : !c.deleted_at) && (!q || nz(fullName(c)).indexOf(q) > -1) && cliPasFiltre(c))
     .sort((a,b) => cliCmp(a, b));
-  const DOWN = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>';
-  const UP = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"></path></svg>';
+  const DOWN = CLI_CARET_DOWN, UP = CLI_CARET_UP;
   const rows = list.map(c => {
     const open = CLI_OPEN === c.id;
     const alerte = cliAlerte(c);
@@ -3234,12 +3249,6 @@ function repCardHtml(d, rep, compact){
       + (open ? '<div class="card" style="margin:6px 0;padding:10px" onclick="event.stopPropagation()">' + savHtml(d, rep ? "rep" : "cli") + '</div>' : '') : '')
     + '</div>';
 }
-function devRepsHtml(devId){
-  const ds = S.dossiers.filter(x => x.device_id === devId);
-  if (!ds.length) return "";
-  const rep = ROLE === "rep";
-  return '<div class="m" style="margin-top:8px;font-weight:600">Réparations</div>' + ds.map(d => repCardHtml(d, rep)).join("");
-}
 /* Photo d’un modèle de la base, par nom de modèle (« Redmi · Note 5 » ou « Redmi Note 5 ») */
 var MODELE_PHOTOS = {"redminote5": "data:image/jpeg;base64,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"};
 /* Texte réduit à lettres et chiffres : « Redmi · Note 5 » -> « redminote5 » */
@@ -3263,44 +3272,6 @@ function modelePhoto(d){
   }
   return "";
 }
-/* Dernière réparation de l’appareil, avec le nombre de photos */
-function lastRepHtml(d, nPh){
-  const ds = S.dossiers.filter(x => x.device_id === d.id).sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")));
-  const r = ds[0];
-  return '<div class="m">Dernière réparation</div>'
-    + (r ? '<div style="font-weight:600;margin-top:2px">' + esc(r.panne || r.type || "–") + '</div><div class="m">' + (r.created_at ? fr(String(r.created_at).slice(0, 10)) : "Date inconnue") + ' · ' + esc(r.statut || "") + '</div>'
-      : '<div class="m" style="margin-top:2px">Aucune réparation</div>')
-    + '<button class="chip" style="margin-top:8px;display:inline-flex;align-items:center;gap:6px" onclick="openDevPage(\'' + d.id + '\')">' + ICON_IMG + ' ' + nPh + ' photo(s)</button>';
-}
-function devLine(d, rep){
-  const tel = d.type === "Téléphone";
-  let codes = "";
-  if (tel && d.pin) codes += '<div class="m">Code PIN : <span class="code">' + esc(d.pin) + '</span></div>';
-  if (tel && d.schema_code) codes += '<div class="m">Schéma : <span class="code">' + esc(d.schema_code) + '</span></div>';
-  const nPh = photosFor("device", d.id).length;
-  const who = ROLE === "rep" ? "Espace réparateur · Clients" : "Espace client";
-  const couleur = d.couleur ? ' · ' + esc(d.couleur) : "";
-  const alerte = !S.appBaseErr && !baseHasModele(d.type, d.modele) ? repere("Appareil non relié à la base Appareils") : "";
-  const photoBtn = '<button class="chip" style="float:right;display:inline-flex;align-items:center;gap:6px" title="Photos de l’appareil" onclick="openGalerie(\'device\',\'' + d.id + '\')">' + ICON_IMG + ' ' + nPh + '</button>';
-  const head = rep
-    ? '<div style="display:flex;gap:12px;align-items:stretch;margin-top:4px">'
-      + '<div style="flex:0 0 84px;min-width:0">'
-      + '<button onclick="openDevPage(\'' + d.id + '\')" title="Ouvrir l’appareil" style="display:block;width:84px;height:84px;padding:0;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center">'
-      + (modelePhoto(d) ? '<img src="' + modelePhoto(d) + '" alt="' + esc(devNom(d)) + '" style="width:100%;height:100%;object-fit:cover;background:#fff">' : ICON_IMG)
-      + '</button>'
-      + '<div class="t" style="font-size:12px;margin-top:4px;line-height:1.25;word-break:break-word">' + esc(devNom(d)) + couleur + alerte + '</div></div>'
-      + '<div style="flex:1;min-width:0;border:1px solid var(--line);border-radius:12px;padding:10px 12px">' + lastRepHtml(d, nPh) + '</div>'
-      + '</div>'
-    : '<div class="t">' + esc(devNom(d)) + couleur + alerte + '</div>';
-  return '<div class="card" data-page="' + who + '" style="margin:6px 0">' + (rep ? '' : photoBtn) + head
-    + '<div class="m" style="margin-top:4px">' + (tel ? 'IMEI' : 'N° de série') + ' : <span class="code">' + esc((tel ? d.imei : d.sn) || '–') + '</span></div>' + codes
-    + (d.etat ? '<div class="m">État : ' + esc(d.etat) + '</div>' : '')
-    + '<div style="margin-top:6px;display:flex;gap:6px"><button class="chip" title="Modifier" onclick="showDevForm(\'' + d.id + '\')">✏️</button>'
-    + (rep ? '<button class="chip late" onclick="delDev(\'' + d.id + '\')">Effacer</button>' : '')
-    + '</div>'
-    + devRepsHtml(d.id)
-    + '<div id="de-' + d.id + '"></div></div>';
-}
 function cliAchatsAppHtml(me){
   const out = [];
   (S.ventes || []).filter(v => v.client_id === me.id).forEach(v => venteLignes(v).forEach(l => {
@@ -3311,11 +3282,76 @@ function cliAchatsAppHtml(me){
   }));
   return out.join("");
 }
+/* Appareils du client : une carte par appareil (photo, identifiant, état de la dernière réparation, modifier, photos) */
+function devStatutTxt(r){
+  if (!r) return "Aucune réparation";
+  return {"Devis en cours": "Le devis est en cours", "En cours": "La réparation en cours", "Terminé": "La réparation est terminée", "Remis": "Appareil remis"}[r.statut] || (r.statut || "Réparation");
+}
+function cliDevCard(d){
+  const r = S.dossiers.filter(x => x.device_id === d.id).sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")))[0];
+  const tel = d.type === "Téléphone";
+  const nPh = photosFor("device", d.id).length;
+  const alerte = !S.appBaseErr && !baseHasModele(d.type, d.modele) ? repere("Appareil non relié à la base Appareils") : "";
+  return '<div class="card dev-card2" data-page="Mes appareils">'
+    + '<div class="dev-ph">' + (modelePhoto(d) ? '<img src="' + modelePhoto(d) + '" alt="' + esc(devNom(d)) + '">' : ICON_IMG) + '</div>'
+    + '<div class="dev-mid">'
+    + '<div class="t">' + esc(devNom(d)) + (d.couleur ? ' · ' + esc(d.couleur) : '') + alerte + '</div>'
+    + '<div class="m">' + (tel ? 'IMEI' : 'N° de série') + ' : <span class="code">' + esc((tel ? d.imei : d.sn) || "–") + '</span></div>'
+    + (tel && d.pin ? '<div class="m">Code PIN : <span class="code">' + esc(d.pin) + '</span></div>' : '')
+    + (tel && d.schema_code ? '<div class="m">Schéma : <span class="code">' + esc(d.schema_code) + '</span></div>' : '')
+    + '<div class="dev-st">' + esc(devStatutTxt(r)) + '</div>'
+    + '<div id="de-' + d.id + '"></div>'
+    + '</div>'
+    + '<div class="dev-side">'
+    + (cliPeutModifier(d) ? '<button class="btn ghost sq" title="Modifier" aria-label="Modifier" onclick="cliDevEdit(\'' + d.id + '\')">' + ICON_EDIT + '</button>' : '<span></span>')
+    + '<button class="chip" title="Photos de l’appareil" onclick="openGalerie(\'device\',\'' + d.id + '\')">' + ICON_IMG + ' ' + nPh + '</button>'
+    + '</div></div>';
+}
+/* Client : l’identifiant (IMEI ou N° de série) se renseigne une seule fois ; le code PIN se modifie ; le reste est lu seulement */
+function devIdVide(d){ const x = d.type === "Téléphone" ? d.imei : d.sn; return !x || x === "Non renseigné"; }
+function cliPeutModifier(d){ return devIdVide(d) || (d.type === "Téléphone" && !d.schema_code); }
+function cliDevEdit(devId){
+  const d = S.devices.find(x => x.id === devId), box = $("de-" + devId);
+  if (!d || !box) return;
+  const tel = d.type === "Téléphone";
+  let h = '<div class="card" style="margin:8px 0 0">';
+  if (devIdVide(d)) h += '<label>' + devIdText(d.type).replace(" *", "") + '</label><input id="cdI" inputmode="numeric" placeholder="' + (tel ? "15 chiffres" : "") + '">'
+    + '<div class="m" style="margin-top:4px">Une fois renseigné, il ne peut plus être modifié.</div>';
+  if (tel && d.schema_code) h += '<div class="m" style="margin-top:8px">Le schéma de déverrouillage est modifié par ton réparateur.</div>';
+  else if (tel) h += '<label>Code PIN</label><input id="cdP" inputmode="numeric" value="' + esc(d.pin || "") + '" placeholder="Aucun code">';
+  h += '<button class="btn" style="margin-top:10px" onclick="saveDevCli(\'' + d.id + '\')">Enregistrer</button>'
+    + '<button class="btn ghost" onclick="render()">Annuler</button><div class="err" id="cdErr"></div></div>';
+  box.innerHTML = h;
+}
+async function saveDevCli(devId){
+  const d = S.devices.find(x => x.id === devId), err = $("cdErr");
+  if (!d || !err) return;
+  err.textContent = "";
+  const tel = d.type === "Téléphone", row = {};
+  const iEl = $("cdI");
+  if (iEl && devIdVide(d)) {
+    const id = iEl.value.replace(/\s/g, "");
+    if (id) {
+      if (tel && !/^\d{15}$/.test(id)) { err.textContent = "L’IMEI doit comporter 15 chiffres."; return; }
+      if (tel) row.imei = id; else row.sn = id;
+    }
+  }
+  const pEl = $("cdP");
+  if (pEl) {
+    const p = pEl.value.trim();
+    if (!p && d.pin) { err.textContent = "Le code PIN ne peut pas être supprimé ici : contacte ton réparateur."; return; }
+    if (p && p !== (d.pin || "")) row.pin = p;
+  }
+  if (!Object.keys(row).length) { err.textContent = "Rien à enregistrer."; return; }
+  const res = await SB.from("devices").update(row).eq("id", devId).select("id");
+  if (res.error) { err.textContent = msgErr(res.error); return; }
+  if (!res.data || !res.data.length) { err.textContent = "Enregistrement refusé : contacte ton réparateur."; return; }
+  toast("Appareil mis à jour");
+  await reload();
+}
 function cliDevHtml(me){
   const ds = S.devices.filter(d => d.client_id === me.id);
-  return (ds.map(d => devLine(d, false)).join("") + cliAchatsAppHtml(me) || '<p class="m">Aucun appareil pour le moment.</p>')
-    + '<div id="devForm"></div><button class="btn ghost small" style="margin-top:6px" onclick="showDevForm(null,\'' + me.id + '\')">+ Ajouter un appareil</button>'
-    + '<p class="m" style="margin-top:6px">Tu peux modifier tes appareils. Pour en retirer un, contacte ton réparateur.</p>';
+  return ds.map(cliDevCard).join("") + cliAchatsAppHtml(me) || '<p class="m">Aucun appareil pour le moment.</p>';
 }
 function showDevForm(devId, cid){
   const d = devId ? S.devices.find(x => x.id === devId) : null;
@@ -4711,8 +4747,11 @@ function clDeskDetail(me, p){
     </main>
   </div>`;
 }
-var CL_REP_MORE = false;
+var CL_REP_MORE = false, CL_DEV_MORE = false;
 function clRepMore(){ CL_REP_MORE = !CL_REP_MORE; render(); return false; }
+function clDevMore(){ CL_DEV_MORE = !CL_DEV_MORE; render(); return false; }
+/* Ouvre la page « Mes appareils » avec cet appareil déroulé */
+function clDevOpen(id){ CL_DESK_PAGE = "appareils"; render(); window.scrollTo(0, 0); return false; }
 function clDeskView(me){
   if (CL_DESK_PAGE === "achats" || CL_DESK_PAGE === "appareils" || CL_DESK_PAGE === "reparations" || CL_DESK_PAGE === "infos" || CL_DESK_PAGE === "avoirs") return clDeskDetail(me, CL_DESK_PAGE);
   const ds = S.dossiers.filter(d => d.client_id === me.id);
@@ -4721,6 +4760,8 @@ function clDeskView(me){
   const nbAchats = (S.ventes || []).filter(v => v.client_id === me.id).length;
   const nbAppareils = S.devices.filter(d => d.client_id === me.id).length;
   const totalAvoirs = (S.avoirs || []).filter(a => a.client_id === me.id).reduce((t, a) => t + (+a.montant || 0), 0);
+  const devs = S.devices.filter(d => d.client_id === me.id);
+  const devTuile = d => '<button type="button" class="cl-tile cl-tile-btn" onclick="return clDevOpen(\'' + d.id + '\')"><span class="cl-thumb" aria-hidden="true" style="overflow:hidden;background:#fff">' + (modelePhoto(d) ? '<img src="' + modelePhoto(d) + '" alt="" style="width:100%;height:100%;object-fit:cover">' : '') + '</span><div style="min-width:0;text-align:left"><div class="cl-tile-t">' + esc(devNom(d)) + '</div><div class="cl-tile-s">' + esc([d.couleur, d.etat].filter(Boolean).join(" · ") || "–") + '</div></div></button>';
   const tuile = d => '<div class="cl-tile"><span class="cl-thumb" aria-hidden="true"></span><div style="min-width:0"><div class="cl-tile-t">' + esc(d.appareil || "Réparation") + '</div><div class="cl-tile-s">' + esc(d.statut || "") + '</div></div></div>';
   return `<div class="cl-desk" id="cl-top">
     ${clDeskHead(me)}
@@ -4737,6 +4778,11 @@ function clDeskView(me){
         <div class="cl-row"><h2 class="cl-h2">Mes réparations</h2><span class="cl-badge">${enCours.length}</span></div>
         ${enCours.length ? '<div class="cl-tiles">' + (CL_REP_MORE ? enCours : enCours.slice(0, 2)).map(tuile).join("") + '</div>' : '<p class="cl-muted">Aucune réparation en cours.</p>'}
         ${enCours.length > 2 ? '<a href="#" class="cl-link" onclick="return clRepMore()">' + (CL_REP_MORE ? "− Voir moins" : "+ Voir plus") + '</a>' : ''}
+      </section>
+      <section class="cl-rep cl-rep-wide">
+        <div class="cl-row"><h2 class="cl-h2">Mes appareils</h2><span class="cl-badge">${nbAppareils}</span></div>
+        ${nbAppareils ? '<div class="cl-tiles">' + (CL_DEV_MORE ? devs : devs.slice(0, 2)).map(devTuile).join("") + '</div>' : '<p class="cl-muted">Aucun appareil.</p>'}
+        ${nbAppareils > 2 ? '<a href="#" class="cl-link" onclick="return clDevMore()">' + (CL_DEV_MORE ? "− Voir moins" : "+ Voir plus") + '</a>' : ''}
       </section>
     </main>
   </div>`;
