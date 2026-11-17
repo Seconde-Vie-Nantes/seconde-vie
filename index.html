@@ -85,8 +85,8 @@ body.lg .dash-page > h2:first-of-type{margin-top:6px}
 .dash-list .more{color:var(--mut);font-weight:600}
 .dash-list .empty{color:var(--mut)}
 @media (min-width:900px){ .dash-grid{grid-template-columns:repeat(5,minmax(0,1fr))} }
-@media (min-width:900px){ body.lg nav button.nav-copy{margin-top:16px;border:1px dashed #b9c9bf;color:var(--brand);background:#fff} }
-@media (max-width:899px){ nav button.nav-copy,nav button.nav-logout{display:none} }
+@media (min-width:900px){ body.lg nav button.nav-copy{margin-top:16px;border:1px dashed #b9c9bf;color:var(--brand);background:#fff} body.lg nav a.nav-ecran{display:block;margin-top:16px;padding:9px 14px;box-sizing:border-box;border-radius:10px;border:1px dashed #b9c9bf;color:var(--brand);background:#fff;text-align:center;text-decoration:none;font:inherit} }
+@media (max-width:899px){ nav button.nav-copy,nav button.nav-logout,nav a.nav-ecran{display:none} }
 .vue-note{font-size:13px;color:var(--mut);margin:6px 0 0}
 @media (min-width:900px){ body.lg .hdr-logout{display:none} body.lg nav button.nav-logout{margin-top:auto;color:var(--mut)} }
 
@@ -469,6 +469,7 @@ async function loadAll(){
   const vt = await SB.from("ventes").select("*");
   if (vt.error) { S.ventes = []; if (ROLE === "rep") toast("Ventes : " + msgErr(vt.error)); } else S.ventes = vt.data || [];
   { const ab = await SB.from("appareils_base").select("*"); S.appBaseErr = !!ab.error && ROLE === "rep"; S.appBase = ab.error ? [] : (ab.data || []); }
+  enrichirAppareils();
   if (ROLE === "rep") { const sa = await SB.from("stock_appareils").select("*").order("nom"); if (sa.error) toast("Appareils à vendre : " + msgErr(sa.error)); else S.stockApp = sa.data || []; }
   const sv = await SB.from("sav").select("*").order("created_at", {ascending:false});
   if (sv.error) toast("SAV : " + msgErr(sv.error)); else S.sav = sv.data || [];
@@ -654,7 +655,7 @@ function render(){
   if (!ME) { nav.classList.add("hide"); $("fbWrap").innerHTML = ""; $("notifWrap").innerHTML = ""; closeNotifPanel(); app.innerHTML = loginView(); return; }
   if (ROLE === "rep") {
     nav.classList.remove("hide");
-    nav.innerHTML = REP_NAV.map(([v,l]) => `<button class="${VIEW===v?"on":""}" onclick="go('${v}')">${l}</button>`).join("") + '<button class="nav-copy" title="Copie toutes les suggestions et bugs non archivés" onclick="copierRecapNonArchive()">Copier le récap</button><button class="nav-logout" onclick="logout()">Déconnexion</button>';
+    nav.innerHTML = REP_NAV.map(([v,l]) => `<button class="${VIEW===v?"on":""}" onclick="go('${v}')">${l}</button>`).join("") + '<a class="nav-ecran" href="reparations-en-cours.html" target="_blank" rel="noopener">Réparations en cours ↗</a><button class="nav-copy" title="Copie toutes les suggestions et bugs non archivés" onclick="copierRecapNonArchive()">Copier le récap</button><button class="nav-logout" onclick="logout()">Déconnexion</button>';
     app.innerHTML = '<div class="row" style="align-items:center;margin:4px 0 8px"><img class="logo-h" src="' + LOGO_SRC + '" alt="Seconde Vie"><button class="btn small ghost hdr-logout" onclick="logout()">Déconnexion</button></div>' + (DOSSIER ? detailView() : REP[VIEW]());
     if (VIEW === "stock" && !DOSSIER) { mpDraw("n"); mpDraw("a"); }
     if (VIEW === "newvente") mpDraw("v");
@@ -685,6 +686,7 @@ async function syncReservations(){
   return changes.length;
 }
 async function go(v){
+  if (v === "new") PIECES_PREV.n = [];
   if (v === "out") return logout();
   VIEW = v; DOSSIER = null;
   if (v === "dbadmin") { DBA.lock = true; DBA.edit = null; DBA.err = ""; if (DBA.table) { DBA.rows = null; dbaLoad(); } }
@@ -1011,7 +1013,7 @@ function repArchCard(d){
   return '<div class="card" style="cursor:pointer" onclick="openD(\'' + d.id + '\')">'
     + '<div class="row" style="align-items:center"><div style="min-width:0"><div class="t">' + esc(d.appareil || "Appareil") + '</div>'
     + '<div class="m">' + esc(d.clients ? fullName(d.clients) : "Client inconnu") + '</div></div>'
-    + '<span class="chip">' + esc(d.type || "Réparation") + '</span></div>'
+    + '<span class="chip">' + esc(typeRep(d)) + '</span>' + alerteAppareil(d) + '</div>'
     + (d.panne ? '<div class="m" style="margin-top:4px">' + esc(d.panne) + '</div>' : '')
     + '<div class="row" style="margin-top:8px"><span>Payé : ' + repPaye(d) + '</span><span class="m">Finalisé le ' + (repFin(d) ? fr(repFin(d)) : "—") + '</span></div>'
     + '<div style="margin-top:6px;color:' + g.c + ';font-weight:700">Garantie : ' + g.t + '</div></div>';
@@ -1023,7 +1025,7 @@ function repArchListe(list){
     return '<div class="rep-tab" onclick="openD(\'' + d.id + '\')">'
       + '<div data-l="Appareil"><b>' + esc(d.appareil || "Appareil") + '</b></div>'
       + '<div data-l="Client">' + esc(d.clients ? fullName(d.clients) : "Client inconnu") + '</div>'
-      + '<div data-l="Type"><span class="chip">' + esc(d.type || "Réparation") + '</span>' + (d.panne ? ' <span class="m">' + esc(d.panne) + '</span>' : '') + '</div>'
+      + '<div data-l="Type"><span class="chip">' + esc(typeRep(d)) + '</span>' + alerteAppareil(d) + (d.panne ? ' <span class="m">' + esc(d.panne) + '</span>' : '') + '</div>'
       + '<div data-l="Payé">' + repPaye(d) + '</div>'
       + '<div data-l="Finalisé le">' + (repFin(d) ? fr(repFin(d)) : "—") + '</div>'
       + '<div data-l="Garantie" style="color:' + g.c + ';font-weight:700">' + g.t + '</div></div>';
@@ -1217,6 +1219,7 @@ const REP = {
       <div class="m" id="nFinal" style="margin:4px 0 8px">Prix final : à définir</div>
       <label>Retour prévu</label><input id="nE" type="date">
       <label>Notes</label><textarea id="nNo" rows="2"></textarea>
+      ${piecesChoixHtml('n')}
       <button class="btn" onclick="createD()">Créer le dossier</button>
       <div class="err" id="nErr"></div>
     </div>`;
@@ -1354,6 +1357,15 @@ function setFbHidden(v){ if (v) closeFeedback(); FB_HIDDEN = v; try { localStora
 /* ---------- Mises à jour (cloche en haut à droite) ----------
    Ajouter une entrée en haut de la liste à chaque mise en ligne. */
 var UPDATES = [
+  {id: "2026-11-17-ax", date: "17/11/2026", titre: "Message de démarrage plus précis", items: ["Si l’application ne démarre pas, le message indique la cause (bibliothèque de connexion non chargée, ou erreur au démarrage) et propose de recharger."]},
+  {id: "2026-11-17-aw", date: "17/11/2026", titre: "Qualirépar et IMEI", items: ["Les photos Qualirépar d’un appareil sont celles rattachées à l’appareil ou à une de ses réparations, et apparaissent dans la page Qualirépar.", "La fiche de l’appareil a une section « Qualirépar · IMEI » à part des autres photos.", "La fiche client a une section « Qualirépar · IMEI » par téléphone, visible seulement du réparateur."]},
+  {id: "2026-11-17-av", date: "17/11/2026", titre: "Numéro de suivi des pièces", items: ["Une pièce marquée « Commandé » affiche un champ pour son numéro de suivi, dans la fiche de la réparation.", "Le client voit ce numéro sur sa réparation, pour suivre la livraison."]},
+  {id: "2026-11-17-au", date: "17/11/2026", titre: "Pièces liées à une réparation", items: ["À la création d’une réparation (fiche de l’appareil ou Nouvelle prestation), on peut lier une ou plusieurs pièces du stock.", "Une pièce disponible est réservée ; sinon elle passe automatiquement « À commander ».", "Dans une réparation existante, un ajout sans stock suffisant passe aussi « À commander ». Le statut se change ensuite dans la réparation."]},
+  {id: "2026-11-17-at", date: "17/11/2026", titre: "Modifier une réparation", items: ["Dans la fiche d’une réparation, un bloc « Modifier la réparation » permet de changer l’appareil du client, le nom, le prix et la durée, à tout moment.", "Les points d’exclamation se corrigent à cet endroit."]},
+  {id: "2026-11-17-as", date: "17/11/2026", titre: "Tri relié à Appareils, réparations à corriger", items: ["Réparations & Mods : la liste s’affiche dès l’ouverture de l’onglet, sans attendre un modèle.", "Les marques, gammes et modèles proposés viennent uniquement de la base Appareils.", "Une réparation non reliée à un appareil, ou dont l’appareil n’est plus dans la base, porte un point d’exclamation. Dans sa fiche, on la rattache à un appareil du client."]},
+  {id: "2026-11-17-ar", date: "17/11/2026", titre: "Tri récent dans Appareils, marques de la base dans les réparations", items: ["Appareils : tri « Ajouté récemment ».", "Réparations : les marques et modèles de la base Appareils sont proposés, comme Infinix, même s’ils ne sont pas dans la liste de départ.", "Une réparation peut être créée pour un appareil dont la marque n’a pas encore de réparation : elle reprend les réparations de son type."]},
+  {id: "2026-11-17-aq", date: "17/11/2026", titre: "Repère sur les réparations à corriger", items: ["Un point d’exclamation apparaît à côté du type quand l’appareil de la réparation n’est plus relié à la base Appareils (type, marque ou modèle absent) ou a été supprimé.", "L’ancien texte reste affiché pour que tu puisses le corriger. Le client ne voit pas ce repère."]},
+  {id: "2026-11-17-ap", date: "17/11/2026", titre: "Réparations alignées sur les appareils", items: ["Le type, la marque, le modèle et la couleur d’une réparation sont ceux de sa fiche dans Appareils.", "La puce de la réparation affiche le type de l’appareil (Téléphone, Console…)."]},
   {id: "2026-11-16-br", date: "16/11/2026", titre: "Déplacement horizontal des photos", items: [
     "Pendant le déplacement, la photo ne bouge que de gauche à droite, sur sa ligne, et se réordonne avec ses voisines de la même ligne."]},
   {id: "2026-11-16-by", date: "16/11/2026", titre: "Appareils sans menu déroulant sur ordinateur", items: ["Sur ordinateur, chaque appareil affiche directement sa fiche : plus de flèche à dérouler.", "Sur téléphone, la liste reste repliable."]},
@@ -1866,6 +1878,23 @@ function pieceInner(d, montreDepot){
   if (ps.some(p => p.statut === "Commandé")) h += bulle("Pièce en route", true);
   if (ps.some(p => p.statut === "À commander")) h += bulle("Pièce à commander");
   return h;
+}
+/* Client : pièces commandées de sa réparation, avec le numéro de suivi quand il est renseigné */
+function piecesSuiviHtml(d){
+  const cmd = pcs(d.id).filter(p => p.statut === "Commandé");
+  if (!cmd.length) return "";
+  return '<div style="margin-top:8px;border-top:1px solid var(--line,#e5e7eb);padding-top:8px">'
+    + cmd.map(p => '<div class="m" style="margin-top:4px">Pièce commandée : <b>' + esc(p.nom) + '</b> · '
+      + (p.suivi ? 'suivi : <span class="code">' + esc(p.suivi) + '</span>' : 'numéro de suivi à venir') + '</div>').join("")
+    + '</div>';
+}
+/* Numéro de suivi d’une pièce commandée (le client le voit sur sa réparation) */
+async function savePieceSuivi(pid, v){
+  const val = String(v || "").trim() || null;
+  const { error } = await SB.from("pieces_dossier").update({ suivi: val }).eq("id", pid);
+  if (error) { toast(msgErr(error) + (/suivi/.test(msgErr(error)) ? " — ajoute d’abord la colonne « suivi » à la table pieces_dossier (SQL)." : "")); return; }
+  const p = S.pieces.find(x => x.id === pid); if (p) p.suivi = val;
+  flash("Numéro de suivi enregistré");
 }
 function infosManquantes(d){
   return !(d.panne || "").trim() || d.prix == null || !d.duree || (d.statut === "Remis" && !d.echeance);
@@ -2429,7 +2458,7 @@ function dossierCard(d, cli){
     ${stepsHtml(d.statut)}
     ${d.statut === "Remis" ? `<div class="row" style="margin-top:8px"><span class="chip">${d.echeance ? "Remis le " + fr(d.echeance) : "Remis"}</span></div>` : ""}
     ${pretBloc}
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px"><div>${pieceInner(d)}</div>${payChip(d)}</div></div>`;
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px"><div>${pieceInner(d)}</div>${payChip(d)}</div>${cli ? piecesSuiviHtml(d) : ""}</div>`;
 }
 
 var CLI_OPEN=null, CLI_TRASH=false, CLI_ADD=false;
@@ -2944,7 +2973,8 @@ function abListe(){
   const cmp = {
     type: (a, b) => abNorm(a.type).localeCompare(abNorm(b.type), "fr") || abNorm(a.marque).localeCompare(abNorm(b.marque), "fr") || abNorm(a.modele).localeCompare(abNorm(b.modele), "fr"),
     marque: (a, b) => abNorm(a.marque).localeCompare(abNorm(b.marque), "fr") || abNorm(a.modele).localeCompare(abNorm(b.modele), "fr"),
-    nom: (a, b) => abNorm(a.modele).localeCompare(abNorm(b.modele), "fr") || abNorm(a.type).localeCompare(abNorm(b.type), "fr")
+    nom: (a, b) => abNorm(a.modele).localeCompare(abNorm(b.modele), "fr") || abNorm(a.type).localeCompare(abNorm(b.type), "fr"),
+    recent: (a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")) || abNorm(a.modele).localeCompare(abNorm(b.modele), "fr")
   };
   const list = (S.appBase || []).filter(x => abOk(x.type, AB_FV.abFT) && abOk(x.marque, AB_FV.abFM)
       && (!q || [x.type, x.marque, x.modele, x.couleur].some(v => abNorm(v).indexOf(q) > -1)))
@@ -2997,7 +3027,7 @@ function appareilsHtml(){
     + '<button class="btn" onclick="abAjouter()">Ajouter à la base</button><div class="err" id="abErr"></div></div>'
     + abFiltresHtml()
     + '<div class="row" style="gap:6px;flex-wrap:wrap;margin:8px 0">'
-    + '<select onchange="AB_SORT=this.value;abRefresh()">' + selOpts([["nom", "Trier : nom"], ["type", "Trier : type"], ["marque", "Trier : marque"]], AB_SORT) + '</select></div>'
+    + '<select onchange="AB_SORT=this.value;abRefresh()">' + selOpts([["nom", "Trier : nom"], ["type", "Trier : type"], ["marque", "Trier : marque"], ["recent", "Trier : ajouté récemment"]], AB_SORT) + '</select></div>'
     + '<div class="ab-scroll" id="abL">' + abListe() + '</div>';
 }
 var ICON_EDIT = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>';
@@ -3057,12 +3087,21 @@ function cliHtml(q){
         + '<h2 style="font-size:15px;margin:12px 0 4px">Appareils</h2>'
         + (devs.map(d => devCompact(d)).join("") || '<p class="m">Aucun appareil.</p>')
         + '<div style="display:flex;align-items:center;gap:10px;margin-top:10px"><button class="btn ghost sq" title="Ajouter un appareil" aria-label="Ajouter un appareil" onclick="showDevForm(null,\'' + c.id + '\')"><span class="ic"></span></button><span class="m">Ajouter un appareil</span></div>'
-        + '<div id="devForm"></div><div class="err" id="cliErr"></div>');
+        + '<div id="devForm"></div><div class="err" id="cliErr"></div>' + cliQualiHtml(c));
     return '<div class="card cli-card">' + row
       + '<div class="cli-body-wrap' + (CLI_NOANIM ? ' cli-still' : '') + '" data-cli-body="' + c.id + '"><div class="cli-body"><div class="cli-in">' + inner + '</div></div></div></div>';
   }).join("");
   if (!rows) return '<p class="m">' + (CLI_TRASH ? 'La corbeille est vide.' : 'Aucun client.') + '</p>';
   return (list.length ? '<div class="cli-head"><div>Prénom Nom</div><div>Numéro</div><div>Mail</div><div>Adresse</div><div>CP</div><div>Créé le</div><div></div></div>' : '') + rows;
+}
+/* Fiche client, réparateur seulement : photos Qualirépar de l’IMEI de chaque téléphone */
+function cliQualiHtml(c){
+  if (ROLE !== "rep") return "";
+  const tels = S.devices.filter(d => d.client_id === c.id && d.type === "Téléphone");
+  if (!tels.length) return "";
+  return '<h2 style="font-size:15px;margin:14px 0 4px">Qualirépar · IMEI</h2><p class="m" style="font-size:12px">Visible uniquement par toi, jamais par le client.</p>'
+    + tels.map(d => '<div class="card" style="margin:6px 0"><div class="t" style="font-size:14px">' + esc(devNom(d)) + (d.couleur ? ' · ' + esc(d.couleur) : '') + '</div>'
+      + '<div class="m">IMEI : <span class="code">' + esc(d.imei || '–') + '</span></div>' + photosBloc("quali", d.id) + '</div>').join("");
 }
 function devOpts(cid){
   const ds = S.devices.filter(d => d.client_id === cid);
@@ -3075,8 +3114,6 @@ var CAT_SEED=[["Console",null,"PlayStation","PS5","Lecteur","79","24 h",false],[
 function srt(a){ return a.slice().sort(function(x,y){ return x.localeCompare(y,"fr") }); }
 function setCat(k,v){ CAT[k]=v; if (k==="app"){ CAT.cat=""; CAT.gam=""; CAT.mod=""; } if (k==="cat"){ CAT.gam=""; CAT.mod=""; } if (k==="gam") CAT.mod=""; render(); }
 function optList(arr,sel,ph){ return '<option value="">'+ph+'</option>'+arr.map(function(v){ return '<option'+(v===sel?' selected':'')+'>'+esc(v)+'</option>' }).join(""); }
-var BRANDS_BY_APP={Console:["PlayStation","XBOX","Nintendo","Sega"],Manette:["PlayStation","XBOX","Nintendo","Sega"],Mods:["PlayStation","XBOX","Nintendo","Sega"],"Téléphone":["Apple","Samsung","Xiaomi","Autre"],"PC portable":["HP","Dell","Lenovo","Apple","Asus","Autre"]};
-var MODELES_MANETTE={PlayStation:["DualShock 3 (PS3)","DualShock 4 (PS4)","DualSense (PS5)"],XBOX:["360","One","One S / X","Series X|S"],Nintendo:["GamePad Wii U"]};
 var STOCK_TAB = "pieces";
 function setStockTab(t){ STOCK_TAB = t; render(); }
 /* Manettes et téléphones : couleur saisie à chaque fois, avec les couleurs déjà connues en suggestion */
@@ -3123,12 +3160,12 @@ function aCouleurRefresh(app, mod){
   $("aCouleurDl").innerHTML = list ? coulDlHtml(list) : "";
   $("aCouleur").value = "";
 }
-var MODELES_CONSOLE={XBOX:["360","360 S","360 E","One","One S","One X","Series X","Series S"],PlayStation:["PS1","PS2","PS2 Slim","PS3 Rétrocompatible","PS3","PS3 Slim","PS3 Ultra Slim","PS4","PS4 Slim","PS4 Pro","PS5","PS5 Slim","PS5 Pro"],Nintendo:["DS Tank", "DS Lite", "DSi", "DSi XL", "2DS", "3DS", "3DS XL", "NEW 3DS", "NEW 2DS XL", "NEW 3DS XL", "SWITCH", "SWITCH LITE", "SWITCH OLED", "GAME BOY", "GAME BOY COLOR", "GAME BOY POCKET", "GAME BOY ADVANCED", "GAME BOY ADVANCED SP", "GAME BOY MICRO", "GAME CUBE", "WII", "WII U", "N64", "NES", "SUPER NES"]};
 /* Gammes des téléphones (tout sauf iPhone). Un modèle de gamme est enregistré sous « gamme · modèle ». */
-var GAMMES_TEL = {Samsung:["Galaxy S","Galaxy A","Galaxy M","Galaxy Z","Galaxy Note","Autre"], Xiaomi:["Xiaomi","Redmi","Redmi Note","MI","POCO","MI A","MI MAX","MI MIX","REDMI S","PAD"], Autre:["Autre"]};
-var MODELES_TEL = {Samsung:{"Galaxy S":["Galaxy S22"]}, Xiaomi:{"Redmi Note":["REDMI NOTE 5"]}};
-function hasGamme(app, cat){ return app === "Téléphone" && !!cat && cat !== "Apple"; }
-function gammesFor(app, cat){ return hasGamme(app, cat) ? (GAMMES_TEL[cat] || ["Autre"]) : []; }
+/* Marques d’un type : seulement celles de la base Appareils (rien d’ajouté en dur) */
+function marquesApp(app){ return abMarquesFor(app); }
+/* Gamme : seulement celles saisies dans la base Appareils */
+function hasGamme(app, cat){ return app === "Téléphone" && !!cat && abGammesFor(app, cat).length > 0; }
+function gammesFor(app, cat){ return hasGamme(app, cat) ? abGammesFor(app, cat) : []; }
 function modOpts(mods, gam, sel){
   const cut = gam ? gam.length + 3 : 0;
   return '<option value="">Modèle…</option>' + mods.map(m => '<option value="' + esc(m) + '"' + (m === sel ? ' selected' : '') + '>' + esc(cut ? m.slice(cut) : m) + '</option>').join("");
@@ -3138,27 +3175,27 @@ function catalogueView(){
   if (!rows.length) return '<h1>Réparations &amp; Mods</h1><p class="m">Le catalogue est vide.</p><button class="btn" onclick="importCat()">Importer le catalogue de base</button>';
   const inApp = r => !CAT.app || r.appareil === CAT.app || (r.appareil === "Mods" && r.cible === CAT.app);
   const base = rows.filter(inApp);
-  const brands = BRANDS_BY_APP[CAT.app] || ["Autre"];
-  const src = CAT.app === "Console" ? MODELES_CONSOLE : CAT.app === "Manette" ? MODELES_MANETTE : {};
-  const stat = (CAT.cat && src[CAT.cat]) ? src[CAT.cat] : [];
+  const brands = marquesApp(CAT.app);
   const gams = gammesFor(CAT.app, CAT.cat);
-  const mods = gams.length ? (CAT.gam ? modelsFor(CAT.app, CAT.cat, CAT.gam) : []) : srt([...new Set(stat.concat(base.filter(r => !CAT.cat || r.categorie === CAT.cat).map(r => r.modele)))]);
+  const mods = gams.length ? (CAT.gam ? modelsFor(CAT.app, CAT.cat, CAT.gam) : []) : modelsFor(CAT.app, CAT.cat);
   const list = rows.filter(r => inApp(r) && (!CAT.cat || r.categorie === CAT.cat) && (!CAT.mod || r.modele === CAT.mod))
-    .sort((a,b) => a.reparation.localeCompare(b.reparation, "fr"));
-  let body;
-  if (CAT.mod) body = (list.map(catRow).join("") || '<p class="m">Aucune réparation pour ce modèle.</p>') + addCatForm();
-  else if (CAT.cat && gams.length && !CAT.gam) body = '<p class="m">Choisis la gamme pour voir les modèles.</p>';
-  else if (CAT.cat) body = '<div class="card"><div class="t">Nouveau modèle</div><label>Nom du modèle</label><input id="cNM" placeholder="Ex. Master System"><button class="btn" onclick="newModel()">Créer ce modèle</button></div>';
-  else body = '<p class="m">Choisis un type d’appareil, une marque et un modèle pour voir les réparations et leurs prix.</p>';
+    .sort((a,b) => String(a.appareil).localeCompare(String(b.appareil), "fr") || String(a.categorie).localeCompare(String(b.categorie), "fr") || String(a.modele).localeCompare(String(b.modele), "fr") || a.reparation.localeCompare(b.reparation, "fr"));
+  const aucune = CAT.mod ? "Aucune réparation pour ce modèle." : "Aucune réparation pour ce choix.";
+  const corps = list.length
+    ? list.map(r => (CAT.mod ? "" : catLibelle(r)) + catRow(r)).join("")
+    : '<p class="m">' + aucune + '</p>';
+  const body = corps + (CAT.mod ? addCatForm() : "")
+    + (CAT.cat && !gams.length && !mods.length ? '<p class="m" style="margin-top:10px">Pour ajouter un modèle, crée-le d’abord dans l’onglet Appareils.</p>' : "");
   return '<h1>Réparations &amp; Mods</h1>'
     + '<select onchange="setCat(\'app\',this.value)">' + optList(APPS, CAT.app, "Choisir un type d’appareil…") + '</select>'
     + (CAT.app ? '<div class="two" style="margin-top:8px"><select onchange="setCat(\'cat\',this.value)">' + optList(brands, CAT.cat, "Marque…") + '</select>' + (gams.length ? '<select onchange="setCat(\'gam\',this.value)">' + optList(gams, CAT.gam || "", "Gamme…") + '</select>' : '<select onchange="setCat(\'mod\',this.value)">' + optList(mods, CAT.mod, "Modèle…") + '</select>') + '</div>' + (gams.length && CAT.gam ? '<div style="margin-top:8px"><select onchange="setCat(\'mod\',this.value)">' + modOpts(mods, CAT.gam, CAT.mod) + '</select></div>' : '') : '')
     + '<div style="margin-top:10px">' + body + '</div>';
 }
-function newModel(){
-  const v = $("cNM").value.trim().replace(/[<>"]/g, "");
-  if (!v) { toast("Indique le nom du modèle"); return; }
-  CAT.mod = (gammesFor(CAT.app, CAT.cat).length && CAT.gam ? CAT.gam + " · " : "") + v; render();
+/* Type · marque · modèle de la ligne, avec un point d’exclamation si la base Appareils ne le contient pas */
+function catLibelle(r){
+  const t = r.appareil === "Mods" ? r.cible : r.appareil;
+  const absent = !S.appBaseErr && ROLE === "rep" && !baseHasTrio(t, r.categorie, r.modele);
+  return '<div class="m" style="margin:10px 0 4px">' + esc([t, r.categorie, r.modele].filter(Boolean).join(" · ")) + (absent ? repere("Marque ou modèle absent de la base Appareils : à corriger") : "") + '</div>';
 }
 function catRow(r){
   const ok = r.prix != null && !isNaN(+r.prix);
@@ -3240,7 +3277,7 @@ function repCardHtml(d, rep, compact){
     : '<span class="chip ' + cls + '">' + (l == null ? "Pas de date prévue" : "Prêt pour le " + fr(d.echeance) + " · " + jours(l)) + '</span>';
   const open = SAVD_OPEN === d.id && d.statut === "Remis";
   return '<div class="card" data-page="Réparation : ' + esc(d.panne) + '" style="margin:6px 0;' + (rep ? 'cursor:pointer;' : '') + '"' + (rep ? ' onclick="openD(\'' + d.id + '\')"' : '') + '>'
-    + '<div class="row" style="align-items:center"><div style="flex:1;min-width:0;text-align:left;align-self:flex-start"><div style="text-align:left"><span class="chip">' + esc(d.type) + '</span></div>' + (compact ? '<div class="t" style="text-align:left;margin-top:4px">' + esc(d.panne) + '</div>' : '<div class="t" style="text-align:left;margin-top:4px">' + esc(d.appareil) + ' · ' + esc(c) + '</div><div class="m" style="text-align:left">' + esc(d.panne) + '</div>') + '</div>' + manque + (compact ? '<div style="align-self:flex-start;margin-left:8px">' + payChip(d) + '</div>' : '') + '</div>'
+    + '<div class="row" style="align-items:center"><div style="flex:1;min-width:0;text-align:left;align-self:flex-start"><div style="text-align:left"><span class="chip">' + esc(typeRep(d)) + '</span>' + alerteAppareil(d) + '</div>' + (compact ? '<div class="t" style="text-align:left;margin-top:4px">' + esc(d.panne) + '</div>' : '<div class="t" style="text-align:left;margin-top:4px">' + esc(d.appareil) + ' · ' + esc(c) + '</div><div class="m" style="text-align:left">' + esc(d.panne) + '</div>') + '</div>' + manque + (compact ? '<div style="align-self:flex-start;margin-left:8px">' + payChip(d) + '</div>' : '') + '</div>'
     + stepsHtml(d.statut)
     + (date && !(compact && d.statut === "Remis") ? '<div class="row" style="margin-top:8px">' + date + '</div>' : '') + (compact && (d.statut === "Remis" || d.statut === "Terminé") ? '' : dateBarHtml(d))
     + '<div style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px"><div>' + pieceInner(d, !compact || d.statut === "Devis en cours") + '</div>' + (compact ? '' : payChip(d)) + '</div>'
@@ -3379,6 +3416,27 @@ function showDevForm(devId, cid){
 }
 /* Marque d’un appareil client : retrouvée dans la base (le client n’a pas de colonne marque) */
 function devMarqueOf(d){ const x = (S.appBase || []).find(b => b.type === d.type && b.modele === d.modele); return x ? x.marque : ""; }
+/* Texte d’un appareil tel qu’il est dans la base Appareils : marque · modèle · couleur */
+function appareilTexte(v){ return [devMarqueOf(v), v.modele].filter(Boolean).join(" · ") + (v.couleur ? " · " + v.couleur : ""); }
+/* Une réparation reliée à un appareil prend le texte de cet appareil (plus de texte recopié qui peut être périmé) */
+function enrichirAppareils(){
+  const par = new Map((S.devices || []).map(v => [v.id, v]));
+  (S.dossiers || []).forEach(x => {
+    x.appAlerte = "";
+    x.appType = "";
+    if (!x.device_id) { if (ROLE === "rep" && !S.appBaseErr) x.appAlerte = "Réparation non reliée à un appareil : à corriger"; return; }
+    const v = par.get(x.device_id);
+    const suivi = ROLE === "rep" && !S.appBaseErr;   // seul le réparateur peut corriger
+    if (!v) { if (suivi) x.appAlerte = "Appareil lié introuvable : à corriger"; return; }
+    if (!S.appBaseErr && baseHasTrio(v.type, devMarqueOf(v), v.modele)) { x.appareil = appareilTexte(v); x.appType = v.type || ""; return; }
+    // type, marque ou modèle absents de la base : on garde l’ancien texte, relié à rien, et on signale
+    if (suivi) x.appAlerte = "Type, marque ou modèle plus reliés à la base Appareils : à corriger";
+  });
+}
+/* Point d’exclamation sur une réparation dont l’appareil n’est plus relié à la base */
+function alerteAppareil(d){ return d.appAlerte ? repere(d.appAlerte) : ""; }
+/* Type affiché sur une réparation : celui de l’appareil lié (Téléphone, Console…), sinon le type de la prestation */
+function typeRep(d){ return d.appType || d.type || "Réparation"; }
 function devIdText(t){ return t === "Téléphone" ? "IMEI *" : t ? "N° de série *" : "IMEI ou N° de série *"; }
 var DEV_TEL_LAST = null;
 /* Appelée à chaque changement du type : étiquette IMEI / série, et champs de déverrouillage seulement pour un téléphone */
@@ -3451,7 +3509,7 @@ function openDevPage(id){
 function closeDevPage(){ CLI_DEV = null; CLI_NOANIM = true; render(); }
 function devPage(d){
   const tel = d.type === "Téléphone", rep = ROLE === "rep";
-  const ph = photosFor("device", d.id);
+  const ph = photosFor("device", d.id).filter(p => !isQuali(p));
   const grille = ph.length
     ? '<div class="gal-grid">' + ph.map(p => '<div class="gal-item"><a href="#" onclick="openImg(\'' + esc(photoUrl(p)) + '\');return false"><img src="' + esc(photoUrl(p)) + '" alt="Photo"></a><div class="m" style="font-size:12px;margin:4px 0">' + esc(photoOrigine(p)) + '</div>'
       + (rep ? '<button class="chip late" onclick="delPhoto(\'' + p.id + '\',\'device\',\'' + d.id + '\')">Supprimer</button>' : '') + '</div>').join("") + '</div>'
@@ -3468,11 +3526,61 @@ function devPage(d){
     + '<div id="de-' + d.id + '"></div>'
     + '<h2 style="font-size:15px;margin:12px 0 6px">Photos</h2>' + grille
     + photoAddHtml('device', d.id, 8)
+    + (rep && tel ? '<h2 style="font-size:15px;margin:14px 0 4px">Qualirépar · IMEI</h2><p class="m" style="font-size:12px">Visible uniquement par toi, jamais par le client.</p>' + photosBloc("quali", d.id) : "")
     + devRepsBloc(d);
 }
 /* Réparations de l’appareil : « + » qui devient « - » pour ouvrir ou fermer le formulaire */
 var DEV_REP_OPEN = null;
-function devRepToggle(id){ DEV_REP_OPEN = DEV_REP_OPEN === id ? null : id; CLI_NOANIM = true; render(); }
+function devRepToggle(id){ DEV_REP_OPEN = DEV_REP_OPEN === id ? null : id; PIECES_PREV.d = []; CLI_NOANIM = true; render(); }
+/* Pièces liées à une réparation à la création : une ou plusieurs, prises dans le stock.
+   Une pièce en stock est réservée ; sinon elle est mise « À commander ». */
+var PIECES_PREV = {d: [], n: []};
+function piecesStockOk(p){ const s = S.stock.find(x => x.sku === p.sku); return !!s && s.qte >= p.qte; }
+function piecesChoixHtml(k){
+  return '<div id="pvBox-' + k + '" style="grid-column:1/-1">' + piecesPrevInner(k) + '</div>';
+}
+function piecesPrevInner(k){
+  const L = PIECES_PREV[k] || [];
+  const opts = S.stock.filter(x => x.sku).slice().sort((a, b) => String(a.nom).localeCompare(String(b.nom), "fr"))
+    .map(x => '<option value="' + esc(x.sku) + '">' + esc(x.nom) + ' · ' + x.qte + ' dispo</option>').join("");
+  const lignes = L.map((p, i) => '<div class="row" style="align-items:center;margin-top:4px"><span>' + esc(p.qte + " × " + p.nom) + '</span>'
+    + '<span class="m">' + (piecesStockOk(p) ? "en stock : réservée" : "pas assez en stock : à commander") + '</span>'
+    + '<button class="chip late" onclick="piecesPrevDel(\'' + k + '\',' + i + ')">Retirer</button></div>').join("");
+  return '<label>Pièces à lier (facultatif)</label>'
+    + '<select id="pvSel-' + k + '"><option value="">- choisir une pièce du stock -</option>' + opts + '</select>'
+    + '<div style="display:flex;gap:6px;margin-top:6px;align-items:center"><span class="m">Quantité</span><input id="pvQ-' + k + '" inputmode="numeric" value="1" style="width:80px;margin:0"><button class="chip ok" onclick="piecesPrevAdd(\'' + k + '\')">+ Ajouter la pièce</button></div>'
+    + lignes
+    + (L.length ? "" : '<p class="m" style="margin-top:4px">Aucune pièce liée pour le moment.</p>');
+}
+function piecesPrevDraw(k){ const b = $("pvBox-" + k); if (b) b.innerHTML = piecesPrevInner(k); }
+function piecesPrevAdd(k){
+  const sku = $("pvSel-" + k).value, n = parseInt($("pvQ-" + k).value, 10);
+  if (!sku) { toast("Choisis une pièce."); return; }
+  if (isNaN(n) || n < 1) { toast("Quantité invalide."); return; }
+  const s = S.stock.find(x => x.sku === sku);
+  if (!s) return;
+  PIECES_PREV[k].push({sku: s.sku, nom: s.nom, qte: n});
+  piecesPrevDraw(k);
+}
+function piecesPrevDel(k, i){ PIECES_PREV[k].splice(i, 1); piecesPrevDraw(k); }
+/* Enregistre les pièces liées pour la réparation qui vient d’être créée */
+async function piecesPrevLier(dossierId, k){
+  const L = PIECES_PREV[k] || [];
+  for (const p of L) {
+    const s = S.stock.find(x => x.sku === p.sku);
+    if (s && s.qte >= p.qte) {
+      const r = await SB.from("stock").update({qte: s.qte - p.qte, res: s.res + p.qte}).eq("sku", s.sku);
+      if (r.error) { toast(msgErr(r.error)); continue; }
+      s.qte -= p.qte; s.res += p.qte;   // stock local à jour pour une éventuelle deuxième ligne de la même pièce
+      const { error } = await SB.from("pieces_dossier").insert({dossier_id: dossierId, nom: p.nom, qte: p.qte, statut: "Réservée", sku: p.sku});
+      if (error) toast(msgErr(error));
+    } else {
+      const { error } = await SB.from("pieces_dossier").insert({dossier_id: dossierId, nom: p.nom, qte: p.qte, statut: "À commander", sku: p.sku});
+      if (error) toast(msgErr(error));
+    }
+  }
+  PIECES_PREV[k] = [];
+}
 function devRepsBloc(d){
   const on = DEV_REP_OPEN === d.id;
   const ds = S.dossiers.filter(x => x.device_id === d.id).sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")));
@@ -3497,6 +3605,7 @@ function devRepForm(d){
     +   '<div>' + L('Prêt pour le') + '<input id="drE" type="date" onchange="devRepLive()"></div>'
     +   '<div class="dr-full">' + L('Notes') + '<textarea id="drNo" rows="2" placeholder="Facultatif"></textarea></div>'
     + '</div>'
+    + piecesChoixHtml('d')
     + '<div id="drPrev" class="dr-prev">' + devRepPreviewHtml({name: "", base: NaN, fin: NaN, rm: 0, pct: false, duree: "", echeance: ""}) + '</div>'
     + '<div id="drErr" class="err"></div>'
     + '<button class="btn" style="width:100%" onclick="devRepCreate(\'' + k + '\')">Créer la réparation</button>'
@@ -3556,14 +3665,15 @@ async function devRepCreate(devId){
   if (isNaN(v.rm) || v.rm < 0 || (v.pct && v.rm > 100)) { err.textContent = "Remise invalide."; return; }
   let fin = isNaN(v.base) ? null : v.fin, notes = $("drNo").value.trim();
   if (fin !== null && v.rm > 0) notes = "Remise : " + v.rm + (v.pct ? " %" : " €") + " (prix avant remise : " + v.base + " €)" + (notes ? "\n" + notes : "");
-  const { error } = await SB.from("dossiers").insert({
+  const { data, error } = await SB.from("dossiers").insert({
     client_id: d.client_id, type: "Réparation",
-    appareil: d.modele + (d.couleur ? " " + d.couleur : ""), device_id: d.id, panne: v.name,
+    appareil: appareilTexte(d), device_id: d.id, panne: v.name,
     statut: "Devis en cours", prix: fin,
     duree: durNorm(v.duree), echeance: v.echeance || null,
     notes: notes || null
-  });
+  }).select().single();
   if (error) { err.textContent = msgErr(error); return; }
+  await piecesPrevLier(data.id, "d");
   DEV_REP_OPEN = null; CLI_NOANIM = true;
   await loadAll();
   flash("Réparation créée");
@@ -3644,20 +3754,16 @@ async function purgeCli(id){
 var MP={}, PKS={};
 function typeOf(mods){ return (mods[0] || "").split(" · ")[0] || null; }
 function modelsFor(app, cat, gam){
-  const base = S.catalogue.filter(r => r.appareil === app || (r.appareil === "Mods" && r.cible === app));
+  const deBase = (m0) => (S.appBase || []).filter(x => x.type === app && (!cat || x.marque === cat) && (m0 === undefined || String(x.modele).indexOf(m0) === 0)).map(x => x.modele).filter(Boolean);
   if (hasGamme(app, cat)) {
     if (!gam) return [];
-    const pre = gam + " · ";
-    const seeds = ((MODELES_TEL[cat] || {})[gam] || []).map(m => pre + m);
-    return srt([...new Set(seeds.concat(base.filter(r => r.categorie === cat && String(r.modele || "").indexOf(pre) === 0).map(r => r.modele)))]);
+    return srt([...new Set(deBase(gam + " · "))]);
   }
-  const src = app === "Console" ? MODELES_CONSOLE : app === "Manette" ? MODELES_MANETTE : app === "Téléphone" ? {Apple: ["iPhone 15"]} : {};
-  const stat = (cat && src[cat]) ? src[cat] : [];
-  return srt([...new Set(stat.concat(base.filter(r => !cat || r.categorie === cat).map(r => r.modele)).filter(Boolean))]);
+  return srt([...new Set(deBase())]);
 }
 function pkHtml(key){
   const st = PKS[key] = PKS[key] || {app:"", cat:""};
-  const brands = st.app ? (BRANDS_BY_APP[st.app] || ["Autre"]) : [];
+  const brands = st.app ? marquesApp(st.app) : [];
   const gams = st.app && st.cat ? gammesFor(st.app, st.cat) : [];
   const showMod = !!st.app && !!st.cat && (!gams.length || !!st.gam);
   const mods = showMod ? modelsFor(st.app, st.cat, st.gam) : [];
@@ -3807,8 +3913,9 @@ function nCPick(cid){
   nDPick();
 }
 function nRepOpts(dv){
-  const nm = nz(dv.modele);
+  const nm = nz(dv.modele), mq = nz(devMarqueOf(dv));
   let rows = S.catalogue.filter(r => r.appareil !== "Mods" && nz(r.modele) === nm), lib = r => r.reparation;
+  if (!rows.length && mq) { rows = S.catalogue.filter(r => r.appareil === dv.type && nz(r.categorie) === mq); lib = r => r.reparation + (r.modele ? " · " + r.modele : ""); }
   if (!rows.length) { rows = S.catalogue.filter(r => r.appareil === dv.type); lib = r => r.reparation + (r.modele ? " · " + r.modele : ""); }
   return rows.slice().sort((a, b) => String(a.reparation).localeCompare(String(b.reparation), "fr"))
     .map(r => '<option value="' + esc(r.id) + '">' + esc(lib(r)) + (r.prix != null && !isNaN(+r.prix) ? " — " + eur(r.prix) : "") + '</option>').join("");
@@ -3862,12 +3969,13 @@ async function createD(){
   }
   const { data, error } = await SB.from("dossiers").insert({
     client_id: $("nC").value, type: $("nT").value,
-    appareil: dv.modele + (dv.couleur ? " " + dv.couleur : ""), device_id: dv.id, panne: W,
+    appareil: appareilTexte(dv), device_id: dv.id, panne: W,
     statut: "Devis en cours", prix: fin,
     duree: durNorm($("nDu").value), echeance: $("nE").value || null,
     notes: notes || null
   }).select().single();
   if (error) { err.textContent = msgErr(error); return; }
+  await piecesPrevLier(data.id, "n");
   await loadAll();
   DOSSIER = data.id; VIEW = "dossiers"; render();
 }
@@ -3901,7 +4009,10 @@ function isQuali(p){ return p.quali === true || String(p.path || "").indexOf("qu
 function photosForRaw(kind, id){
   const all = S.photos || [];
   if (kind === "dossier") return all.filter(p => p.dossier_id === id);
-  if (kind === "quali") return all.filter(p => p.device_id === id && isQuali(p));
+  if (kind === "quali") {
+    const dids = (S.dossiers || []).filter(x => x.device_id === id).map(x => x.id);
+    return all.filter(p => isQuali(p) && (p.device_id === id || (p.dossier_id && dids.indexOf(p.dossier_id) > -1)));
+  }
   if (kind === "modele") return all.filter(p => p.appareil_base_id === id && !p.couleur);
   if (kind === "modcol") { const k = colKey(id); return all.filter(p => p.appareil_base_id === k.base && (p.couleur || "") === k.nom); }
   if (kind === "device") {
@@ -4041,7 +4152,7 @@ function photosBloc(kind, id, extra){
   const list = photosFor(kind, id).concat(extra || []);
   const rep = ROLE === "rep";
   return '<div class="gal-grid" data-gal-kind="' + kind + '" data-gal-id="' + id + '">'
-    + list.map(p => '<div class="gal-cell" data-pid="' + p.id + '"><a href="#" draggable="false" onclick="openImg(\'' + esc(photoUrl(p)) + '\');return false"><img src="' + esc(photoUrl(p)) + '" alt="Photo" draggable="false"></a>'
+    + list.map(p => '<div class="gal-cell" data-pid="' + p.id + '"><a href="#" draggable="false" onclick="openImg(\'' + esc(photoUrl(p)) + '\');return false"><img src="' + esc(photoUrl(p)) + '" alt="Photo" draggable="false" onerror="this.alt=\'Photo introuvable\';this.style.opacity=\'.35\'"></a>'
       + (rep ? '<button type="button" class="gal-del" title="Retirer la photo" aria-label="Retirer la photo" onclick="delPhoto(\'' + p.id + '\',\'' + kind + '\',\'' + id + '\')">' + ICON_TRASH + '</button>' : '')
       + '</div>').join("")
     + '</div>' + (list.length ? "" : '<p class="m">Aucune photo pour le moment.</p>')
@@ -4208,20 +4319,36 @@ function estManette(d){
   const dev = S.devices.find(x => x.id === d.device_id);
   return dev ? dev.type === "Manette" : /manette/i.test(d.appareil || "");
 }
+/* Nom du client d’un appareil, affiché en petit sous le nom de l’appareil */
+function clientDeAppareil(dev, d0){
+  const c = (S.clients || []).find(x => x.id === ((dev && dev.client_id) || (d0 && d0.client_id)));
+  if (c) return fullName(c);
+  return d0 && d0.clients ? fullName(d0.clients) : "";
+}
 function qualireparHtml(){
   const ds = S.dossiers.filter(d => !estManette(d));
   const groups = {}, order = [];
+  const ajout = (k, init) => { if (!groups[k]) { groups[k] = init; order.push(k); } return groups[k]; };
   ds.forEach(d => {
     const k = d.device_id ? "dev:" + d.device_id : "dos:" + d.id;
-    if (!groups[k]) { groups[k] = {dev: d.device_id || null, dossier: d.device_id ? null : d, dossiers: []}; order.push(k); }
-    groups[k].dossiers.push(d);
+    ajout(k, {dev: d.device_id || null, dossier: d.device_id ? null : d, dossiers: []}).dossiers.push(d);
   });
+  /* un appareil qui a des photos Qualirépar reste visible, même sans réparation affichée */
+  (S.devices || []).forEach(v => { if (v.type !== "Manette" && photosForRaw("quali", v.id).length) ajout("dev:" + v.id, {dev: v.id, dossier: null, dossiers: []}); });
   return '<h1>Qualirépar</h1><p class="m">Photos des réparations éligibles, rattachées à l’appareil du client. Les manettes de jeu ne sont pas éligibles au label et n’apparaissent pas ici.</p>'
     + (order.length ? order.map(k => {
       const g = groups[k], d0 = g.dossiers[0];
-      const repairs = g.dossiers.map(d => esc(d.panne || "") + ' · ' + esc(d.statut || "")).join("<br>");
-      if (g.dev) return '<div class="card"><div class="t">' + esc(d0.appareil) + '</div><div class="m">' + repairs + '</div><div class="m">' + photosFor("quali", g.dev).length + ' photo(s) Qualirépar</div>' + photosBloc("quali", g.dev) + '</div>';
-      return '<div class="card"><div class="t">' + esc(d0.appareil) + ' · ' + esc(d0.panne || "") + '</div><div class="m">' + esc(d0.statut || "") + ' · appareil non lié</div>' + photosBloc("dossier", d0.id) + '</div>';
+      if (g.dev) {
+        const dev = (S.devices || []).find(x => x.id === g.dev) || {};
+        const titre = d0 ? d0.appareil : appareilTexte(dev);
+        const cli = clientDeAppareil(dev, d0);
+        const repairs = g.dossiers.length ? g.dossiers.map(d => esc(d.panne || "") + ' · ' + esc(d.statut || "")).join("<br>") : "Aucune réparation pour le moment";
+        return '<div class="card"><div class="t">' + esc(titre) + '</div>' + (cli ? '<div class="m" style="font-size:12px">' + esc(cli) + '</div>' : '')
+          + '<div class="m">' + repairs + '</div><div class="m">' + photosForRaw("quali", g.dev).length + ' photo(s) Qualirépar</div>' + photosBloc("quali", g.dev) + '</div>';
+      }
+      const cli = clientDeAppareil(null, d0);
+      return '<div class="card"><div class="t">' + esc(d0.appareil) + ' · ' + esc(d0.panne || "") + '</div>' + (cli ? '<div class="m" style="font-size:12px">' + esc(cli) + '</div>' : '')
+        + '<div class="m">' + esc(d0.statut || "") + ' · appareil non lié</div>' + photosBloc("dossier", d0.id) + '</div>';
     }).join("") : '<p class="m">Aucune réparation.</p>');
 }
 function detailView(){
@@ -4232,9 +4359,10 @@ function detailView(){
   const c = d.clients ? fullName(d.clients) : "";
   return `<button class="btn ghost small" onclick="closeD()">← Retour</button>
   <h2>${esc(d.appareil)}</h2>
+  ${ROLE === "rep" ? modifHtml(d) : ""}
   <div class="card">
     <div class="t">${esc(c)}</div>
-    ${nomOk ? `<label id="lbl-panne">Nom de la réparation *</label>
+    ${ROLE === "rep" ? "" : nomOk ? `<label id="lbl-panne">Nom de la réparation *</label>
     <input id="dNom" value="${esc(d.panne || "")}" placeholder="Ex. Remplacement écran" onchange="fSave('panne', this.value)">` : `<div class="m">${esc(d.type)} · ${esc(d.panne)}</div>`}
     ${stepsHtml(d.statut)}
     ${d.statut === "Terminé" || d.statut === "Remis" ? "" : dateBarHtml(d)}
@@ -4243,7 +4371,7 @@ function detailView(){
     <textarea id="dNo" rows="2" onchange="fSave('notes', this.value)">${esc(d.notes || "")}</textarea>
     <label>Statut</label>
     <select id="dSt" onchange="setStatut(this.value)">${STEPS.map(s => `<option value="${s}" ${s === d.statut ? "selected" : ""}>${lblS(s)}</option>`).join("")}</select>
-    ${devis ? `
+    ${ROLE === "rep" ? "" : devis ? `
     <label id="lbl-prix">Prix (€) *</label><input id="dPx" inputmode="decimal" value="${d.prix ?? ""}" placeholder="à définir" oninput="numOnly(this);updateReste()" onchange="fSave('prix', this.value)">
     <label id="lbl-duree">Durée de réparation *</label><input id="dDu" value="${esc(d.duree || "")}" placeholder="Ex. 2h" onchange="fSave('duree', this.value)">`
     : `<div class="m" style="font-size:15px;margin-bottom:6px">Prix : ${d.prix == null ? "à définir" : eur(d.prix)}</div>
@@ -4266,6 +4394,7 @@ function detailView(){
   ${pcs(d.id).map(p => `<div class="card"><div class="t">${esc(p.nom)}</div>
     <div class="m">Qté ${p.qte} ${p.sku ? "· <span class='code'>" + esc(p.sku) + "</span>" : "· sans SKU"}</div>
     <select onchange="setPst('${p.id}',this.value)" style="margin-top:6px">${pstOpts(p)}</select>
+    ${p.statut === "Commandé" ? `<div style="margin-top:6px"><label>Numéro de suivi (visible par le client)</label><input id="sv-${p.id}" value="${esc(p.suivi || "")}" placeholder="Ex. 6A12345678901" onchange="savePieceSuivi('${p.id}', this.value)"></div>` : ""}
     <div class="two" style="margin-top:6px"><div><label>Prix HT (€)</label><input id="pht-${p.id}" inputmode="decimal" value="${p.prix_ht ?? ""}" placeholder="0" oninput="numOnly(this);pieceCalc('${p.id}','ht')" onchange="savePrixPiece('${p.id}')"></div><div><label>Prix TTC (€) · TVA 20 %</label><input id="pttc-${p.id}" inputmode="decimal" value="${p.prix_ttc ?? ""}" placeholder="0" oninput="numOnly(this);pieceCalc('${p.id}','ttc')" onchange="savePrixPiece('${p.id}')"></div></div>
     <button class="chip late" style="margin-top:6px" onclick="delPieceD('${p.id}')">Retirer</button></div>`).join("")
     || '<p class="m">Aucune pièce pour ce dossier.</p>'}
@@ -4421,6 +4550,26 @@ async function delPieceD(pid){
 function numOnly(el){ el.value = el.value.replace(/[^0-9.,]/g, ""); }
 function rcEdit(){ $("rcBox").style.display = "block"; $("rcPen").style.display = "none"; }
 function openD(id){ DOSSIER = id; render(); }
+/* Bloc « Modifier la réparation » : appareil, nom, prix, durée — toujours modifiables par le réparateur */
+function modifHtml(d){
+  const mes = (S.devices || []).filter(v => v.client_id === d.client_id);
+  const opts = mes.map(v => '<option value="' + esc(v.id) + '"' + (v.id === d.device_id ? " selected" : "") + '>' + esc(appareilTexte(v)) + '</option>').join("");
+  const alerte = d.appAlerte ? '<div class="t" style="color:#dc2626;margin-bottom:8px">' + esc(d.appAlerte) + '</div>' : "";
+  return '<div class="card"' + (d.appAlerte ? ' style="border-color:#dc2626"' : '') + '><div class="t">Modifier la réparation</div>' + alerte
+    + (mes.length ? '<label>Appareil du client</label><select onchange="relierAppareil(\'' + d.id + '\', this.value)"><option value="">- choisir un appareil -</option>' + opts + '</select>'
+      : '<p class="m">Ce client n’a aucun appareil : ajoute-le dans sa fiche, puis rattache-le ici.</p>')
+    + '<label id="lbl-panne">Nom de la réparation *</label><input id="dNom" value="' + esc(d.panne || "") + '" placeholder="Ex. Remplacement écran" onchange="fSave(\'panne\', this.value)">'
+    + '<div class="two"><div><label id="lbl-prix">Prix (€)</label><input id="dPx" inputmode="decimal" value="' + esc(d.prix == null ? "" : d.prix) + '" placeholder="à définir" oninput="numOnly(this);updateReste()" onchange="fSave(\'prix\', this.value)"></div>'
+    + '<div><label id="lbl-duree">Durée de réparation</label><input id="dDu" value="' + esc(d.duree || "") + '" placeholder="Ex. 2h" onchange="fSave(\'duree\', this.value)"></div></div>'
+    + '</div>';
+}
+async function relierAppareil(dossierId, devId){
+  if (!devId) return;
+  const { data, error } = await SB.from("dossiers").update({device_id: devId}).eq("id", dossierId).select("id");
+  if (error) { toast(msgErr(error)); return; }
+  if (!data || !data.length) { toast("Modification refusée"); return; }
+  await reload();
+}
 function closeD(){ DOSSIER = null; render(); }
 async function applyPst(p, v){
   const st = p.sku ? S.stock.find(x => x.sku === p.sku) : null;
@@ -4475,7 +4624,7 @@ function qty(){ const n = parseInt($("pN").value, 10); return isNaN(n) || n < 1 
 async function addPiece(did, sku){
   const s = S.stock.find(x => x.sku === sku), n = qty();
   if (!s || !n) { $("pErr").textContent = "Quantité invalide."; return; }
-  if (s.qte < n) { $("pErr").textContent = "Stock insuffisant : " + s.qte + " disponible(s), " + n + " nécessaire(s)."; return; }
+  if (s.qte < n) { toast("Stock insuffisant : la pièce est mise à commander"); return addPieceCmd(did, sku); }
   const r = await SB.from("stock").update({ qte: s.qte - n, res: s.res + n }).eq("sku", s.sku);
   if (r.error) { $("pErr").textContent = msgErr(r.error); return; }
   const { error } = await SB.from("pieces_dossier").insert({ dossier_id: did, nom: s.nom, qte: n, statut: "Réservée", sku: s.sku });
@@ -5127,8 +5276,8 @@ window.addEventListener("focus", verifierJour);
 window.addEventListener("resize", () => { if (VIEW === "dashboard" && !DOSSIER) fitDashVals(); });
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (VIEW === "dashboard" && !DOSSIER) fitDashVals(); });
 
-boot().catch(function(e){ var a = document.getElementById('app'); if (a && (!a.innerHTML || a.querySelector('#boot'))) a.innerHTML = '<p class="m" style="padding:24px">L’application n’a pas pu démarrer. Vérifiez votre connexion internet, puis rechargez la page.</p>'; console.error(e); });
+boot().catch(function(e){ var a = document.getElementById('app'); if (a && (!a.innerHTML || a.querySelector('#boot'))) a.innerHTML = '<div class="m" style="padding:24px"><p>L’application n’a pas pu démarrer. Vérifiez votre connexion internet, puis rechargez la page.</p><p style="font-size:12px;word-break:break-word">Détail : ' + String(e && (e.message || e)).slice(0, 300).replace(/</g, '&lt;') + '</p><button class="btn" onclick="location.reload()">Recharger</button></div>'; console.error(e); });
 </script>
-<script>if(!window.supabase){var a=document.getElementById('app');if(a&&(!a.innerHTML||a.querySelector('#boot')))a.innerHTML='<p class="m" style="padding:24px">L’application n’a pas pu démarrer. Vérifiez votre connexion internet, puis rechargez la page.</p>'}</script>
+<script>if(!window.supabase){var a=document.getElementById('app');if(a&&(!a.innerHTML||a.querySelector('#boot')))a.innerHTML='<div class="m" style="padding:24px"><p>L’application n’a pas pu démarrer. Vérifiez votre connexion internet, puis rechargez la page.</p><p style="font-size:12px">Détail : la bibliothèque de connexion (Supabase) ne s’est pas chargée. Le réseau ou le CDN est peut-être bloqué sur cet appareil.</p><button class="btn" onclick="location.reload()">Recharger</button></div>'}</script>
 </body>
 </html>
