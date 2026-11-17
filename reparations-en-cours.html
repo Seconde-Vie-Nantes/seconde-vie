@@ -95,6 +95,7 @@
     <span class="clock" id="horloge">--:--</span>
     <span id="maj" class="hidden"></span>
     <button id="btnActu" class="hidden" onclick="charger()">Actualiser</button>
+    <button id="btnPlein" class="hidden" onclick="plein()">Plein écran</button>
     <button id="btnOut" class="hidden" onclick="deconnexion()">Déconnexion</button>
   </div>
 </header>
@@ -5907,8 +5908,37 @@ function montrer(vue) {
   const actif = vue === "vueEcran";
   document.getElementById("bande").classList.toggle("hidden", !actif);
   document.getElementById("btnActu").classList.toggle("hidden", !actif);
+  document.getElementById("btnPlein").classList.toggle("hidden", !(actif && pleinDispo()));
+  etiquettePlein();
   document.getElementById("btnOut").classList.toggle("hidden", vue === "vueLogin");
 }
+/* Plein écran (si l’appareil le permet) */
+function pleinDispo() {
+  var e = document.documentElement;
+  return !!(e.requestFullscreen || e.webkitRequestFullscreen);
+}
+function enPlein() {
+  return !!(document.fullscreenElement || document.webkitFullscreenElement);
+}
+function etiquettePlein() {
+  var b = document.getElementById("btnPlein");
+  if (b) b.textContent = enPlein() ? "Quitter le plein écran" : "Plein écran";
+}
+function plein() {
+  try {
+    var r;
+    if (enPlein()) {
+      r = (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    } else {
+      var e = document.documentElement;
+      r = (e.requestFullscreen || e.webkitRequestFullscreen).call(e);
+    }
+    if (r && r.catch) r.catch(function () {});
+  } catch (err) {
+  }
+}
+document.addEventListener("fullscreenchange", etiquettePlein);
+document.addEventListener("webkitfullscreenchange", etiquettePlein);
 function depuis(dateStr) {
   if (!dateStr) return "";
   const j = new Date(dateStr);
