@@ -59,18 +59,19 @@
   .tag{display:inline-block;align-self:flex-start;margin-top:.77em;font-size:.93em;font-weight:700;padding:.31em .69em;border-radius:999px;background:var(--chip)}
   .vide{color:var(--mut);font-size:17px;padding:8px 4px}
 
-  /* Bande du bas : à payer. Elle est dans la mise en page, donc elle ne cache aucune case. */
-  .bande{flex:0 0 auto;height:88px;margin:0 14px 14px;background:#0b100e;border:1px solid var(--line);border-radius:18px;display:flex;align-items:center;gap:14px;padding:10px 14px}
-  .bande-total{flex:0 0 150px;display:flex;flex-direction:column;gap:2px;min-width:0}
+  /* Bande du bas : à payer. Hauteur = 15 % de l’écran. Les tuiles se collent à droite de « À payer »,
+     se remplissent de gauche à droite, puis une ligne en dessous. Elle ne recouvre aucune case. */
+  .bande{flex:0 0 auto;height:15vh;min-height:0;margin:0 14px 14px;background:#0b100e;border:1px solid var(--line);border-radius:18px;display:flex;align-items:stretch;overflow:hidden}
+  .bande-total{flex:0 0 170px;display:flex;flex-direction:column;justify-content:center;gap:2px;padding:0 16px;min-width:0}
   .bande-l{font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--mut);font-weight:700}
   .bande-m{font-size:30px;font-weight:800;color:var(--bad);font-variant-numeric:tabular-nums;line-height:1.1;white-space:nowrap}
-  .bande-liste{flex:1 1 auto;display:flex;gap:12px;min-width:0;overflow:hidden;align-items:center}
-  .bi{flex:0 0 auto;width:var(--cw,282px);height:66px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px 12px;display:flex;flex-direction:column;justify-content:center;min-width:0;overflow:hidden}
+  .bande-liste{flex:1 1 auto;min-width:0;min-height:0;display:grid;justify-content:start;align-content:start;overflow:hidden}
+  .bi{background:var(--panel);border:1px solid var(--line);padding:6px 12px;display:flex;flex-direction:column;justify-content:center;min-width:0;min-height:0;overflow:hidden}
   .bi-n{display:block;font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .bi-m{display:block;margin-top:3px;font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
-  .bi.plus{flex:0 0 90px;width:90px;align-items:center;color:var(--mut);font-size:15px;white-space:nowrap;text-align:center}
-  .bande-vide{color:var(--mut);font-size:16px}
-  .alerte{color:var(--bad);font-size:13px}
+  .bi.plus{align-items:center;color:var(--mut);font-size:15px;white-space:nowrap;text-align:center}
+  .bande-vide{align-self:center;padding:0 16px;color:var(--mut);font-size:16px}
+  .alerte{color:var(--bad);font-size:13px;align-self:center;padding:0 12px}
 
   /* Verrouillage en paysage : en portrait, la page demande de tourner l’appareil */
   .tourner{display:none}
@@ -94,11 +95,11 @@
     .col-titre{padding:0 2px 4px;margin-bottom:6px}
     .col-titre h2{font-size:13px}
     .col-titre .nb{font-size:17px}
-    .bande{height:64px;margin:0 10px 8px;padding:6px 10px;gap:10px}
-    .bande-total{flex:0 0 auto;min-width:96px}
+    .bande{margin:0 10px 8px}
+    .bande-total{flex:0 0 auto;min-width:96px;padding:0 10px}
     .bande-l{font-size:10px}
     .bande-m{font-size:18px}
-    .bi{height:50px;padding:4px 8px}
+    .bi{padding:4px 8px}
     .bi-n{font-size:12px}
     .bi-m{font-size:14px;margin-top:0}
   }
@@ -6058,23 +6059,29 @@ function ajusterTout() {
 }
 function afficherBande() {
   const liste = document.getElementById("bandeListe");
-  document.getElementById("bande").style.setProperty("--cw", Math.round(CARTE_W * ECHELLE) + "px");
   const total = DUS.reduce((s, x) => s + x.reste, 0);
   document.getElementById("bandeTotal").textContent = euros(total);
   if (!DUS.length) {
+    liste.style.gridTemplateColumns = "";
+    liste.style.gridAutoRows = "";
     liste.innerHTML = '<span class="bande-vide">Rien à payer</span>';
     return;
   }
-  const cw = CARTE_W * ECHELLE, gap = 12, plusW = 90;
-  const avail = liste.clientWidth;
-  const tout = Math.floor((avail + gap) / (cw + gap));
-  let shown;
-  if (DUS.length <= Math.min(MAX_PAYER, tout)) shown = DUS.length;
-  else shown = Math.max(0, Math.min(MAX_PAYER, Math.floor((avail - plusW) / (cw + gap))));
+  const cw = Math.floor(CARTE_W * ECHELLE);
+  const W = liste.clientWidth, H = liste.clientHeight;
+  const cols = Math.max(1, Math.floor(W / cw));
+  const maxRows = Math.max(1, Math.floor(H / 56));
+  const cellsMax = cols * maxRows;
+  let shown = Math.min(DUS.length, MAX_PAYER, cellsMax);
+  if (DUS.length > shown && shown + 1 > cellsMax) shown = cellsMax - 1;
+  const plus = DUS.length > shown;
+  const rows = Math.max(1, Math.min(maxRows, Math.ceil((shown + (plus ? 1 : 0)) / cols)));
+  liste.style.gridTemplateColumns = "repeat(" + cols + ", " + cw + "px)";
+  liste.style.gridAutoRows = Math.floor(H / rows) + "px";
   let h = DUS.slice(0, shown).map(
     (x) => '<div class="bi"><span class="bi-n" title="' + esc(x.appareil) + '">' + esc(x.appareil || "Appareil") + '</span><span class="bi-m">' + euros(x.reste) + "</span></div>"
   ).join("");
-  if (DUS.length > shown) h += '<div class="bi plus">+ ' + (DUS.length - shown) + " autre" + (DUS.length - shown > 1 ? "s" : "") + "</div>";
+  if (plus) h += '<div class="bi plus">+ ' + (DUS.length - shown) + " autre" + (DUS.length - shown > 1 ? "s" : "") + "</div>";
   liste.innerHTML = h;
 }
 function heure() {
