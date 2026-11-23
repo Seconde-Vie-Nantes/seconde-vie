@@ -131,7 +131,7 @@ body.lg .dash-page > h2:first-of-type{margin-top:6px}
 .dba-t td.act{white-space:nowrap}
 .dba-t tr.dba-fr th{position:static;cursor:default;border-bottom:1px solid var(--line);padding:5px 6px;background:var(--surf)}
 .dba-t tr.dba-fr input{width:100%;min-width:90px;margin:0;padding:5px 7px;font-size:12px;font-weight:400;border-radius:8px}
-.stk-row{display:grid;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid rgba(128,128,128,.25);grid-template-columns:var(--stk-cols,minmax(0,1.4fr) minmax(0,1fr) minmax(0,1.3fr) minmax(0,.9fr) minmax(0,.9fr) 300px);min-width:max-content}
+.stk-row{display:grid;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid rgba(128,128,128,.25);grid-template-columns:var(--stk-cols,minmax(120px,1.4fr) minmax(80px,1fr) minmax(120px,1.3fr) minmax(90px,.9fr) minmax(90px,.9fr) minmax(170px,300px));min-width:0}
 .stk-head{border-bottom:2px solid var(--line)}
 /* Page Clients : barre de défilement toujours affichée */
 html.scroll-on{overflow-y:scroll}
@@ -197,9 +197,29 @@ body.lg .cli-head{padding:0 14px 4px}
 .stk-head>span{position:relative;padding-right:10px}
 .stk-rz{position:absolute;top:0;bottom:0;right:0;width:10px;cursor:col-resize;touch-action:none;z-index:2}
 .stk-rz:hover,.stk-rz:active{background:linear-gradient(90deg,transparent 4px,var(--brand) 4px,var(--brand) 6px,transparent 6px)}
-.stk-wrap{overflow-x:auto;max-width:100%}
+.stk-wrap{max-width:100%;container-type:inline-size}
+/* Liste étroite : Référence et Réservé sont masquées, les autres colonnes gardent leur place */
+@media (min-width:601px){@container (max-width:760px){.stk-row{grid-template-columns:minmax(0,2fr) minmax(0,1.3fr) minmax(0,1.3fr) minmax(120px,170px) !important}.stk-x{display:none !important}}}
+/* Page Stock : barres de défilement toujours affichées (verticale à droite, horizontale en bas) */
+html.stk-on{overflow-y:scroll;overflow-x:scroll}
+/* Les boutons de chaque pièce restent visibles quand on glisse horizontalement */
+.stk-row>.stk-act{position:sticky;right:0;z-index:1;background:var(--bg)}
+.stk-head>.stk-act{background:var(--bg)}
+/* Modification d'une pièce : collée en haut de l'écran pendant le défilement, défile elle-même si elle est plus haute que l'écran */
+.stk-edit-box{position:sticky;top:10px;z-index:6;max-height:calc(100vh - 20px);overflow:auto;margin-bottom:8px}
+.stk-edit-box:empty{display:none}
 .stk-act{display:flex;gap:6px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
-@media (max-width:600px){.stk-row{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) minmax(0,1.3fr);min-width:0}.stk-x,.stk-rz{display:none}.stk-act{grid-column:1/-1;justify-content:flex-start}.stk-head .stk-act{display:none}}
+/* Grand écran : les textes passent à la ligne au lieu d'être coupés */
+@media (min-width:601px){.stk-row>.ab-cell{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}}
+/* Téléphone : chaque pièce se fait glisser à gauche et à droite ; seul le nombre de pièces reste à l'écran */
+@media (max-width:600px){
+  .stk-head{display:none}
+  .stk-row{display:grid;grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:max-content;gap:14px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:10px 0;min-width:0}
+  .stk-row>.ab-cell{white-space:nowrap;overflow:visible;text-overflow:clip}
+  .stk-row>.stk-act{display:contents;position:static}
+  .stk-row>.stk-act>*{flex:none}
+  .stk-row>.stk-act>.chip.ok,.stk-row>.stk-act>.chip.late{position:sticky;left:0;z-index:2;background:var(--bg)}
+}
 .ab-cell{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ab-grid{flex:1;min-width:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.3fr) minmax(0,.8fr);gap:8px}
 .ab-acts{display:flex;gap:6px;align-items:center;justify-content:flex-end;flex-shrink:0;width:176px}
@@ -6587,7 +6607,8 @@ document.addEventListener("keydown", (e) => {
 function render() {
   const app = $("app"), nav = $("nav");
   applySidebar();
-  document.documentElement.classList.toggle("scroll-on", VIEW === "clients" && !!ME);
+  document.documentElement.classList.toggle("scroll-on", (VIEW === "clients" || VIEW === "stock") && !!ME);
+  document.documentElement.classList.toggle("stk-on", VIEW === "stock" && !!ME);
   document.body.classList.toggle("rep-nav", ROLE === "rep" && !!ME);
   saveNav();
   if (RECOVERY) {
@@ -7891,6 +7912,10 @@ const REP = {
     </div>
     <div id="stkAdd" class="card${STK_ADD ? "" : " hide"}">
       <label>Nom</label><input id="sN">
+      <label>Type de pièce</label>${catSelHtml("sCat", "", "— Choisir un type —")}
+      <label>Prix (€)</label><input id="sPx" inputmode="decimal" placeholder="0">
+      <label>Date du prix</label><input id="sDt" type="date">
+      <label>Lien pour commander</label><input id="sLi" placeholder="https://…">
       <label>Quantité</label><input id="sQt" inputmode="numeric" value="0">
       <label>Modèles</label><div id="mp-n"></div>
       <button class="btn" onclick="addStock()">Ajouter au stock</button>
@@ -9747,8 +9772,15 @@ function abRefreshFor(pre) {
   if (g) abFormRefresh(g[0], g[1], g[2], g[3]);
   if (pre === "dvT") devTypeHook();
 }
-var AB_FV = { abFT: { raw: "", exact: true }, abFM: { raw: "", exact: true } };
-var AB_FILTRE = ["abFT", "abFM"];
+var AB_FV = { abFT: { raw: "", exact: true }, abFM: { raw: "", exact: true }, abFI: { raw: "", exact: true } };
+var AB_FILTRE = ["abFT", "abFM", "abFI"];
+/* Filtre image : "" = tous, "avec" = au moins une photo, "sans" = aucune photo */
+function abFiltreImage(x) {
+  const r = AB_FV.abFI.raw;
+  if (!r) return true;
+  const avec = !!baseModelePhoto(x, "");
+  return r === "avec" ? avec : !avec;
+}
 function abFiltreSave(pre) {
   AB_FV[pre] = { raw: abSelVal(pre).trim(), exact: !AB_MM[pre] };
 }
@@ -9763,7 +9795,9 @@ function abFiltreListes() {
 function abFiltresHtml() {
   const L = abFiltreListes(), lbl = (t) => '<div class="m" style="margin:8px 0 2px;font-weight:600">' + t + "</div>";
   const sel = (pre, list, cur, ph) => '<select id="' + pre + `S" onchange="abRefreshFor('` + pre + `')">` + optList(list, list.indexOf(cur) >= 0 ? cur : "", ph) + "</select>";
-  return '<div style="margin:8px 0">' + lbl("Filtrer par type") + sel("abFT", L.types, AB_FV.abFT.raw, "Tous les types") + lbl("Filtrer par marque") + sel("abFM", L.marques, AB_FV.abFM.raw, "Toutes les marques") + "</div>";
+  const fi = AB_FV.abFI.raw;
+  const imgSel = '<select id="abFIS" onchange="abRefreshFor(\'abFI\')"><option value=""' + (fi === "" ? " selected" : "") + '>Tous les appareils</option><option value="avec"' + (fi === "avec" ? " selected" : "") + '>Avec image</option><option value="sans"' + (fi === "sans" ? " selected" : "") + '>Sans image</option></select>';
+  return '<div style="margin:8px 0">' + lbl("Filtrer par type") + sel("abFT", L.types, AB_FV.abFT.raw, "Tous les types") + lbl("Filtrer par marque") + sel("abFM", L.marques, AB_FV.abFM.raw, "Toutes les marques") + lbl("Filtrer par image") + imgSel + "</div>";
 }
 function abFiltreRefresh() {
   AB_FILTRE.forEach(abFiltreSave);
@@ -10272,7 +10306,7 @@ function abListe() {
     nom: (a, b) => abNorm(a.modele).localeCompare(abNorm(b.modele), "fr") || abNorm(a.type).localeCompare(abNorm(b.type), "fr"),
     recent: (a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")) || abNorm(a.modele).localeCompare(abNorm(b.modele), "fr")
   };
-  const list = (S.appBase || []).filter((x) => abOk(x.type, AB_FV.abFT) && abOk(x.marque, AB_FV.abFM) && (!q || [x.type, x.marque, x.modele, x.couleur].some((v) => abNorm(v).indexOf(q) > -1))).sort(cmp[AB_SORT] || cmp.nom);
+  const list = (S.appBase || []).filter((x) => abOk(x.type, AB_FV.abFT) && abOk(x.marque, AB_FV.abFM) && abFiltreImage(x) && (!q || [x.type, x.marque, x.modele, x.couleur].some((v) => abNorm(v).indexOf(q) > -1))).sort(cmp[AB_SORT] || cmp.nom);
   let h = list.length ? abHeadHtml() : "", last = null;
   list.forEach((x) => {
     const g = AB_SORT === "type" ? x.type : AB_SORT === "marque" ? x.marque || "Sans marque" : null;
@@ -10440,7 +10474,7 @@ function cliLignesHtml() {
     const img = venteImage({ lignes: [l] });
     const titre = [l.modele || l.appareil, l.couleur, l.sn ? "SN " + l.sn : null].filter(Boolean).join(" · ");
     const edit = CLI_LIGNE_EDIT === i ? '<div style="display:grid;gap:6px;margin-top:8px"><input id="lnM" value="' + esc(l.modele || "") + '" placeholder="Nom de l’appareil"><input id="lnC" value="' + esc(l.couleur || "") + '" placeholder="Couleur"><input id="lnS" value="' + esc(l.sn || "") + '" placeholder="Numéro de série"><div class="row" style="gap:8px"><button type="button" class="chip ok" style="width:auto" onclick="cliLigneSauver(' + i + ')">Enregistrer</button><button type="button" class="chip" style="width:auto" onclick="cliLigneEditer(' + i + ')">Annuler</button></div></div>' : "";
-    return '<div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="display:flex;align-items:center;gap:10px"><div style="flex:none;width:40px;height:40px;border-radius:8px;overflow:hidden;border:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center">' + (img ? '<img src="' + img + '" alt="" style="width:100%;height:100%;object-fit:contain">' : ICON_IMG) + '</div><div style="min-width:0;flex:1"><div style="font-size:18px;font-weight:600;line-height:1.25">' + esc(titre) + (l.quantite > 1 ? " × " + l.quantite : "") + (l.acheter ? ' <span title="À commander" style="display:inline-flex;vertical-align:middle;color:var(--mut)">' + ICON_TRUCK + "</span>" : "") + '</div></div><button type="button" class="btn ghost" title="Modifier l’appareil" aria-label="Modifier l’appareil" onclick="cliLigneEditer(' + i + ')" style="width:34px;height:34px;padding:0;margin:0;display:flex;align-items:center;justify-content:center;flex:none">' + ICON_EDIT + '</button><button type="button" style="border:0;background:none;cursor:pointer;font-weight:700;font-size:20px;margin:0 2px" aria-label="Supprimer de la vente" title="Supprimer de la vente" onclick="cliLigneDel(' + i + ')">×</button></div>' + edit + "</div>";
+    return '<div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="display:flex;align-items:center;gap:10px"><div style="flex:none;width:40px;height:40px;border-radius:8px;overflow:hidden;border:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center">' + (img ? '<img src="' + img + '" alt="" style="width:100%;height:100%;object-fit:contain">' : ICON_IMG) + '</div><div style="min-width:0;flex:1"><div style="font-size:18px;font-weight:600;line-height:1.25">' + esc(titre) + (l.quantite > 1 ? " × " + l.quantite : "") + (l.acheter ? ' <span title="À commander" style="display:inline-flex;vertical-align:middle;color:var(--mut)">' + ICON_TRUCK + "</span>" : "") + '</div></div><button type="button" class="btn ghost sq" title="Modifier l’appareil" aria-label="Modifier l’appareil" onclick="cliLigneEditer(' + i + ')">' + ICON_EDIT + '</button><button type="button" style="border:0;background:none;cursor:pointer;font-weight:700;font-size:20px;margin:0 2px" aria-label="Supprimer de la vente" title="Supprimer de la vente" onclick="cliLigneDel(' + i + ')">×</button></div>' + edit + "</div>";
   }).join("") || '<p class="m">Aucun modèle ajouté pour le moment.</p>';
 }
 function cliLigneEditer(i) {
@@ -10555,6 +10589,13 @@ function cliVenteAller(cid) {
 }
 function repBaseDe(label) {
   return (S.appBase || []).find((b) => [b.type, b.marque, b.modele].filter(Boolean).join(" · ") === label) || null;
+}
+/* Reprise d'une réparation : l'appareil se choisit dans la base Appareils (type · marque · modèle) */
+function repDossierOpts(cur) {
+  const labels = [...new Set((S.appBase || []).map((b) => [b.type, b.marque, b.modele].filter(Boolean).join(" · ")).filter(Boolean))];
+  if (cur && labels.indexOf(cur) < 0) labels.push(cur);
+  labels.sort((a, b) => a.localeCompare(b, "fr"));
+  return '<option value="">- Aucun -</option>' + labels.map((l) => '<option value="' + esc(l) + '"' + (l === cur ? " selected" : "") + ">" + esc(l) + "</option>").join("");
 }
 function repCouleurOpts(label, sel) {
   const b = repBaseDe(label);
@@ -11396,10 +11437,10 @@ async function piecesPrevLier(dossierId, k) {
       }
       s.qte -= p.qte;
       s.res += p.qte;
-      const { error } = await SB.from("pieces_dossier").insert({ dossier_id: dossierId, nom: p.nom, qte: p.qte, statut: "Réservée", sku: p.sku });
+      const { error } = await SB.from("pieces_dossier").insert(Object.assign({ dossier_id: dossierId, nom: p.nom, qte: p.qte, statut: "Réservée", sku: p.sku }, stkCoutPiece(p.sku)));
       if (error) toast(msgErr(error));
     } else {
-      const { error } = await SB.from("pieces_dossier").insert({ dossier_id: dossierId, nom: p.nom, qte: p.qte, statut: "À commander", sku: p.sku });
+      const { error } = await SB.from("pieces_dossier").insert(Object.assign({ dossier_id: dossierId, nom: p.nom, qte: p.qte, statut: "À commander", sku: p.sku }, stkCoutPiece(p.sku)));
       if (error) toast(msgErr(error));
     }
   }
@@ -11692,15 +11733,25 @@ function devPkEdit() {
   aCouleurRefresh("", "");
   mpDraw("a");
 }
+var MP_PLUS = {};
+function mpPlusToggle(key) {
+  MP_PLUS[key] = !MP_PLUS[key];
+  mpDraw(key);
+}
 function mpDraw(key) {
   const box = $("mp-" + key);
   if (!box) return;
   MP[key] = MP[key] || [];
+  if (key === "e" && !MP_PLUS.e) {
+    box.innerHTML = MP[key].map((m) => '<span class="chip ok" style="margin:2px 4px 2px 0">' + esc(m) + ' <button style="border:0;background:none;cursor:pointer;font-weight:700" onclick="mpDel(\'e\',\'' + esc(m) + '\')">×</button></span>').join("") + '<div style="margin-top:6px"><button type="button" class="btn sq ghost" title="Ajouter un modèle" aria-label="Ajouter un modèle" onclick="mpPlusToggle(\'e\')"><span class="ic"></span></button></div>';
+    return;
+  }
   if (key === "a" && MP.a.length && !DEV_PK_OPEN) {
     box.innerHTML = '<div class="row" style="align-items:center;gap:6px"><span class="chip ok">' + esc(MP.a[0]) + '</span><button class="chip" title="Modifier le modèle" onclick="devPkEdit()">✎</button></div>';
     return;
   }
-  box.innerHTML = MP[key].map((m) => '<span class="chip ok" style="margin:2px 4px 2px 0">' + esc(m) + ` <button style="border:0;background:none;cursor:pointer;font-weight:700" onclick="mpDel('` + key + "','" + esc(m) + `')">×</button></span>`).join("") + '<div style="margin-top:6px">' + (key === "v" || key === "a" ? pkHtml(key) : pkBaseHtml(key)) + "</div>";
+  const fermer = key === "e" ? '<div style="margin-top:6px"><button type="button" class="btn sq ghost" title="Fermer" aria-label="Fermer" onclick="mpPlusToggle(\'e\')"><span class="ic minus"></span></button></div>' : "";
+  box.innerHTML = MP[key].map((m) => '<span class="chip ok" style="margin:2px 4px 2px 0">' + esc(m) + ` <button style="border:0;background:none;cursor:pointer;font-weight:700" onclick="mpDel('` + key + "','" + esc(m) + `')">×</button></span>`).join("") + fermer + '<div style="margin-top:6px">' + (key === "v" || key === "a" ? pkHtml(key) : pkBaseHtml(key)) + "</div>";
 }
 function mpAdd(key, v) {
   MP[key] = MP[key] || [];
@@ -11714,8 +11765,10 @@ function mpDel(key, v) {
 function editPiece(sku) {
   const x = S.stock.find((y) => y.sku === sku);
   MP.e = x.modeles && x.modeles.length ? x.modeles.slice() : x.modele ? [x.modele] : [];
-  $("pe-" + sku).innerHTML = '<div class="card" style="margin:8px 0 0"><label>SKU</label><input id="ep-s" value="' + esc(x.sku) + '"><label>Nom</label><input id="ep-n" value="' + esc(x.nom) + `"><label>Modèles</label><div id="mp-e"></div><p class="m">La quantité se règle avec + / −.</p><button class="btn" onclick="savePiece2('` + sku + `')">Enregistrer</button><div class="err" id="ep-err"></div></div>`;
+  MP_PLUS.e = false;
+  $("stkEditBox").innerHTML = '<div class="card" style="margin:0"><div class="row" style="justify-content:space-between;align-items:center"><span class="t">Modifier la pièce</span><button class="chip" onclick="$(\'stkEditBox\').innerHTML=\'\'">Fermer</button></div><label>SKU</label><input id="ep-s" value="' + esc(x.sku) + '"><label>Nom</label><input id="ep-n" value="' + esc(x.nom) + `"><label>Type de pièce</label>${catSelHtml("ep-cat", x.categorie || "", "— Aucun —")}<label>Prix (€)</label><input id="ep-px" inputmode="decimal" value="${x.prix == null ? "" : x.prix}"><label>Date du prix</label><input id="ep-dt" type="date" value="${x.prix_date ? String(x.prix_date).slice(0, 10) : ""}"><label>Lien pour commander</label><input id="ep-li" value="${esc(x.lien || "")}" placeholder="https://…"><label>Modèles</label><div id="mp-e"></div><button class="btn" onclick="savePiece2('` + sku + `')">Enregistrer</button><div class="err" id="ep-err"></div></div>`;
   mpDraw("e");
+  $("stkEditBox").scrollIntoView({ block: "start" });
 }
 async function deleteStock(sku) {
   const x = S.stock.find((y) => y.sku === sku);
@@ -11746,7 +11799,9 @@ async function savePiece2(sku) {
     return;
   }
   const modeles = MP.e || [];
-  const { error } = await SB.from("stock").update({ nom, type: typeOf(modeles), modeles, modele: modeles.join(", ") || null }).eq("sku", sku);
+  const ancien = S.stock.find((y) => y.sku === sku) || {};
+  const ch = stkChampsForm({ cat: "ep-cat", px: "ep-px", dt: "ep-dt", li: "ep-li" });
+  const { error } = await SB.from("stock").update(Object.assign({ nom, type: typeOf(modeles), modeles, modele: modeles.join(", ") || null }, stkPayload(ch, ancien))).eq("sku", sku);
   if (error) {
     err.textContent = msgErr(error);
     return;
@@ -12456,7 +12511,7 @@ function detailView() {
     ${acoNonReparti(d) > 0 ? '<div class="m" style="margin-top:6px">Acompte déjà enregistré, non réparti entre espèces et virement : ' + eur(acoNonReparti(d)) + "</div>" : ""}
     <div class="two"><div><label>Acompte espèces (€)</label><input id="dAcoE" inputmode="decimal" value="${d.acompte_especes || ""}" placeholder="0" oninput="numOnly(this);updateReste()" onchange="fSave('acompte_especes', this.value)"></div><div><label>Acompte virement (€)</label><input id="dAcoV" inputmode="decimal" value="${d.acompte_virement || ""}" placeholder="0" oninput="numOnly(this);updateReste()" onchange="fSave('acompte_virement', this.value)"></div></div>
     <div class="two"><div><label>Virement reçu (€)</label><input id="pV" inputmode="decimal" value="${d.paye_virement || ""}" placeholder="0" oninput="numOnly(this);updateReste()" onchange="fSave('paye_virement', this.value)"></div><div><label>Espèces reçues (€)</label><input id="pE" inputmode="decimal" value="${d.paye_especes || ""}" placeholder="0" oninput="numOnly(this);updateReste()" onchange="fSave('paye_especes', this.value)"></div></div>
-    <div class="two"><div><label>Reprise : appareil</label><input id="dRepA" value="${esc(d.reprise_appareil || "")}" placeholder="ex. Switch V1" onchange="fSave('reprise_appareil', this.value)"></div><div><label>Montant de la reprise (€)</label><input id="dRep" inputmode="decimal" value="${d.reprise_montant || ""}" placeholder="0" oninput="numOnly(this);updateReste()" onchange="fSave('reprise_montant', this.value)"></div></div>
+    <div class="two"><div><label>Reprise : appareil</label><select id="dRepA" onchange="fSave('reprise_appareil', this.value)">${repDossierOpts(d.reprise_appareil || "")}</select></div><div><label>Montant de la reprise (€)</label><input id="dRep" inputmode="decimal" value="${d.reprise_montant || ""}" placeholder="0" oninput="numOnly(this);updateReste()" onchange="fSave('reprise_montant', this.value)"></div></div>
     <div id="resteBox" style="text-align:center;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:19px;font-weight:400;letter-spacing:.03em;margin:12px 0"></div>
   </div>
   <h2>Photos</h2>
@@ -12798,7 +12853,7 @@ async function savePiece(did) {
     $("pErr").textContent = msgErr(e1);
     return;
   }
-  const { error: e2 } = await SB.from("pieces_dossier").insert({ dossier_id: did, nom, qte: n, statut: "À commander", sku });
+  const { error: e2 } = await SB.from("pieces_dossier").insert(Object.assign({ dossier_id: did, nom, qte: n, statut: "À commander", sku }, stkCoutPiece(sku)));
   if (e2) {
     $("pErr").textContent = msgErr(e2);
     return;
@@ -12825,7 +12880,7 @@ async function addPiece(did, sku) {
     $("pErr").textContent = msgErr(r.error);
     return;
   }
-  const { error } = await SB.from("pieces_dossier").insert({ dossier_id: did, nom: s.nom, qte: n, statut: "Réservée", sku: s.sku });
+  const { error } = await SB.from("pieces_dossier").insert(Object.assign({ dossier_id: did, nom: s.nom, qte: n, statut: "Réservée", sku: s.sku }, stkCoutPiece(s.sku)));
   if (error) {
     $("pErr").textContent = msgErr(error);
     return;
@@ -12869,13 +12924,46 @@ async function addPieceCmd(did, sku) {
     $("pErr").textContent = "Quantité invalide.";
     return;
   }
-  const { error } = await SB.from("pieces_dossier").insert({ dossier_id: did, nom: s.nom, qte: n, statut: "À commander", sku: s.sku });
+  const { error } = await SB.from("pieces_dossier").insert(Object.assign({ dossier_id: did, nom: s.nom, qte: n, statut: "À commander", sku: s.sku }, stkCoutPiece(s.sku)));
   if (error) {
     $("pErr").textContent = msgErr(error);
     return;
   }
   toast("Pièce ajoutée à commander");
   await reload();
+}
+function stkChampsForm(ids) {
+  const v = (id) => { const e = $(id); return e ? e.value.trim() : ""; };
+  const px = v(ids.px);
+  return { categorie: v(ids.cat) || null, prix: px === "" ? null : pnumP(px), prix_date: v(ids.dt) || null, lien: v(ids.li) || null };
+}
+function stkPayload(ch, ancien) {
+  /* On n'envoie une colonne que si on la remplit ou si elle avait une valeur (pour pouvoir l'effacer) */
+  const out = {};
+  Object.keys(ch).forEach((k) => {
+    const old = ancien ? ancien[k] : null;
+    if (ch[k] != null || (old != null && old !== "")) out[k] = ch[k];
+  });
+  return out;
+}
+function stkAge(s) {
+  if (s.created_at) return Date.parse(s.created_at) || 0;
+  return parseInt(String(s.sku).replace(/\D/g, ""), 10) || 0;
+}
+function stkPrixTxt(s) {
+  return eur(s.prix) + (s.prix_date ? " · au " + fr(String(s.prix_date).slice(0, 10)) : "");
+}
+/* Coût réparateur recopié depuis le stock : seulement prix_ttc / prix_ht de la pièce de réparation, jamais le champ client */
+function stkCoutPiece(sku) {
+  const s = S.stock.find((x) => x.sku === sku);
+  if (!s || s.prix == null || s.prix === "") return {};
+  const ttc = +s.prix;
+  return { prix_ttc: ttc, prix_ht: roundP(ttc / PIECE_TVA) };
+}
+var STK_CATS = ["Écran", "Batterie", "Châssis", "Vitre arrière", "Caméra", "Bouton", "Autre"];
+var STK_CAT = "";
+function catSelHtml(id, cur, ph) {
+  return '<select id="' + id + '"><option value="">' + ph + '</option>' + STK_CATS.map((c) => '<option' + (c === cur ? ' selected' : '') + '>' + esc(c) + '</option>').join("") + '</select>';
 }
 var STK_Q = "", STK_SORT = "nom", STK_TYPE = "", STK_ST = "", STK_MQ = "", STK_MO = "", STK_ADD = false;
 var ASORT = "nom", ATYPE = "", AST = "", AGRADE = "";
@@ -12899,7 +12987,8 @@ function stkListes() {
 }
 function stkControls() {
   const L = stkListes(), lbl = (t) => '<div class="m" style="margin:8px 0 2px;font-weight:600">' + t + "</div>";
-  return '<div style="margin:8px 0">' + lbl("Filtrer par type") + `<select onchange="STK_TYPE=this.value;STK_MQ='';STK_MO='';render()">` + optList(L.types, STK_TYPE, "Tous les types") + "</select>" + lbl("Filtrer par marque") + `<select onchange="STK_MQ=this.value;STK_MO='';render()">` + optList(L.marques, STK_MQ, "Toutes les marques") + "</select>" + lbl("Filtrer par modèle") + '<select onchange="STK_MO=this.value;render()">' + optList(L.modeles, STK_MO, "Tous les modèles") + "</select>" + lbl("Filtrer par stock") + '<select onchange="STK_ST=this.value;render()">' + selOpts([["", "Tous"], ["dispo", "En stock"], ["rupture", "Rupture"]], STK_ST) + '</select></div><div class="row" style="gap:6px;flex-wrap:wrap;margin:0 0 8px"><select onchange="STK_SORT=this.value;render()">' + selOpts([["nom", "Trier : nom"], ["type", "Trier : type"], ["qte", "Trier : quantité dispo"], ["res", "Trier : réservé"]], STK_SORT) + "</select></div>";
+  const catOpts = ['<option value="">Toutes les pièces</option>'].concat(STK_CATS.map((c) => '<option' + (c === STK_CAT ? " selected" : "") + ">" + esc(c) + "</option>"), ['<option value="__sans"' + (STK_CAT === "__sans" ? " selected" : "") + ">Sans type</option>"]).join("");
+  return '<div style="margin:8px 0">' + lbl("Filtrer par pièce") + `<select onchange="STK_CAT=this.value;render()">` + catOpts + "</select>" + lbl("Filtrer par type") + `<select onchange="STK_TYPE=this.value;STK_MQ='';STK_MO='';render()">` + optList(L.types, STK_TYPE, "Tous les types") + "</select>" + lbl("Filtrer par marque") + `<select onchange="STK_MQ=this.value;STK_MO='';render()">` + optList(L.marques, STK_MQ, "Toutes les marques") + "</select>" + lbl("Filtrer par modèle") + '<select onchange="STK_MO=this.value;render()">' + optList(L.modeles, STK_MO, "Tous les modèles") + "</select>" + lbl("Filtrer par stock") + '<select onchange="STK_ST=this.value;render()">' + selOpts([["", "Tous"], ["dispo", "En stock"], ["rupture", "Rupture"]], STK_ST) + '</select></div><div class="row" style="gap:6px;flex-wrap:wrap;margin:0 0 8px"><select onchange="STK_SORT=this.value;render()">' + selOpts([["nom", "Trier : nom"], ["type", "Trier : type"], ["recent", "Trier : plus récents"], ["ancien", "Trier : plus anciens"], ["qte", "Trier : quantité dispo"], ["res", "Trier : réservé"]], STK_SORT) + "</select></div>";
 }
 function stkAddToggle() {
   STK_ADD = !STK_ADD;
@@ -12919,7 +13008,8 @@ function stkLoadW() {
   }
 }
 function stkApplyW() {
-  if (STK_W) document.documentElement.style.setProperty("--stk-cols", STK_W.map((w) => Math.round(w) + "px").join(" ") + " 300px");
+  const MINS = [120, 80, 120, 120, 130];
+  if (STK_W) document.documentElement.style.setProperty("--stk-cols", STK_W.map((w, i) => "minmax(" + MINS[i] + "px," + Math.max(1, Math.round(w)) + "fr)").join(" ") + " minmax(170px,300px)");
   else document.documentElement.style.removeProperty("--stk-cols");
 }
 function stkResize(e, i) {
@@ -12957,9 +13047,12 @@ function stkHtml(q) {
   const cmp = {
     type: (a, b) => String(a.type || "").localeCompare(String(b.type || "")) || String(a.nom).localeCompare(String(b.nom)),
     qte: (a, b) => (b.qte || 0) - (a.qte || 0),
-    res: (a, b) => (b.res || 0) - (a.res || 0)
+    res: (a, b) => (b.res || 0) - (a.res || 0),
+    /* Date d'ajout si la table la fournit, sinon le numéro de référence (PC-…) qui suit l'ordre d'ajout */
+    recent: (a, b) => stkAge(b) - stkAge(a) || String(a.nom).localeCompare(String(b.nom)),
+    ancien: (a, b) => stkAge(a) - stkAge(b) || String(a.nom).localeCompare(String(b.nom))
   }[STK_SORT] || ((a, b) => String(a.nom).localeCompare(String(b.nom)));
-  const list = S.stock.filter((s) => !term || [s.sku, s.nom, s.type, s.modele].some((v) => nz(v).indexOf(term) > -1)).filter((s) => !STK_TYPE || s.type === STK_TYPE).filter((s) => !STK_MQ || stkPartsOf(s).some((p) => p.m === STK_MQ)).filter((s) => !STK_MO || stkPartsOf(s).some((p) => p.mo === STK_MO)).filter((s) => !STK_ST || (STK_ST === "dispo" ? s.qte > 0 : !(s.qte > 0))).sort(cmp);
+  const list = S.stock.filter((s) => !term || [s.sku, s.nom, s.type, s.modele].some((v) => nz(v).indexOf(term) > -1)).filter((s) => !STK_CAT || (STK_CAT === "__sans" ? !s.categorie : s.categorie === STK_CAT)).filter((s) => !STK_TYPE || s.type === STK_TYPE).filter((s) => !STK_MQ || stkPartsOf(s).some((p) => p.m === STK_MQ)).filter((s) => !STK_MO || stkPartsOf(s).some((p) => p.mo === STK_MO)).filter((s) => !STK_ST || (STK_ST === "dispo" ? s.qte > 0 : !(s.qte > 0))).sort(cmp);
   if (!list.length) return '<p class="m">Aucune pièce trouvée.</p>';
   stkLoadW();
   stkApplyW();
@@ -12967,12 +13060,12 @@ function stkHtml(q) {
   const head = '<div class="stk-row stk-head"><span class="m ab-cell" style="font-weight:600">Nom' + rz(0) + '</span><span class="m ab-cell" style="font-weight:600">Type' + rz(1) + '</span><span class="m ab-cell" style="font-weight:600">Modèle' + rz(2) + '</span><span class="m ab-cell stk-x" style="font-weight:600">Référence' + rz(3) + '</span><span class="m ab-cell stk-x" style="font-weight:600">Réservé' + rz(4) + '</span><div class="stk-act"></div></div>';
   const rows = list.map((s) => `<div id="s-${esc(s.sku)}">
     <div class="stk-row">
-      <b class="ab-cell">${esc(s.nom)}${stkRepere(s)}</b><span class="ab-cell">${esc(s.type)}</span><span class="ab-cell">${esc(s.modele)}</span>
+      <b class="ab-cell">${esc(s.nom)}${s.categorie ? ' <span class="chip" style="font-size:12px;padding:2px 8px;font-weight:600">' + esc(s.categorie) + "</span>" : ""}${s.lien ? ' <a class="chip" href="' + esc(s.lien) + '" target="_blank" rel="noopener" style="font-size:12px;padding:2px 8px;text-decoration:none">Commander ↗</a>' : ""}${stkRepere(s)}${s.prix != null && s.prix !== "" ? '<span class="m" style="display:block;font-weight:400;font-size:13px">' + esc(stkPrixTxt(s)) + "</span>" : ""}</b><span class="ab-cell">${esc(s.type)}</span><span class="ab-cell">${stkPartsOf(s).length ? stkPartsOf(s).map((p) => '<span style="display:block">' + esc(p.mo) + "</span>").join("") : esc(s.modele)}</span>
       <span class="ab-cell code stk-x">${esc(s.sku)}</span><span class="ab-cell stk-x">Réservé : ${s.res}</span>
       <div class="stk-act"><button class="chip" onclick="adjStock('${esc(s.sku)}',-1)">−</button><span class="chip ${s.qte > 0 ? "ok" : "late"}">${s.qte > 0 ? s.qte + " dispo" : "Rupture"}</span><button class="chip" onclick="adjStock('${esc(s.sku)}',1)">+</button><button class="btn sq ghost" title="Modifier cette pièce" aria-label="Modifier cette pièce" onclick="editPiece('${esc(s.sku)}')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button><button class="btn sq ghost" title="Supprimer cette pièce" aria-label="Supprimer cette pièce" onclick="deleteStock('${esc(s.sku)}')"><span class="ic" style="transform:rotate(45deg)"></span></button></div>
     </div>
     <div id="pe-${esc(s.sku)}"></div></div>`).join("");
-  return '<div class="stk-wrap">' + (STK_W ? '<div class="m" style="text-align:right;margin-bottom:4px"><button class="chip" onclick="stkResetW()">Largeurs par défaut</button></div>' : "") + head + rows + "</div>";
+  return '<div class="stk-wrap">' + (STK_W ? '<div class="m" style="text-align:right;margin-bottom:4px"><button class="chip" onclick="stkResetW()">Largeurs par défaut</button></div>' : "") + '<div id="stkEditBox" class="stk-edit-box"></div>' + head + rows + "</div>";
 }
 async function addStock() {
   const err = $("sErr");
@@ -12983,7 +13076,8 @@ async function addStock() {
     return;
   }
   const max = S.stock.reduce((t, s) => Math.max(t, parseInt(String(s.sku).replace(/\D/g, ""), 10) || 0), 1e3);
-  const { error } = await SB.from("stock").insert({ sku: "PC-" + (max + 1), nom, type: typeOf(modeles), modeles, modele: modeles.join(", "), qte: q, res: 0 });
+  const ch = stkChampsForm({ cat: "sCat", px: "sPx", dt: "sDt", li: "sLi" });
+  const { error } = await SB.from("stock").insert(Object.assign({ sku: "PC-" + (max + 1), nom, type: typeOf(modeles), modeles, modele: modeles.join(", "), qte: q, res: 0 }, stkPayload(ch, null)));
   if (error) {
     err.textContent = msgErr(error);
     return;
