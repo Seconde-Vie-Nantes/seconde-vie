@@ -11470,7 +11470,8 @@ function piecesChoixHtml(k) {
 }
 function piecesPrevInner(k) {
   const L = PIECES_PREV[k] || [];
-  const dev = k === "n" && $("nD") ? S.devices.find((x) => x.id === $("nD").value) : null;
+  /* « n » : formulaire général (appareil choisi dans le menu) ; sinon k est l’identifiant de l’appareil de la fiche */
+  const dev = k === "n" ? ($("nD") ? S.devices.find((x) => x.id === $("nD").value) : null) : S.devices.find((x) => x.id === k) || null;
   const liees = piecesPourAppareil(dev);
   const opts = liees.map((x) => '<option value="' + esc(x.sku) + '">' + esc(x.nom) + " · " + x.qte + " dispo</option>").join("");
   const vide = !dev ? "- choisis d’abord un appareil -" : liees.length ? "- choisir une pièce de cet appareil -" : "- aucune pièce liée à cet appareil -";
