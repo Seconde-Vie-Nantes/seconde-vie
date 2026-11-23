@@ -9630,7 +9630,7 @@ function dossierCard(d, cli) {
     ${stepsHtml(d.statut)}
     ${d.statut === "Remis" ? `<div class="row" style="margin-top:8px"><span class="chip">${d.echeance ? "Remis le " + fr(d.echeance) : "Remis"}</span></div>` : ""}
     ${pretBloc}
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px"><div>${pieceInner(d)}</div>${payChip(d)}</div>${cli ? piecesSuiviHtml(d) : ""}${cli ? '<div class="m" style="margin-top:6px">' + (CLI_DET === d.id ? "Masquer le détail du prix ▴" : "Voir le détail du prix ▾") + "</div>" : ""}${cli && CLI_DET === d.id ? cliPrixHtml(d) : ""}</div>`;
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px"><div>${pieceInner(d)}</div>${payChip(d)}</div>${cli ? piecesSuiviHtml(d) : ""}${cli ? cliPrixResume(d) : ""}${cli ? '<div class="m" style="margin-top:6px">' + (CLI_DET === d.id ? "Masquer le détail du prix ▴" : "Voir le détail du prix ▾") + "</div>" : ""}${cli && CLI_DET === d.id ? cliPrixHtml(d) : ""}</div>`;
 }
 /* Espace client : détail du prix d’une réparation (ouvert au clic sur la carte) */
 var CLI_DET = null;
@@ -9638,14 +9638,21 @@ function cliDetToggle(id) {
   CLI_DET = CLI_DET === id ? null : id;
   render();
 }
+/* Espace client : prix de la pièce et main-d’œuvre visibles directement sur la carte */
+function cliPrixResume(d) {
+  const aVal = (x) => x != null && x !== "";
+  if (!aVal(d.piece_client) && !aVal(d.mo_client)) return "";
+  return '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">' + (aVal(d.piece_client) ? '<span class="chip">Pièce : ' + esc(eur(d.piece_client)) + "</span>" : "") + (aVal(d.mo_client) ? '<span class="chip">Main-d’œuvre : ' + esc(eur(d.mo_client)) + "</span>" : "") + "</div>";
+}
 function cliPrixHtml(d) {
   const p = payInfo(d);
   const ligne = (l, v, col) => '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:6px 0;border-bottom:1px solid var(--line,#e5e7eb)"><span class="m">' + l + '</span><b' + (col ? ' style="color:' + col + '"' : "") + ">" + v + "</b></div>";
   let h = '<div class="card" style="margin:10px 0 0;padding:10px 12px;cursor:default" onclick="event.stopPropagation()">';
   if (Array.isArray(d.lignes) && d.lignes.length) d.lignes.forEach((x) => (h += ligne(esc(x.nom) + (x.remise ? ' <span style="font-size:12px">(remise ' + esc(x.remise) + ")</span>" : ""), x.prix == null ? "À définir" : eur(x.prix))));
   h += ligne(Array.isArray(d.lignes) && d.lignes.length ? "Total de la réparation" : "Prix de la réparation", p.prix == null ? "À définir" : eur(p.prix));
-  if (d.piece_client != null && d.piece_client !== "") h += ligne("Pièce", eur(d.piece_client));
-  if (d.mo_client != null && d.mo_client !== "") h += ligne("Main-d’œuvre", eur(d.mo_client));
+  const aVal = (x) => x != null && x !== "";
+  h += ligne("Prix de la pièce", aVal(d.piece_client) ? eur(d.piece_client) : "—");
+  h += ligne("Main-d’œuvre", aVal(d.mo_client) ? eur(d.mo_client) : "—");
   h += ligne("Déjà payé", eur(p.tot));
   if (p.rep > 0) h += ligne("Reprise", eur(p.rep));
   if (p.trop > 0) h += ligne("Trop perçu", eur(p.trop), "var(--bad,#dc2626)");
