@@ -7909,6 +7909,7 @@ const REP = {
       <label>Panne / prestation *</label><select id="nR" onchange="nRPick()"><option value="">- choisis d’abord un appareil -</option></select>
       <input id="nW" placeholder="Nom de la prestation" style="display:none;margin-top:6px">
       <div class="two"><div><label>Prix (€)</label><input id="nP" inputmode="decimal" placeholder="à définir" oninput="nFinal()"></div><div><label>Durée de réparation</label><input id="nDu" placeholder="Ex. 1h"></div></div>
+      ${repLBouton("n")}
       <div class="two"><div><label>Remise</label><input id="nRm" inputmode="decimal" placeholder="0" oninput="nFinal()"></div><div><label>Unité</label><select id="nRu" onchange="nFinal()"><option value="eur">€</option><option value="pct">%</option></select></div></div>
       <div class="m" id="nFinal" style="margin:4px 0 8px">Prix final : à définir</div>
       <label>Retour prévu</label><input id="nE" type="date"><label class="sg-lbl"><input type="checkbox" id="nSG" class="sg-case"${NEW_SANS_GAR ? " checked" : ""} onchange="nSgBascule()"> Pas de garantie</label>
@@ -9641,7 +9642,8 @@ function cliPrixHtml(d) {
   const p = payInfo(d);
   const ligne = (l, v, col) => '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:6px 0;border-bottom:1px solid var(--line,#e5e7eb)"><span class="m">' + l + '</span><b' + (col ? ' style="color:' + col + '"' : "") + ">" + v + "</b></div>";
   let h = '<div class="card" style="margin:10px 0 0;padding:10px 12px;cursor:default" onclick="event.stopPropagation()">';
-  h += ligne("Prix de la réparation", p.prix == null ? "À définir" : eur(p.prix));
+  if (Array.isArray(d.lignes) && d.lignes.length) d.lignes.forEach((x) => (h += ligne(esc(x.nom) + (x.remise ? ' <span style="font-size:12px">(remise ' + esc(x.remise) + ")</span>" : ""), x.prix == null ? "À définir" : eur(x.prix))));
+  h += ligne(Array.isArray(d.lignes) && d.lignes.length ? "Total de la réparation" : "Prix de la réparation", p.prix == null ? "À définir" : eur(p.prix));
   if (d.piece_client != null && d.piece_client !== "") h += ligne("Pièce", eur(d.piece_client));
   if (d.mo_client != null && d.mo_client !== "") h += ligne("Main-d’œuvre", eur(d.mo_client));
   h += ligne("Déjà payé", eur(p.tot));
@@ -10046,10 +10048,18 @@ async function abCascade(ancien, nouv) {
   note(await SB.from("stock_appareils").update({ appareil: nouv.type, modele: nouv.modele }).eq("appareil", ancien.type).eq("modele", ancien.modele));
   if (ids.length) {
     note(await SB.from("devices").update({ type: nouv.type, modele: nouv.modele }).in("id", ids));
-    const prestations = (S.dossiers || []).filter((x) => ids.indexOf(x.device_id) > -1 && String(x.appareil || "").indexOf(ancien.modele) > -1);
-    for (const x of prestations) {
-      note(await SB.from("dossiers").update({ appareil: String(x.appareil).replace(ancien.modele, nouv.modele) }).eq("id", x.id));
+    /* Texte des réparations reconstruit en entier : « Marque · Modèle · Couleur » */
+    for (const x of (S.dossiers || []).filter((x) => ids.indexOf(x.device_id) > -1)) {
+      const dv = devs.find((d) => d.id === x.device_id);
+      const txt = [nouv.marque, nouv.modele].filter(Boolean).join(" · ") + (dv && dv.couleur ? " · " + dv.couleur : "");
+      if (txt !== x.appareil) note(await SB.from("dossiers").update({ appareil: txt }).eq("id", x.id));
     }
+  }
+  /* Pièces du stock reliées à ce modèle (« Type · Marque · Modèle ») */
+  const vieux = [ancien.type, ancien.marque, ancien.modele].join(" · "), neuf = [nouv.type, nouv.marque, nouv.modele].join(" · ");
+  for (const x of (S.stock || []).filter((x) => Array.isArray(x.modeles) && x.modeles.indexOf(vieux) > -1)) {
+    const ms = [...new Set(x.modeles.map((m) => (m === vieux ? neuf : m)))];
+    note(await SB.from("stock").update(x.modele === vieux ? { modeles: ms, modele: neuf } : { modeles: ms }).eq("sku", x.sku));
   }
   if (erreurs.length) toast("Renommage incomplet : " + erreurs[0]);
 }
@@ -10088,7 +10098,7 @@ async function abSauver(id) {
   AB_EDIT = null;
   AB_CL.edit = [];
   AB_DRAFT.edit = { nom: "", hex: "", img: "" };
-  if (avant && (avant.modele !== modele || avant.type !== type)) await abCascade(avant, { type, modele });
+  if (avant && (avant.modele !== modele || avant.type !== type || avant.marque !== marque)) await abCascade(avant, { type, marque, modele });
   toast("Appareil modifié");
   await reload();
 }
@@ -10118,7 +10128,7 @@ function abLigne(x) {
   const nPh = (S.photos || []).filter((p) => p.appareil_base_id === x.id).length, ouvert = AB_PHOTO_OPEN === x.id;
   const vig = baseModelePhoto(x, "");
   const vignette = vig ? '<img src="' + esc(vig) + '" alt="" style="width:44px;height:44px;object-fit:contain;border-radius:8px;flex:none;display:block;background:#fff">' : '<span style="width:44px;height:44px;border-radius:8px;flex:none;display:flex;align-items:center;justify-content:center;background:#EEF1EC">' + ICON_IMG + "</span>";
-  return `<div class="row" onclick="abRowClick(event,'` + x.id + `')" style="align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(128,128,128,.25);flex-wrap:nowrap;cursor:pointer">` + vignette + '<div class="ab-grid"><span class="ab-cell">' + esc(x.type) + '</span><span class="ab-cell">' + esc(x.marque || "Sans marque") + '</span><b class="ab-cell">' + esc(x.modele) + '</b><span class="ab-cell' + (x.couleur ? "" : " m") + '">' + abCoulCellSimple(x.couleur) + '</span></div><div class="ab-acts"><button class="btn sq ghost" title="' + (ouvert ? "Fermer la galerie" : "Photos du modèle") + '" aria-label="' + (ouvert ? "Fermer la galerie" : "Photos du modèle (" + nPh + ")") + '" aria-pressed="' + (ouvert ? "true" : "false") + `" style="position:relative" onclick="abPhotos('` + x.id + `')">` + ICON_IMG + (nPh ? '<span style="position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:var(--line);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center">' + nPh + "</span>" : "") + `</button><button class="chip" onclick="abEdit('` + x.id + `')">Modifier</button><button class="btn sq ghost" title="Retirer cet appareil" aria-label="Retirer cet appareil" onclick="abSupprimer('` + x.id + `')"><span class="ic" style="transform:rotate(45deg)"></span></button></div></div>` + (ouvert ? abFicheHtml(x) : "");
+  return `<div class="row" onclick="abRowClick(event,'` + x.id + `')" style="align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(128,128,128,.25);flex-wrap:nowrap;cursor:pointer">` + vignette + '<div class="ab-grid"><span class="ab-cell">' + esc(x.type) + '</span><span class="ab-cell">' + esc(x.marque || "Sans marque") + '</span><b class="ab-cell">' + esc(x.modele) + '</b><span class="ab-cell' + (x.couleur ? "" : " m") + '">' + abCoulCellSimple(x.couleur) + '</span></div><div class="ab-acts"><button class="btn sq ghost" title="' + (ouvert ? "Fermer la galerie" : "Photos du modèle") + '" aria-label="' + (ouvert ? "Fermer la galerie" : "Photos du modèle (" + nPh + ")") + '" aria-pressed="' + (ouvert ? "true" : "false") + `" style="position:relative" onclick="abPhotos('` + x.id + `')">` + ICON_IMG + (nPh ? '<span style="position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:var(--line);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center">' + nPh + "</span>" : "") + `</button><button class="btn sq ghost" title="Modifier cet appareil" aria-label="Modifier cet appareil" onclick="abEdit('` + x.id + `')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button><button class="btn sq ghost" title="Retirer cet appareil" aria-label="Retirer cet appareil" onclick="abSupprimer('` + x.id + `')"><span class="ic" style="transform:rotate(45deg)"></span></button></div></div>` + (ouvert ? abFicheHtml(x) : "");
 }
 function colId(baseId, nom) {
   return baseId + "::" + encodeURIComponent(nom);
@@ -11286,8 +11296,44 @@ function showDevForm(devId, cid) {
   AB_MM.dvMa = false;
   AB_MM.dvM = false;
   DEV_TEL_LAST = tv === "Téléphone";
-  box.innerHTML = '<div class="card" style="margin:8px 0 0"><label>Type *</label>' + abSelHtml("dvT", tv, abTypes(), "— Choisir un type —", "Nouveau type", true) + "<label>Marque *</label>" + abSelHtml("dvMa", mq, tv ? abMarquesFor(tv) : [], "— Choisir une marque —", "Nouvelle marque", !!tv) + "<label>Modèle *</label>" + abSelHtml("dvM", mv, tv && mq ? abModelesFor(tv, mq) : [], "— Choisir un modèle —", "Nouveau modèle", !!(tv && mq)) + '<label>Couleur</label><input id="dvC" value="' + v(d && d.couleur) + '" placeholder="Ex. Bleu"><label id="dvIdL">' + devIdText(tv) + '</label><input id="dvI" inputmode="numeric" value="' + (unk ? "" : v(idv)) + '"' + (unk ? " disabled" : "") + '><label style="font-weight:400;display:flex;gap:8px;align-items:center;margin-top:6px"><input type="checkbox" id="dvU" onchange="devUnk()" style="width:auto;margin:0"' + (unk ? " checked" : "") + '> Je ne sais pas où le trouver</label><div id="dvCode"></div><label>État</label><input id="dvE" value="' + v(d && d.etat) + '" placeholder="Ex. rayure sur le dos"><button class="btn" onclick="saveDev(' + (devId ? "'" + devId + "'" : "null") + ",'" + owner + `')">` + (d ? "Enregistrer les modifications" : "Enregistrer l’appareil") + '</button><button class="btn ghost" onclick="render()">Annuler</button><div class="err" id="dvErr"></div></div>';
+  box.innerHTML = '<div class="card" style="margin:8px 0 0"><label>Type *</label>' + abSelHtml("dvT", tv, abTypes(), "— Choisir un type —", "Nouveau type", true) + "<label>Marque *</label>" + abSelHtml("dvMa", mq, tv ? abMarquesFor(tv) : [], "— Choisir une marque —", "Nouvelle marque", !!tv) + "<label>Modèle *</label>" + abSelHtml("dvM", mv, tv && mq ? abModelesFor(tv, mq) : [], "— Choisir un modèle —", "Nouveau modèle", !!(tv && mq)) + '<label>Couleur</label><select id="dvCS" onchange="dvCoulPick()"></select><input id="dvC" value="' + v(d && d.couleur) + '" placeholder="Ex. Bleu" style="display:none;margin-top:6px"><label id="dvIdL">' + devIdText(tv) + '</label><input id="dvI" inputmode="numeric" value="' + (unk ? "" : v(idv)) + '"' + (unk ? " disabled" : "") + '><label style="font-weight:400;display:flex;gap:8px;align-items:center;margin-top:6px"><input type="checkbox" id="dvU" onchange="devUnk()" style="width:auto;margin:0"' + (unk ? " checked" : "") + '> Je ne sais pas où le trouver</label><div id="dvCode"></div><label>État</label><input id="dvE" value="' + v(d && d.etat) + '" placeholder="Ex. rayure sur le dos"><button class="btn" onclick="saveDev(' + (devId ? "'" + devId + "'" : "null") + ",'" + owner + `')">` + (d ? "Enregistrer les modifications" : "Enregistrer l’appareil") + '</button><button class="btn ghost" onclick="render()">Annuler</button><div class="err" id="dvErr"></div></div>';
   devCodeFields(d);
+  dvCoulRefresh();
+  /* La liste des couleurs suit le type, la marque et le modèle choisis */
+  if (!box.dataset.coul) {
+    box.dataset.coul = "1";
+    const suivre = (e) => {
+      if (e.target && /^dv(T|Ma|M)S?$/.test(e.target.id)) dvCoulRefresh();
+    };
+    box.addEventListener("change", suivre);
+    box.addEventListener("input", suivre);
+  }
+}
+/* Couleurs proposées : celles du modèle dans la base Appareils, sinon toutes les couleurs connues */
+function dvCoulOpts(cur) {
+  const t = abSelVal("dvT").trim(), ma = abSelVal("dvMa").trim(), mo = abSelVal("dvM").trim();
+  const b = (S.appBase || []).find((x) => x.type === t && x.marque === ma && x.modele === mo);
+  const duModele = b ? abCoulParse(b.couleur).map((c) => c.nom) : [];
+  const list = duModele.length ? duModele : abCouleurs();
+  const tout = cur && list.indexOf(cur) < 0 ? list.concat([cur]) : list;
+  return '<option value="">— Aucune —</option>' + tout.map((n) => '<option value="' + esc(n) + '"' + (n === cur ? " selected" : "") + ">" + esc(n) + "</option>").join("") + '<option value="__autre">Autre (saisie libre)…</option>';
+}
+function dvCoulRefresh() {
+  const sel = $("dvCS"), inp = $("dvC");
+  if (!sel || !inp) return;
+  if (inp.style.display !== "none") return;
+  sel.innerHTML = dvCoulOpts(inp.value.trim());
+}
+function dvCoulPick() {
+  const sel = $("dvCS"), inp = $("dvC");
+  if (sel.value === "__autre") {
+    inp.style.display = "";
+    inp.value = "";
+    inp.focus();
+  } else {
+    inp.style.display = "none";
+    inp.value = sel.value;
+  }
 }
 function devMarqueOf(d) {
   const x = (S.appBase || []).find((b) => b.type === d.type && b.modele === d.modele);
@@ -11301,6 +11347,8 @@ function enrichirAppareils() {
   (S.dossiers || []).forEach((x) => {
     x.appAlerte = "";
     x.appType = "";
+    /* Texte tel qu’enregistré dans la réparation (avant remplacement par le nom actuel de l’appareil) */
+    if (x.appDb === undefined) x.appDb = x.appareil || "";
     if (!x.device_id) {
       if (ROLE === "rep" && !S.appBaseErr) x.appAlerte = "Réparation non reliée à un appareil : à corriger";
       return;
@@ -11312,7 +11360,9 @@ function enrichirAppareils() {
       return;
     }
     if (!S.appBaseErr && baseHasTrio(v.type, devMarqueOf(v), v.modele)) {
-      x.appareil = appareilTexte(v);
+      const txt = appareilTexte(v);
+      if (suivi && x.appDb !== txt) x.appAlerte = "Nom de l’appareil pas à jour dans cette réparation : ouvre l’appareil du client et enregistre-le";
+      x.appareil = txt;
       x.appType = v.type || "";
       return;
     }
@@ -11400,6 +11450,12 @@ async function saveDev(devId, cid) {
     err.textContent = msgErr(res.error);
     return;
   }
+  /* Appareil modifié : le texte de ses réparations suit */
+  if (devId) {
+    const txt = [ma, mo].filter(Boolean).join(" · ") + (row.couleur ? " · " + row.couleur : "");
+    const rd = await SB.from("dossiers").update({ appareil: txt }).eq("device_id", devId);
+    if (rd.error) toast("Appareil modifié, mais pas le nom dans ses réparations : " + msgErr(rd.error));
+  }
   if (ROLE === "rep" && !S.appBaseErr && !baseHasTrio(t, ma, mo)) {
     const rb = await SB.from("appareils_base").insert({ type: t, marque: ma, modele: mo });
     if (rb.error) toast("Appareil enregistré, mais pas ajouté à la base : " + msgErr(rb.error));
@@ -11442,9 +11498,96 @@ function devPage(d) {
   return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><button class="chip" onclick="closeDevPage()">← Retour au client</button><span class="m">Appareil</span></div><div style="display:flex;gap:12px;align-items:center;margin-top:10px"><div style="flex:0 0 84px">' + (modelePhoto(d) ? '<img src="' + modelePhoto(d) + '" alt="' + esc(devNom(d)) + '" style="width:84px;height:84px;object-fit:contain;border-radius:12px;border:1px solid var(--line);background:#fff">' : '<div style="width:84px;height:84px;border-radius:12px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center">' + ICON_IMG + "</div>") + '</div><div style="min-width:0"><div class="t">' + esc(devNom(d)) + (d.couleur ? " · " + esc(d.couleur) : "") + '</div><div class="m">' + esc(d.type || "") + '</div></div></div><div class="m" style="margin-top:10px">' + (tel ? "IMEI" : "N° de série") + ' : <span class="code">' + esc((tel ? d.imei : d.sn) || "–") + "</span></div>" + (tel && d.pin ? '<div class="m">Code PIN : <span class="code">' + esc(d.pin) + "</span></div>" : "") + (tel && d.schema_code ? '<div class="m">Schéma : <span class="code">' + esc(d.schema_code) + "</span></div>" : "") + (d.etat ? '<div class="m">État : ' + esc(d.etat) + "</div>" : "") + `<div style="margin-top:6px;display:flex;gap:6px"><button class="chip" onclick="showDevForm('` + d.id + `')">✏️ Modifier</button>` + (rep ? `<button class="chip late" onclick="delDev('` + d.id + `')">Effacer</button>` : "") + '</div><div id="de-' + d.id + '"></div><h2 style="font-size:15px;margin:12px 0 6px">Photos</h2>' + grille + photoAddHtml("device", d.id, 8) + (rep && tel ? '<h2 style="font-size:15px;margin:14px 0 4px">Qualirépar · IMEI</h2><p class="m" style="font-size:12px">Visible uniquement par toi, jamais par le client.</p>' + photosBloc("quali", d.id) : "") + devRepsBloc(d);
 }
 var DEV_REP_OPEN = null;
+/* Plusieurs réparations dans une même prestation (ex. écran + batterie), chacune avec son prix */
+var REP_L = { d: [], n: [] };
+function repLChamps(k) {
+  return k === "d" ? { r: "drR", w: "drW", p: "drP", du: "drDu", rm: "drRm", ru: "drRu", box: "drL" } : { r: "nR", w: "nW", p: "nP", du: "nDu", rm: "nRm", ru: "nRu", box: "nL" };
+}
+function repLCourante(k) {
+  const F = repLChamps(k), rv = $(F.r) ? $(F.r).value : "";
+  const nom = rv === "autre" ? $(F.w).value.trim() : rv ? String((S.catalogue.find((x) => String(x.id) === rv) || {}).reparation || "") : "";
+  const px = $(F.p) ? String($(F.p).value).trim().replace(",", ".") : "";
+  const rmTxt = $(F.rm) ? String($(F.rm).value).trim().replace(",", ".") : "", rm = rmTxt === "" ? 0 : parseFloat(rmTxt), pct = $(F.ru) ? $(F.ru).value === "pct" : false;
+  const prix = px === "" ? null : parseFloat(px);
+  return { nom, prix, pxTxt: px, rmTxt, rm, pct, fin: prix == null || isNaN(prix) ? null : nRemise(prix, rm > 0 ? rm : 0, pct) };
+}
+function repRemiseOk(c) {
+  return c.rmTxt === "" || (!isNaN(c.rm) && c.rm >= 0 && !(c.pct && c.rm > 100));
+}
+function repRemiseTxt(x) {
+  return x.rm > 0 ? x.rm + (x.pct ? " %" : " €") : "";
+}
+function repLAdd(k) {
+  const F = repLChamps(k), c = repLCourante(k);
+  if (!c.nom) {
+    toast("Choisis une réparation ou saisis son nom.");
+    return;
+  }
+  if (c.pxTxt !== "" && isNaN(c.prix)) {
+    toast("Prix invalide.");
+    return;
+  }
+  if (!repRemiseOk(c)) {
+    toast("Remise invalide.");
+    return;
+  }
+  REP_L[k].push({ nom: c.nom, prix: c.prix, rm: c.rm > 0 ? c.rm : 0, pct: c.pct, fin: c.fin });
+  $(F.r).value = "";
+  $(F.w).value = "";
+  $(F.w).style.display = "none";
+  $(F.p).value = "";
+  if ($(F.rm)) $(F.rm).value = "";
+  repLDraw(k);
+}
+function repLDel(k, i) {
+  REP_L[k].splice(i, 1);
+  repLDraw(k);
+}
+/* Toutes les réparations : celles ajoutées + celle en cours de saisie */
+function repLTout(k) {
+  const c = repLCourante(k), L = REP_L[k].slice();
+  if (c.nom) L.push({ nom: c.nom, prix: isNaN(c.prix) ? null : c.prix, rm: c.rm > 0 && repRemiseOk(c) ? c.rm : 0, pct: c.pct, fin: isNaN(c.prix) || !repRemiseOk(c) ? (isNaN(c.prix) ? null : c.prix) : c.fin });
+  const avecPrix = L.filter((x) => x.prix != null);
+  const r2 = (n) => Math.round(n * 100) / 100;
+  const base = avecPrix.length ? r2(avecPrix.reduce((a, x) => a + x.prix, 0)) : NaN, total = avecPrix.length ? r2(avecPrix.reduce((a, x) => a + x.fin, 0)) : NaN;
+  return { lignes: L, noms: L.map((x) => x.nom).join(" + "), base, total, remise: isNaN(base) ? 0 : r2(base - total) };
+}
+/* Texte de remise pour les notes de la réparation */
+function repRemiseNote(T) {
+  if (!(T.remise > 0)) return "";
+  const avec = T.lignes.filter((x) => x.rm > 0);
+  const quoi = T.lignes.length === 1 ? repRemiseTxt(T.lignes[0]) : avec.map((x) => x.nom + " " + repRemiseTxt(x)).join(", ") + " (soit " + eur(T.remise) + ")";
+  return "Remise : " + quoi + " (prix avant remise : " + eur(T.base) + ")";
+}
+function repLHtml(k) {
+  const L = REP_L[k];
+  if (!L.length) return "";
+  return '<div style="margin-top:8px;border:1px solid var(--line);border-radius:10px;padding:4px 10px">' + L.map((x, i) => '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line)"><div style="flex:1;min-width:0"><div style="overflow-wrap:anywhere">' + esc(x.nom) + '</div><b>' + (x.prix == null ? '<span class="m">prix à définir</span>' : esc(eur(x.fin)) + (x.rm > 0 ? ' <span class="m" style="font-weight:400">(remise ' + esc(repRemiseTxt(x)) + ", au lieu de " + esc(eur(x.prix)) + ")</span>" : "")) + `</b></div><button type="button" class="chip late" title="Retirer" aria-label="Retirer ` + esc(x.nom) + `" onclick="repLDel('` + k + "'," + i + ')">×</button></div>').join("") + '<div class="m" style="padding:6px 0">La réparation choisie ci-dessus s’ajoute aussi à la création.</div></div>';
+}
+function repLDraw(k) {
+  const box = $(repLChamps(k).box);
+  if (box) box.innerHTML = repLHtml(k);
+  if (k === "d") devRepLive();
+  else nFinal();
+}
+function repLBouton(k) {
+  return `<button type="button" class="chip" style="margin-top:8px" onclick="repLAdd('` + k + `')">+ Ajouter une autre réparation</button><div id="` + repLChamps(k).box + '">' + repLHtml(k) + "</div>";
+}
+/* Enregistre la prestation ; le détail (plusieurs réparations) va dans « lignes » si la colonne existe, sinon dans les notes */
+async function repInsert(row, lignes) {
+  if (lignes.length < 2) return await SB.from("dossiers").insert(row).select().single();
+  const det = lignes.map((x) => Object.assign({ nom: x.nom, prix: x.prix == null ? null : x.fin }, x.rm > 0 && x.prix != null ? { prix_avant: x.prix, remise: repRemiseTxt(x) } : {}));
+  let r = await SB.from("dossiers").insert(Object.assign({}, row, { lignes: det })).select().single();
+  if (r.error && /lignes/.test(r.error.message || "")) {
+    const txt = "Détail : " + det.map((x) => x.nom + " " + (x.prix == null ? "(prix à définir)" : eur(x.prix) + (x.remise ? " (remise " + x.remise + ")" : ""))).join(" + ");
+    r = await SB.from("dossiers").insert(Object.assign({}, row, { notes: row.notes ? txt + "\n" + row.notes : txt })).select().single();
+  }
+  return r;
+}
 function devRepToggle(id) {
   DEV_REP_OPEN = DEV_REP_OPEN === id ? null : id;
   PIECES_PREV.d = [];
+  REP_L.d = [];
   CLI_NOANIM = true;
   render();
 }
@@ -11470,8 +11613,8 @@ function piecesChoixHtml(k) {
 }
 function piecesPrevInner(k) {
   const L = PIECES_PREV[k] || [];
-  /* « n » : formulaire général (appareil choisi dans le menu) ; sinon k est l’identifiant de l’appareil de la fiche */
-  const dev = k === "n" ? ($("nD") ? S.devices.find((x) => x.id === $("nD").value) : null) : S.devices.find((x) => x.id === k) || null;
+  /* « n » : formulaire général (appareil choisi dans le menu) ; « d » : fiche de l’appareil dont le formulaire est ouvert */
+  const dev = k === "n" ? ($("nD") ? S.devices.find((x) => x.id === $("nD").value) : null) : k === "d" ? S.devices.find((x) => x.id === DEV_REP_OPEN) || null : S.devices.find((x) => x.id === k) || null;
   const liees = piecesPourAppareil(dev);
   const opts = liees.map((x) => '<option value="' + esc(x.sku) + '">' + esc(x.nom) + " · " + x.qte + " dispo</option>").join("");
   const vide = !dev ? "- choisis d’abord un appareil -" : liees.length ? "- choisir une pièce de cet appareil -" : "- aucune pièce liée à cet appareil -";
@@ -11530,7 +11673,7 @@ function devRepsBloc(d) {
 }
 function devRepForm(d) {
   const k = d.id, L = (t) => '<div class="dr-l">' + t + "</div>";
-  return '<div class="dr-form"><div class="dr-head"><div class="dr-thumb">' + (modelePhoto(d) ? '<img src="' + modelePhoto(d) + '" alt="">' : ICON_IMG) + '</div><div style="min-width:0"><div class="dr-k">Nouvelle prestation</div><div class="t" style="overflow-wrap:anywhere">' + esc(devNom(d)) + (d.couleur ? " · " + esc(d.couleur) : "") + '</div></div></div><div class="dr-grid"><div class="dr-full">' + L("Réparation") + `<select id="drR" onchange="devRepPick('` + k + `')"><option value="">- choisir dans le catalogue -</option>` + nRepOpts(d) + '<option value="autre">Autre (saisie libre)…</option></select><input id="drW" placeholder="Nom de la réparation" style="display:none;margin-top:6px" oninput="devRepLive()"></div><div>' + L("Prix (€)") + '<input id="drP" inputmode="decimal" placeholder="0" oninput="devRepLive()"></div><div>' + L("Remise") + '<div style="display:flex;gap:6px"><input id="drRm" inputmode="decimal" placeholder="0" oninput="devRepLive()" style="flex:1;min-width:0"><select id="drRu" onchange="devRepLive()" style="width:auto"><option value="eur">€</option><option value="pct">%</option></select></div></div><div>' + L("Durée") + '<input id="drDu" placeholder="ex. 2 h" oninput="devRepLive()"></div><div>' + L("Prêt pour le") + '<input id="drE" type="date" onchange="devRepLive()"></div><div class="dr-full">' + L("Notes") + '<textarea id="drNo" rows="2" placeholder="Facultatif"></textarea></div></div>' + piecesChoixHtml("d") + '<div id="drPrev" class="dr-prev">' + devRepPreviewHtml({ name: "", base: NaN, fin: NaN, rm: 0, pct: false, duree: "", echeance: "" }) + `</div><div id="drErr" class="err"></div><button class="btn" style="width:100%" onclick="devRepCreate('` + k + `')">Créer la réparation</button></div>`;
+  return '<div class="dr-form"><div class="dr-head"><div class="dr-thumb">' + (modelePhoto(d) ? '<img src="' + modelePhoto(d) + '" alt="">' : ICON_IMG) + '</div><div style="min-width:0"><div class="dr-k">Nouvelle prestation</div><div class="t" style="overflow-wrap:anywhere">' + esc(devNom(d)) + (d.couleur ? " · " + esc(d.couleur) : "") + '</div></div></div><div class="dr-grid"><div class="dr-full">' + L("Réparation") + `<select id="drR" onchange="devRepPick('` + k + `')"><option value="">- choisir dans le catalogue -</option>` + nRepOpts(d) + '<option value="autre">Autre (saisie libre)…</option></select><input id="drW" placeholder="Nom de la réparation" style="display:none;margin-top:6px" oninput="devRepLive()"></div><div>' + L("Prix (€)") + '<input id="drP" inputmode="decimal" placeholder="0" oninput="devRepLive()"></div><div>' + L("Remise") + '<div style="display:flex;gap:6px"><input id="drRm" inputmode="decimal" placeholder="0" oninput="devRepLive()" style="flex:1;min-width:0"><select id="drRu" onchange="devRepLive()" style="width:auto"><option value="eur">€</option><option value="pct">%</option></select></div></div><div class="dr-full">' + repLBouton("d") + '</div><div>' + L("Durée") + '<input id="drDu" placeholder="ex. 2 h" oninput="devRepLive()"></div><div>' + L("Prêt pour le") + '<input id="drE" type="date" onchange="devRepLive()"></div><div class="dr-full">' + L("Notes") + '<textarea id="drNo" rows="2" placeholder="Facultatif"></textarea></div></div>' + piecesChoixHtml("d") + '<div id="drPrev" class="dr-prev">' + devRepPreviewHtml({ name: "", base: NaN, fin: NaN, rm: 0, pct: false, duree: "", echeance: "" }) + `</div><div id="drErr" class="err"></div><button class="btn" style="width:100%" onclick="devRepCreate('` + k + `')">Créer la réparation</button></div>`;
 }
 function devRepPick(k) {
   const v = $("drR").value, w = $("drW");
@@ -11544,21 +11687,17 @@ function devRepPick(k) {
     w.style.display = "none";
     w.value = r ? r.reparation : "";
     $("drP").value = r && r.prix != null && !isNaN(+r.prix) ? String(+r.prix) : "";
-    $("drDu").value = r && r.duree ? r.duree : "";
+    if (!(REP_L.d.length && $("drDu").value.trim())) $("drDu").value = r && r.duree ? r.duree : "";
   }
   devRepLive();
 }
 function devRepRead() {
-  const rv = $("drR").value;
-  const name = rv === "autre" ? $("drW").value.trim() : rv ? String((S.catalogue.find((x) => String(x.id) === rv) || {}).reparation || "") : "";
-  const base = parseFloat(String($("drP").value).replace(",", "."));
-  const rm = parseFloat(String($("drRm").value).replace(",", ".")) || 0, pct = $("drRu").value === "pct";
-  const fin = isNaN(base) ? NaN : nRemise(base, rm, pct);
-  return { name, base, rm, pct, fin, duree: $("drDu").value.trim(), echeance: $("drE").value };
+  const T = repLTout("d");
+  return { name: T.noms, base: T.base, rm: T.remise, pct: false, fin: T.total, duree: $("drDu").value.trim(), echeance: $("drE").value, lignes: T.lignes, T };
 }
 function devRepPreviewHtml(v) {
   const prix = isNaN(v.fin) ? "Prix à définir" : eur(v.fin);
-  return '<div class="dr-ticket"><div class="dr-k">Aperçu de la réparation</div><div class="dr-tname">' + (v.name ? esc(v.name) : '<span class="m">Nom de la réparation</span>') + '</div><div class="dr-chips"><span class="dr-pill">' + prix + "</span>" + (v.rm > 0 ? '<span class="chip">Remise ' + v.rm + (v.pct ? " %" : " €") + "</span>" : "") + (v.duree ? '<span class="chip">' + esc(v.duree) + "</span>" : "") + (v.echeance ? '<span class="chip">Prêt pour le ' + fr(v.echeance) + "</span>" : "") + "</div></div>";
+  return '<div class="dr-ticket"><div class="dr-k">Aperçu de la réparation</div><div class="dr-tname">' + (v.name ? esc(v.name) : '<span class="m">Nom de la réparation</span>') + '</div><div class="dr-chips"><span class="dr-pill">' + prix + "</span>" + (v.rm > 0 ? '<span class="chip">Remise ' + (v.pct ? v.rm + " %" : eur(v.rm)) + "</span>" : "") + (v.duree ? '<span class="chip">' + esc(v.duree) + "</span>" : "") + (v.echeance ? '<span class="chip">Prêt pour le ' + fr(v.echeance) + "</span>" : "") + "</div></div>";
 }
 function devRepLive() {
   const box = $("drPrev");
@@ -11578,17 +11717,19 @@ async function devRepCreate(devId) {
     err.textContent = "Choisis une réparation ou saisis son nom.";
     return;
   }
-  if ($("drP").value.trim() !== "" && isNaN(v.base)) {
+  const cc = repLCourante("d");
+  if (cc.pxTxt !== "" && isNaN(cc.prix)) {
     err.textContent = "Prix invalide.";
     return;
   }
-  if (isNaN(v.rm) || v.rm < 0 || v.pct && v.rm > 100) {
+  if (!repRemiseOk(cc)) {
     err.textContent = "Remise invalide.";
     return;
   }
   let fin = isNaN(v.base) ? null : v.fin, notes = $("drNo").value.trim();
-  if (fin !== null && v.rm > 0) notes = "Remise : " + v.rm + (v.pct ? " %" : " €") + " (prix avant remise : " + v.base + " €)" + (notes ? "\n" + notes : "");
-  const { data, error } = await SB.from("dossiers").insert({
+  const nr = repRemiseNote(v.T);
+  if (fin !== null && nr) notes = nr + (notes ? "\n" + notes : "");
+  const { data, error } = await repInsert({
     client_id: d.client_id,
     type: "Réparation",
     appareil: appareilTexte(d),
@@ -11599,12 +11740,13 @@ async function devRepCreate(devId) {
     duree: durNorm(v.duree),
     echeance: v.echeance || null,
     notes: notes || null
-  }).select().single();
+  }, v.lignes);
   if (error) {
     err.textContent = msgErr(error);
     return;
   }
   await piecesPrevLier(data.id, "d");
+  REP_L.d = [];
   DEV_REP_OPEN = null;
   CLI_NOANIM = true;
   await loadAll();
@@ -12016,6 +12158,8 @@ function nRepOpts(dv) {
 function nDPick() {
   const dv = S.devices.find((d) => d.id === $("nD").value);
   piecesPrevDraw("n");
+  REP_L.n = [];
+  repLDraw("n");
   $("nR").innerHTML = '<option value="">' + (dv ? "- choisir une réparation -" : "- choisis d’abord un appareil -") + "</option>" + (dv ? nRepOpts(dv) : "") + '<option value="autre">Autre (saisie libre)…</option>';
   $("nW").style.display = "none";
   $("nW").value = "";
@@ -12036,7 +12180,7 @@ function nRPick() {
     w.style.display = "none";
     w.value = r ? r.reparation : "";
     $("nP").value = r && r.prix != null && !isNaN(+r.prix) ? String(+r.prix) : "";
-    $("nDu").value = r && r.duree ? r.duree : "";
+    if (!(REP_L.n.length && $("nDu").value.trim())) $("nDu").value = r && r.duree ? r.duree : "";
   }
   nFinal();
 }
@@ -12046,10 +12190,8 @@ function nRemise(base, rm, pct) {
   return Math.max(0, Math.round((pct ? base * (1 - rm / 100) : base - rm) * 100) / 100);
 }
 function nFinal() {
-  const base = parseFloat(String($("nP").value).replace(",", "."));
-  const rm = parseFloat(String($("nRm").value).replace(",", ".")) || 0, pct = $("nRu").value === "pct";
-  const fin = nRemise(base, rm, pct);
-  $("nFinal").textContent = isNaN(fin) ? "Prix final : à définir" : "Prix final : " + eur(fin) + (rm > 0 ? " (remise " + rm + (pct ? " %" : " €") + ")" : "");
+  const T = repLTout("n"), fin = T.total;
+  $("nFinal").textContent = isNaN(fin) ? "Prix final : à définir" : "Prix final : " + eur(fin) + (T.lignes.length > 1 ? " pour " + T.lignes.length + " réparations" : "") + (T.remise > 0 ? " (remise " + eur(T.remise) + ", au lieu de " + eur(T.base) + ")" : "");
 }
 var NEW_SANS_GAR = false;
 function nSgBascule() {
@@ -12063,8 +12205,8 @@ async function createD() {
     err.textContent = "Choisis un client.";
     return;
   }
-  const dv = S.devices.find((d) => d.id === $("nD").value), rv = $("nR").value;
-  const W = rv === "autre" ? $("nW").value.trim() : rv ? String((S.catalogue.find((x) => String(x.id) === rv) || {}).reparation || "") : "";
+  const dv = S.devices.find((d) => d.id === $("nD").value), T = repLTout("n");
+  const W = T.noms;
   if (!dv) {
     err.textContent = "Choisis un appareil. Ajoute-le d’abord dans la fiche du client.";
     return;
@@ -12073,22 +12215,19 @@ async function createD() {
     err.textContent = "Choisis une réparation ou saisis la prestation.";
     return;
   }
-  const px = $("nP").value.trim().replace(",", ".");
-  if (px !== "" && isNaN(parseFloat(px))) {
+  const px = isNaN(T.total) ? "" : String(T.total);
+  if ($("nP").value.trim() !== "" && isNaN(parseFloat($("nP").value.trim().replace(",", ".")))) {
     err.textContent = "Prix invalide.";
     return;
   }
-  const rmTxt = $("nRm").value.trim().replace(",", "."), rm = rmTxt === "" ? 0 : parseFloat(rmTxt), pct = $("nRu").value === "pct";
-  if (isNaN(rm) || rm < 0 || pct && rm > 100) {
+  if (!repRemiseOk(repLCourante("n"))) {
     err.textContent = "Remise invalide.";
     return;
   }
   let fin = px === "" ? null : parseFloat(px), notes = $("nNo").value.trim();
-  if (fin !== null && rm > 0) {
-    notes = "Remise : " + rm + (pct ? " %" : " €") + " (prix avant remise : " + fin + " €)" + (notes ? "\n" + notes : "");
-    fin = nRemise(fin, rm, pct);
-  }
-  const { data, error } = await SB.from("dossiers").insert({
+  const nr = repRemiseNote(T);
+  if (fin !== null && nr) notes = nr + (notes ? "\n" + notes : "");
+  const { data, error } = await repInsert({
     client_id: $("nC").value,
     type: $("nT").value,
     appareil: appareilTexte(dv),
@@ -12100,13 +12239,14 @@ async function createD() {
     echeance: $("nE").value || null,
     notes: notes || null,
     ...(NEW_SANS_GAR ? { sans_garantie: true } : {})
-  }).select().single();
+  }, T.lignes);
   NEW_SANS_GAR = false;
   if (error) {
     err.textContent = msgErr(error);
     return;
   }
   await piecesPrevLier(data.id, "n");
+  REP_L.n = [];
   await loadAll();
   DOSSIER = data.id;
   VIEW = "dossiers";
@@ -12875,6 +13015,7 @@ function modifHtml(d) {
     return cadre + entete + alerte +
       champ("Appareil du client", actuel ? esc(appareilTexte(actuel)) : '<span class="m">Aucun appareil lié</span>') +
       champ("Nom de la réparation", d.panne ? esc(d.panne) : '<span class="m">à définir</span>') +
+      (Array.isArray(d.lignes) && d.lignes.length ? champ("Détail des réparations", d.lignes.map((x) => esc(x.nom) + " : " + (x.prix == null ? '<span class="m">prix à définir</span>' : esc(eur(x.prix)) + (x.remise ? ' <span class="m">(remise ' + esc(x.remise) + (x.prix_avant != null ? ", au lieu de " + esc(eur(x.prix_avant)) : "") + ")</span>" : ""))).join("<br>")) : "") +
       '<div class="two">' + champ("Prix", prix) + champ("Durée de réparation", duree) + "</div>" +
       '<div class="two">' + champ("Pièce affichée au client", d.piece_client == null ? '<span class="m">—</span>' : esc(eur(d.piece_client))) + champ("Main-d’œuvre affichée au client", d.mo_client == null ? '<span class="m">—</span>' : esc(eur(d.mo_client))) + "</div>" +
       '<div class="two">' + champ("Pièce, coût réel", pieceReel(d) == null ? '<span class="m">à saisir sur les pièces</span>' : esc(eur(pieceReel(d)))) + champ("Gain sur la réparation", gainRep(d) == null ? '<span class="m">à définir</span>' : esc(eur(gainRep(d))) + ' <span class="m">(hors chiffre d’affaires)</span>') + "</div></div>";
