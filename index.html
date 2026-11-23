@@ -13541,6 +13541,16 @@ function clDevMore() {
   render();
   return false;
 }
+/* Accueil client : ouvrir une réparation (page « Mes réparations », détail déplié, défilement jusqu’à elle) */
+function clRepOpen(id) {
+  CL_DESK_PAGE = "reparations";
+  CLI_DET = id;
+  render();
+  const c = document.querySelector('[onclick="cliDetToggle(\'' + id + '\')"]');
+  if (c) c.scrollIntoView({ block: "start" });
+  else window.scrollTo(0, 0);
+  return false;
+}
 function clDevOpen(id) {
   CL_DESK_PAGE = "appareils";
   render();
@@ -13557,7 +13567,7 @@ function clDeskView(me) {
   const totalAvoirs = (S.avoirs || []).filter((a) => a.client_id === me.id).reduce((t, a) => t + (+a.montant || 0), 0);
   const devs = S.devices.filter((d) => d.client_id === me.id);
   const devTuile = (d) => `<button type="button" class="cl-tile cl-tile-btn" onclick="return clDevOpen('` + d.id + `')"><span class="cl-thumb" aria-hidden="true" style="overflow:hidden;background:#fff">` + (modelePhoto(d) ? '<img src="' + modelePhoto(d) + '" alt="" style="width:100%;height:100%;object-fit:contain">' : "") + '</span><div style="min-width:0;text-align:left"><div class="cl-tile-t">' + esc(devNom(d)) + '</div><div class="cl-tile-s">' + esc([d.couleur, d.etat].filter(Boolean).join(" · ") || "–") + "</div></div></button>";
-  const tuile = (d) => '<div class="cl-tile"><span class="cl-thumb" aria-hidden="true"></span><div style="min-width:0"><div class="cl-tile-t">' + esc(d.appareil || "Réparation") + '</div><div class="cl-tile-s">' + esc(d.statut || "") + "</div></div></div>";
+  const tuile = (d) => `<button type="button" class="cl-tile cl-tile-btn" onclick="return clRepOpen('` + d.id + `')"><span class="cl-thumb" aria-hidden="true"></span><div style="min-width:0;text-align:left"><div class="cl-tile-t">` + esc(d.appareil || "Réparation") + '</div><div class="cl-tile-s">' + esc(d.statut || "") + "</div></div></button>";
   return `<div class="cl-desk" id="cl-top">
     ${clDeskHead(me)}
     <main class="cl-main">
