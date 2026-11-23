@@ -20,6 +20,9 @@ input,select,textarea,button{max-width:100%}
 span.chip{cursor:default}
 button:not(:disabled),.card[onclick]{transition:transform .15s,box-shadow .15s}
 button:not(:disabled):hover,.card[onclick]:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.12)}
+/* Titre déroulant « Nouvelle dépense » : pas de relief ni de surbrillance sur toute la carte */
+button.dep-tog:not(:disabled):hover{transform:none;box-shadow:none}
+button.dep-tog:focus-visible{outline:2px solid var(--brand);outline-offset:4px;border-radius:6px}
 .chip{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:99px;background:var(--line);white-space:nowrap;border:0;cursor:pointer;font-family:inherit}
 .code{font-family:ui-monospace,Menlo,monospace;background:var(--bg);padding:2px 6px;border-radius:6px}
 input,select,textarea{width:100%;font:inherit;color:var(--ink);background:var(--surf);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:6px}
@@ -153,7 +156,7 @@ body.lg .cli-head{padding:0 14px 4px}
 /* Mes appareils (espace client) : une carte par appareil, comme la fiche du réparateur */
 .card.dev-card2{display:flex;gap:14px;align-items:stretch;padding:12px;margin-bottom:10px}
 .dev-ph{flex:0 0 130px;width:130px;height:130px;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center}
-.dev-ph img{width:100%;height:100%;object-fit:cover}
+.dev-ph img{width:100%;height:100%;object-fit:contain}
 .dev-mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
 .dev-st{margin-top:8px;border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center;font-size:14px}
 .dev-side{flex:0 0 auto;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-end;gap:8px}
@@ -163,7 +166,7 @@ body.lg .cli-head{padding:0 14px 4px}
 @keyframes drIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
 .dr-head{display:flex;gap:10px;align-items:center;margin-bottom:10px}
 .dr-thumb{flex:0 0 44px;width:44px;height:44px;border-radius:10px;overflow:hidden;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;background:#fff}
-.dr-thumb img{width:100%;height:100%;object-fit:cover}
+.dr-thumb img{width:100%;height:100%;object-fit:contain}
 .dr-k{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
 .dr-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .dr-full{grid-column:1 / -1}
@@ -367,7 +370,7 @@ body:not(.rep-nav).lg .app{margin-left:auto !important;margin-right:auto !import
 .copy-card{background:#FFFFFF;border-radius:14px;padding:20px;width:min(520px,100%);box-shadow:0 12px 40px rgba(0,0,0,.25)}
 .copy-card textarea{width:100%;height:240px;box-sizing:border-box;margin-top:8px;font:inherit;font-size:13px;padding:10px;border:1px solid #DCD7CB;border-radius:10px}
 .gal-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin:10px 0}
-.gal-grid img{width:100%;height:140px;object-fit:cover;border-radius:10px;display:block;background:#fff}
+.gal-grid img{width:100%;height:140px;object-fit:contain;border-radius:10px;display:block;background:#fff}
 .gal-item{display:flex;flex-direction:column;gap:6px}
 .gal-cell{position:relative;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none;border-radius:10px}
 .gal-cell a{display:block}
@@ -388,6 +391,31 @@ body:not(.rep-nav).lg .app{margin-left:auto !important;margin-right:auto !import
 .rep-tab:not(.head):hover{background:#f3f6f4}
 .rep-tab > div[data-l]::before{content:attr(data-l);display:none}
 @media (max-width:899px){ .rep-tab{grid-template-columns:1fr 1fr;gap:8px 12px} .rep-tab.head{display:none} .rep-tab > div[data-l]::before{display:block;font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em} }
+/* Agenda */
+.ag-barre{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin:8px 0}
+.ag-cadre{border:1px solid var(--line);border-radius:14px;overflow-x:auto;background:var(--surf)}
+.ag-entetes,.ag-mois{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+.ag-entetes div{font-size:12px;color:var(--mut);text-align:center;padding:8px 0;font-weight:600;border-bottom:1px solid var(--line)}
+.ag-case{min-height:92px;min-width:0;overflow:hidden;padding:4px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);cursor:pointer}
+.ag-case:nth-child(7n){border-right:0}
+.ag-autre{opacity:.45}
+.ag-num{font-size:12px;font-weight:600;margin-bottom:3px;display:inline-block;min-width:22px;text-align:center}
+.ag-auj .ag-num{background:var(--brand);color:#fff;border-radius:999px;padding:0 6px}
+.ag-ev{font-size:11px;line-height:1.35;padding:1px 5px;border-radius:5px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;color:#fff}
+.ag-rep{background:var(--brand)}
+.ag-ext{background:#8a9b93}
+.ag-plus{font-size:11px;color:var(--mut)}
+.ag-sem{display:grid;grid-template-columns:56px repeat(7,minmax(90px,1fr));min-width:700px}
+.ag-hd{font-size:12px;font-weight:600;text-align:center;padding:8px 0;border-bottom:1px solid var(--line);border-left:1px solid var(--line)}
+.ag-hlab{font-size:11px;color:var(--mut);padding:4px 6px;text-align:right}
+.ag-toute-c{min-height:26px;padding:2px;border-bottom:1px solid var(--line);border-left:1px solid var(--line)}
+.ag-heures div{height:48px;font-size:11px;color:var(--mut);text-align:right;padding-right:6px;box-sizing:border-box;transform:translateY(-7px)}
+.ag-jcol{position:relative;border-left:1px solid var(--line);background:repeating-linear-gradient(to bottom,transparent 0,transparent 47px,var(--line) 47px,var(--line) 48px);cursor:pointer}
+.ag-blk{position:absolute;font-size:11px;line-height:1.3;color:#fff;border-radius:6px;padding:2px 5px;overflow:hidden;cursor:pointer;box-sizing:border-box}
+.ag-form{margin:8px 0 12px}
+.ag-barre .btn,.ag-statbar .btn,.ag-form .btn{width:auto;margin-top:0;padding:10px 16px}
+.sg-lbl{display:flex;align-items:center;gap:10px;margin:12px 0 0;font-size:14px;font-weight:500;cursor:pointer}
+.sg-case{width:18px;height:18px;min-width:18px;margin:0;padding:0;flex:0 0 18px;border-radius:4px;accent-color:var(--brand);cursor:pointer}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600&display=swap" rel="stylesheet"></head>
 <body class="lg">
@@ -6167,7 +6195,7 @@ function pstOpts(p) {
 }
 const PUCES = [["Puce Switch V1", "Switch V1"], ["Puce Switch V2", "Switch V2"], ["Puce Switch Lite", "Switch Lite"], ["Puce Switch OLED", "Switch OLED"]];
 const GMAPS_KEY = "";
-const REP_NAV = [["accueil", "Accueil"], ["dashboard", "Tableau de bord"], ["dossiers", "Réparations et ventes"], ["qualirepar", "Qualirépar"], ["clients", "Clients"], ["appareils", "Appareils"], ["vueclient", "Vue client"], ["new", "Nouvelle prestation"], ["newvente", "Nouvelle vente"], ["ventes", "Ventes"], ["avis", "Suggestions & Bugs"], ["stock", "Stock"], ["catalogue", "Réparations & Mods"], ["dbadmin", "Bases de données"]];
+const REP_NAV = [["accueil", "Accueil"], ["dashboard", "Tableau de bord"], ["depenses", "Dépenses"], ["agenda", "Agenda"], ["dossiers", "Réparations et ventes"], ["qualirepar", "Qualirépar"], ["clients", "Clients"], ["appareils", "Appareils"], ["frp", "FRP Bypass"], ["new", "Nouvelle prestation"], ["newvente", "Nouvelle vente"], ["ventes", "Ventes"], ["avis", "Suggestions & Bugs"], ["stock", "Stock"], ["catalogue", "Réparations & Mods"], ["dbadmin", "Bases de données"]];
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s != null ? s : "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const fullName = (c) => [c && c.prenom, c && c.nom].filter(Boolean).join(" ") || "Sans nom";
@@ -6288,6 +6316,20 @@ async function reload() {
   }
   render();
 }
+function pwdOeil(id) {
+  return '<button type="button" class="lg-show" aria-label="Afficher le mot de passe" onclick="togglePwdBtn(this,\'' + id + '\')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a19.8 19.8 0 0 1 5.06-5.94M9.9 4.24A10.9 10.9 0 0 1 12 4c7 0 11 7 11 7a19.8 19.8 0 0 1-3.17 4.19M14.12 14.12a3 3 0 1 1-4.24-4.24"></path><path d="M1 1l22 22"></path></svg></button>';
+}
+function pwdVerif() {
+  const a = $("lP") ? $("lP").value : "", b = $("lP2") ? $("lP2").value : "", m = $("pwdMsg");
+  if (!m) return;
+  if (!b) {
+    m.textContent = "";
+    m.style.color = "";
+    return;
+  }
+  m.textContent = a === b ? "Les mots de passe correspondent ✓" : "Les mots de passe ne correspondent pas encore";
+  m.style.color = a === b ? "var(--ok)" : "var(--bad)";
+}
 function loginView() {
   if (CM === "forgot") return forgotView();
   const isNew = CM === "code" || CM === "data";
@@ -6318,7 +6360,8 @@ function loginView() {
         ${perso}
         <label>Email${req}</label><input id="lE" type="email" autocomplete="username" onkeydown="if(event.key==='Enter'){event.preventDefault();doLogin()}">
         <label>Mot de passe${req}</label>
-        <div class="lg-pwd"><input id="lP" type="password" autocomplete="${isNew ? "new-password" : "current-password"}" onkeydown="if(event.key==='Enter'){event.preventDefault();doLogin()}"><button type="button" class="lg-show" aria-label="Afficher le mot de passe" onclick="togglePwdBtn(this)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a19.8 19.8 0 0 1 5.06-5.94M9.9 4.24A10.9 10.9 0 0 1 12 4c7 0 11 7 11 7a19.8 19.8 0 0 1-3.17 4.19M14.12 14.12a3 3 0 1 1-4.24-4.24"></path><path d="M1 1l22 22"></path></svg></button></div>
+        <div class="lg-pwd"><input id="lP" type="password" autocomplete="${isNew ? "new-password" : "current-password"}" ${isNew ? 'oninput="pwdVerif()"' : ""} onkeydown="if(event.key==='Enter'){event.preventDefault();doLogin()}"><button type="button" class="lg-show" aria-label="Afficher le mot de passe" onclick="togglePwdBtn(this)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a19.8 19.8 0 0 1 5.06-5.94M9.9 4.24A10.9 10.9 0 0 1 12 4c7 0 11 7 11 7a19.8 19.8 0 0 1-3.17 4.19M14.12 14.12a3 3 0 1 1-4.24-4.24"></path><path d="M1 1l22 22"></path></svg></button></div>
+        ${isNew ? `<label>Confirmer le mot de passe${req}</label><div class="lg-pwd"><input id="lP2" type="password" autocomplete="new-password" oninput="pwdVerif()">${pwdOeil("lP2")}</div><div class="m" id="pwdMsg" style="margin-top:6px;min-height:18px"></div>` : ""}
         <label class="lg-mobonly" style="font-weight:400;display:flex;gap:8px;align-items:center;margin-top:6px"><input type="checkbox" onchange="$('lP').type=this.checked?'text':'password'" style="width:auto;margin:0"> Afficher le mot de passe</label>
         ${login ? `<a href="#" class="lg-forgot-d" onclick="setCM('forgot');return false">Mot de passe oublié ?</a>` : ""}
         ${code}
@@ -6329,8 +6372,8 @@ function loginView() {
     </div>
   </div>`;
 }
-function togglePwdBtn(b) {
-  const p = $("lP");
+function togglePwdBtn(b, id) {
+  const p = $(id || "lP");
   const eye = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"></path><circle cx="12" cy="12" r="3"></circle></svg>', off = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19c-7 0-11-7-11-7a19.8 19.8 0 0 1 5.06-5.94M9.9 4.24A10.9 10.9 0 0 1 12 4c7 0 11 7 11 7a19.8 19.8 0 0 1-3.17 4.19M14.12 14.12a3 3 0 1 1-4.24-4.24"></path><path d="M1 1l22 22"></path></svg>';
   p.type = p.type === "password" ? "text" : "password";
   const shown = p.type === "text";
@@ -6406,6 +6449,10 @@ async function doLogin() {
   err.textContent = "";
   if (!e || !p) {
     err.textContent = "Email et mot de passe requis.";
+    return;
+  }
+  if (CM !== "login" && $("lP2") && $("lP2").value !== p) {
+    err.textContent = "Les deux mots de passe ne sont pas identiques.";
     return;
   }
   if (CM === "login") {
@@ -6486,7 +6533,17 @@ async function boot() {
     toast("Erreur de chargement : " + msgErr(e));
   }
   if (ROLE === "rep") await syncReservations();
+  if (ROLE === "cli") await syncMailCompte();
   render();
+}
+async function syncMailCompte() {
+  if (DEMO || !ME || !ME.email) return;
+  const c = (S.clients || []).find((x) => x.auth_user_id === ME.id);
+  if (!c || (c.mail || "") === ME.email) return;
+  try {
+    const { error } = await SB.from("clients").update({ mail: ME.email }).eq("auth_user_id", ME.id);
+    if (!error) c.mail = ME.email;
+  } catch (e) {}
 }
 async function logout() {
   if (DEMO) return endDemo();
@@ -6554,7 +6611,12 @@ function render() {
     }
     if (VIEW === "newvente") mpDraw("v");
     if (VENTE_OPEN && VIEW === "dossiers" && !DOSSIER) mpDraw("v");
+    if (CLI_VENTE && VIEW === "clients" && !DOSSIER) {
+      mpDraw("v");
+      cliVenteTotaux();
+    }
     if (VIEW === "newvente" || VENTE_OPEN && VIEW === "dossiers" && !DOSSIER) attachPlaces();
+    if (CLI_VENTE && VIEW === "clients" && !DOSSIER) attachPlaces();
     if (DOSSIER) paintDetail();
     if (VIEW === "dashboard" && !DOSSIER) {
       fitDashVals();
@@ -6735,16 +6797,31 @@ function achatLignes() {
   return out;
 }
 function caDetail(key) {
-  const rep = (S.dossiers || []).filter((d) => d.statut === "Remis" && String(d.echeance || "").slice(0, 7) === key).reduce((t, d) => t + payInfo(d).tot, 0);
+  const rep = (S.dossiers || []).filter((d) => d.statut === "Remis" && String(d.echeance || "").slice(0, 7) === key).reduce((t, d) => t + (+d.prix || 0), 0);
   const ven = (S.ventes || []).filter((v) => v.archivee && moisOf(v) === key).reduce((t, v) => t + (+v.prix || 0), 0);
   const dep = (S.depenses || []).filter((x) => String(x.date || "").slice(0, 7) === key).reduce((t, x) => t + (+x.montant || 0), 0);
   return { rep, ven, dep, net: rep + ven - dep };
 }
 function caTotal() {
-  const rep = (S.dossiers || []).filter((d) => d.statut === "Remis").reduce((t, d) => t + payInfo(d).tot, 0);
+  return caBilan().net;
+}
+/* Gains = prix total des réparations terminées + ventes. Les dépenses sont soustraites ensuite. */
+function caBilan() {
+  const rep = (S.dossiers || []).filter((d) => d.statut === "Remis").reduce((t, d) => t + (+d.prix || 0), 0);
   const ven = (S.ventes || []).filter((v) => v.archivee).reduce((t, v) => t + (+v.prix || 0), 0);
   const dep = (S.depenses || []).reduce((t, x) => t + (+x.montant || 0), 0);
-  return rep + ven - dep;
+  return { gains: rep + ven, dep, net: rep + ven - dep };
+}
+/* Pièce réelle : somme des prix TTC saisis sur les pièces de la réparation (déjà dans les dépenses) */
+function pieceReel(d) {
+  const ps = pcs(d.id).filter((p) => p.prix_ttc != null && p.prix_ttc !== "");
+  return ps.length ? ps.reduce((t, p) => t + (+p.prix_ttc || 0) * (+p.qte || 1), 0) : null;
+}
+/* Gain sur la réparation = prix total − pièce réelle. Affiché, mais jamais compté dans le chiffre d’affaires. */
+function gainRep(d) {
+  if (d.prix == null) return null;
+  const pr = pieceReel(d);
+  return pr == null ? null : (+d.prix || 0) - pr;
 }
 function ultimes6(cur) {
   const [cy, cm] = cur.split("-").map(Number), out = [];
@@ -6845,7 +6922,7 @@ function dashboardView() {
     "Pièces à commander": dashTile("Pièces à commander", aCmd.length, aCmd.map((p) => ({ t: esc(p.qte + " × " + p.nom), f: () => openD(p.dossier_id) })), () => dashPage("piece")),
     "Ventes en cours": dashTile("Ventes en cours", ouv.length, ouv.map((v) => ({ t: esc(venteTitre(v)) + " · " + esc(venteClient(v)), f: () => dashGo("dossiers", { tab: "ventes", focus: "vc-" + v.id }) })), () => dashPage("vente")),
     "Ventes du mois": dashTile("Ventes du mois", mois.length, mois.map((v) => ({ t: esc(venteTitre(v)) + " · " + (v.prix == null ? "prix à définir" : eur(v.prix)), f: () => dashGo("ventes", { mois: cur, focus: "vb-" + v.id }) })), () => dashPage("venteMois")),
-    "C.A. global": dashTile("C.A. global", eur(caTotal()), ultimes6(cur).reverse().map((m) => ({ t: esc(m.lbl) + " · " + eur(caDetail(m.key).net), f: scrollStats })), scrollStats),
+    "C.A. global": dashTile("C.A. global", eur(caBilan().net), [{ t: "Gains · " + eur(caBilan().gains), f: scrollStats }, { t: "Dépenses · −" + eur(caBilan().dep), f: () => dashPage("depenses") }].concat(ultimes6(cur).reverse().map((m) => ({ t: esc(m.lbl) + " · " + eur(caDetail(m.key).net), f: scrollStats }))), scrollStats),
     "Stock bas": dashTile("Stock bas", stockBasL.length, stockBasL.map((x) => ({ t: esc(x.nom + (x.modele ? " · " + x.modele : "")) + " · " + (+x.qte || 0) + " en stock", f: () => dashGo("stock", { focus: "s-" + x.sku }) })), () => dashPage("stockBas"), stockBasL.length > 0),
     "Dépenses": dashTile("Dépenses", eur(depMois.reduce((t, x) => t + (+x.montant || 0), 0)), depMois.map((x) => ({ t: eur(x.montant) + " · " + esc(x.libelle), f: () => dashPage("depenses") })), () => dashPage("depenses")),
     "Appareils à commander": dashTile("Appareils à commander", achatQ, achatL.map((x) => ({ t: esc(x.l.quantite + " × " + [x.l.appareil, x.l.categorie, x.l.modele, x.l.couleur].filter(Boolean).join(" · ")), f: () => dashPage("achat") })), () => dashPage("achat")),
@@ -6898,6 +6975,15 @@ function depCalc(from) {
   if (from === "ht") t.value = isNaN(v) ? "" : String(Math.round(v * (1 + TVA) * 100) / 100);
   else h.value = isNaN(v) ? "" : String(htOf(v));
 }
+/* Formulaire « Nouvelle dépense » : menu déroulant, fermé par défaut */
+var DEP_OPEN = false;
+function depToggle() {
+  DEP_OPEN = !DEP_OPEN;
+  render();
+}
+function depEntete() {
+  return '<h2 style="margin:0;' + (DEP_OPEN ? "margin-bottom:10px;" : "") + '"><button type="button" class="dep-tog" aria-expanded="' + (DEP_OPEN ? "true" : "false") + '" onclick="depToggle()" style="background:none;border:0;padding:0;color:inherit;font:inherit;text-align:left;cursor:pointer;width:100%;display:flex;justify-content:space-between;align-items:center;gap:8px">Nouvelle dépense <span aria-hidden="true" style="color:var(--mut)">' + (DEP_OPEN ? "▴" : "▾") + "</span></button></h2>";
+}
 function depensesPage() {
   const cur = todayIso().slice(0, 7);
   const cats = ["Pièces", "Outillage", "Loyer", "Transport", "Fournitures", "Accessoire", "Protection", "Autre"];
@@ -6906,7 +6992,8 @@ function depensesPage() {
   const moisList = list.filter((x) => String(x.date).slice(0, 7) === cur);
   const bloc = (label, ttc) => '<div class="card"><div class="m">' + label + '</div><div class="t" style="font-size:22px">' + eur(ttc) + ' TTC</div><div class="m">' + eur(htOf(ttc)) + " HT</div></div>";
   const rows = list.length ? list.map((x) => '<div class="card"><div class="row" style="align-items:center"><div><div class="t">' + esc(x.libelle) + '</div><div class="m">' + fr(x.date) + (x.categorie ? " · " + esc(x.categorie) : "") + '</div></div><div style="display:flex;align-items:center;gap:10px"><div style="text-align:right"><div class="t">' + eur(x.montant) + ' TTC</div><div class="m">' + eur(htOf(x.montant)) + ` HT</div></div><button class="chip late" onclick="deleteDepense('` + x.id + `')">Supprimer</button></div></div></div>`).join("") : '<p class="m">Aucune dépense enregistrée.</p>';
-  return `<div style="margin:4px 0 10px"><button class="btn small ghost" onclick="go('dashboard')">← Tableau de bord</button></div><h1>Dépenses</h1><div class="two" style="margin-bottom:10px">` + bloc("Ce mois", sumT(moisList)) + bloc("Total", sumT(list)) + '</div><div class="card"><h2 style="margin-top:0">Nouvelle dépense</h2><label>Date</label><input id="depDate" type="date" value="' + todayIso() + `"><div class="two"><div><label>Montant HT (€)</label><input id="depHT" inputmode="decimal" placeholder="0" oninput="depCalc('ht')"></div><div><label>Montant TTC (€) · TVA 20 %</label><input id="depTTC" inputmode="decimal" placeholder="0" oninput="depCalc('ttc')"></div></div><label>Libellé</label><input id="depLib" placeholder="Ex. Écran PS5 fournisseur"><label>Catégorie</label><select id="depCat">` + cats.map((c) => "<option>" + c + "</option>").join("") + '</select><div id="depErr" class="err"></div><button class="btn" onclick="addDepense()">Ajouter la dépense</button></div><h2>Historique</h2>' + rows;
+  const retour = VIEW === "dashpage" ? '<div style="margin:4px 0 10px"><button class="btn small ghost" onclick="go(\'dashboard\')">← Tableau de bord</button></div>' : "";
+  return retour + `<h1>Dépenses</h1><div class="two" style="margin-bottom:10px">` + bloc("Ce mois", sumT(moisList)) + bloc("Total", sumT(list)) + '</div><div class="card">' + depEntete() + (DEP_OPEN ? '<label>Date</label><input id="depDate" type="date" value="' + todayIso() + `"><div class="two"><div><label>Montant HT (€)</label><input id="depHT" inputmode="decimal" placeholder="0" oninput="depCalc('ht')"></div><div><label>Montant TTC (€) · TVA 20 %</label><input id="depTTC" inputmode="decimal" placeholder="0" oninput="depCalc('ttc')"></div></div><label>Libellé</label><input id="depLib" placeholder="Ex. Écran PS5 fournisseur"><label>Catégorie</label><select id="depCat">` + cats.map((c) => "<option>" + c + "</option>").join("") + '</select><div id="depErr" class="err"></div><button class="btn" onclick="addDepense()">Ajouter la dépense</button>' : "") + '</div><h2>Historique</h2>' + rows;
 }
 async function addDepense() {
   const err = $("depErr");
@@ -6930,6 +7017,7 @@ async function addDepense() {
     err.textContent = msgErr(error);
     return;
   }
+  DEP_OPEN = false;
   flash("Dépense ajoutée");
   await reload();
 }
@@ -6960,7 +7048,7 @@ function repSolde(d) {
   return payInfo(d).reste === 0;
 }
 function garantieRest(d) {
-  if (d.statut !== "Remis" || !d.echeance) return null;
+  if (d.sans_garantie || d.statut !== "Remis" || !d.echeance) return null;
   return left(plus6m(d.echeance));
 }
 function garantieMoisRest(fin) {
@@ -7073,9 +7161,609 @@ function dashPageView() {
   const body = pg.items.length ? '<div class="card-grid">' + pg.items.map((x) => pg.r(x)).join("") + "</div>" : '<p class="m">Aucun élément pour le moment.</p>';
   return `<div style="margin:4px 0 10px"><button class="btn small ghost" onclick="go('dashboard')">← Tableau de bord</button></div><h1>` + pg.t + ' <span class="m" style="font-size:16px">· ' + pg.items.length + "</span></h1>" + body;
 }
+/* FRP Bypass : entrées enregistrées dans ce navigateur (localStorage) */
+function frpLire() {
+  try {
+    const v = JSON.parse(localStorage.getItem("sv_frp") || "[]");
+    return Array.isArray(v) ? v : [];
+  } catch (e) {
+    return [];
+  }
+}
+function frpEcrire(liste) {
+  try {
+    localStorage.setItem("sv_frp", JSON.stringify(liste));
+  } catch (e) {
+    toast("Impossible d’enregistrer sur cet appareil.");
+  }
+}
+function frpHtml() {
+  const bases = (S.appBase || []).slice().sort((a, b) => String((a.marque || "") + " " + (a.modele || "")).localeCompare(String((b.marque || "") + " " + (b.modele || "")), "fr"));
+  const opts = bases.map((b) => '<option value="' + esc(b.id) + '">' + esc((b.marque ? b.marque + " " : "") + (b.modele || "")) + "</option>").join("");
+  const liste = frpLire().slice().reverse();
+  const rows = liste.length ? liste.map((x) => {
+    const contenu = /^https?:\/\//i.test(x.contenu) ? '<a href="' + esc(x.contenu) + '" target="_blank" rel="noopener" style="word-break:break-all">' + esc(x.contenu) + "</a>" : '<div style="white-space:pre-wrap">' + esc(x.contenu) + "</div>";
+    return '<div class="card"><div class="row" style="align-items:center"><div style="min-width:0;flex:1"><div class="t">' + esc(x.appareil) + "</div>" + (x.version ? '<div class="m">Version : ' + esc(x.version) + "</div>" : "") + '<div style="margin-top:6px">' + contenu + '</div></div><button class="chip late" onclick="frpSupprimer(\'' + x.id + '\')">Supprimer</button></div></div>';
+  }).join("") : '<p class="m">Aucune entrée pour l’instant.</p>';
+  return '<h1>FRP Bypass</h1><div class="card"><h2 style="margin-top:0">Nouvelle entrée</h2><label>Appareil existant *</label><select id="frpApp"><option value="">— Choisir un appareil —</option>' + opts + '</select><label>Lien ou texte *</label><textarea id="frpTexte" rows="3" placeholder="Colle un lien ou écris les étapes"></textarea><label>Version liée au lien</label><input id="frpVer" placeholder="Ex. Android 12, One UI 5"><div style="margin-top:10px"><button class="btn" onclick="frpAjouter()">Ajouter</button></div><div class="err" id="frpErr"></div></div><h2>Entrées</h2>' + rows;
+}
+function frpAjouter() {
+  const err = $("frpErr");
+  err.textContent = "";
+  const base = $("frpApp").value, texte = $("frpTexte").value.trim(), ver = $("frpVer").value.trim();
+  if (!base) {
+    err.textContent = "Choisis d’abord un appareil.";
+    return;
+  }
+  if (!texte) {
+    err.textContent = "Ajoute un lien ou un texte.";
+    return;
+  }
+  const b = (S.appBase || []).find((x) => x.id === base);
+  const liste = frpLire();
+  liste.push({ id: "f" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), base, appareil: b ? (b.marque ? b.marque + " " : "") + (b.modele || "") : "Appareil", contenu: texte, version: ver, date: new Date().toISOString() });
+  frpEcrire(liste);
+  render();
+}
+function frpSupprimer(id) {
+  if (!confirm("Supprimer cette entrée ?")) return;
+  frpEcrire(frpLire().filter((x) => x.id !== id));
+  render();
+}
+/* ===== Agenda : Google Agenda (lecture et écriture ; synchro automatique chaque minute tant que l’onglet est ouvert) ===== */
+const GCAL_CLIENT_ID = "";
+const GCAL_SCOPE = "https://www.googleapis.com/auth/calendar";
+const GCAL_REP_NOM = "Réparations";
+const GCAL_FUSEAU = "Europe/Paris";
+const AG_H0 = 7, AG_H1 = 21, AG_PAS = 48;
+var AG = { jour: null, vue: "mois", evts: [], repId: null, token: null, tokenExp: 0, client: null, cb: null, cbErr: null, form: null, lu: null, err: "", sync: null, busy: false, timer: null };
+
+function agInit() {
+  if (!AG.jour) {
+    AG.jour = new Date();
+    AG.jour.setHours(0, 0, 0, 0);
+  }
+}
+function agClientId() {
+  if (GCAL_CLIENT_ID) return GCAL_CLIENT_ID;
+  try {
+    return localStorage.getItem("sv_gcal_client") || "";
+  } catch (e) {
+    return "";
+  }
+}
+function agConnecte() {
+  try {
+    return localStorage.getItem("sv_gcal_ok") === "1";
+  } catch (e) {
+    return false;
+  }
+}
+function agAjoute(d, n) {
+  const x = new Date(d);
+  x.setDate(x.getDate() + n);
+  return x;
+}
+function agDebutSemaine(d) {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
+  return x;
+}
+function agDebutMois(d) {
+  return new Date(d.getFullYear(), d.getMonth(), 1);
+}
+function agIso(d) {
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+function agHm(d) {
+  return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+}
+function agHmDe(min) {
+  const m = Math.max(0, Math.min(1439, min));
+  return String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0");
+}
+function agMinDe(hm) {
+  const p = String(hm || "").split(":");
+  return (+p[0] || 0) * 60 + (+p[1] || 0);
+}
+/* Durée lue dans le champ « Durée » d’une réparation : « 2h », « 1h30 », « 45 min », « 1,5 » */
+function agDuree(txt) {
+  const s = String(txt || "").toLowerCase().replace(",", ".");
+  let m = s.match(/(\d+)\s*h\s*(\d+)?/);
+  if (m) return (+m[1]) * 60 + (+(m[2] || 0));
+  m = s.match(/(\d+)\s*min/);
+  if (m) return +m[1];
+  m = s.match(/(\d+(\.\d+)?)/);
+  if (m) return Math.round(parseFloat(m[1]) * 60);
+  return 60;
+}
+function agPlage() {
+  if (AG.vue === "semaine") {
+    const d = agDebutSemaine(AG.jour);
+    return { debut: d, fin: agAjoute(d, 7) };
+  }
+  const d = agDebutSemaine(agDebutMois(AG.jour));
+  return { debut: d, fin: agAjoute(d, 42) };
+}
+
+/* Connexion Google (Identity Services) : le jeton reste en mémoire, il est renouvelé en silence */
+function agGis() {
+  return new Promise((ok, ko) => {
+    if (window.google && google.accounts && google.accounts.oauth2) return ok();
+    const s = document.createElement("script");
+    s.src = "https://accounts.google.com/gsi/client";
+    s.async = true;
+    s.onload = () => ok();
+    s.onerror = () => ko(new Error("Google n’a pas pu être chargé : vérifie ta connexion."));
+    document.head.appendChild(s);
+  });
+}
+function agJeton(silencieux) {
+  if (AG.token && Date.now() < AG.tokenExp - 60000) return Promise.resolve(AG.token);
+  return agGis().then(() => new Promise((ok, ko) => {
+    if (!AG.client) {
+      const id = agClientId();
+      if (!id) return ko(new Error("Ajoute l’ID client OAuth dans l’onglet."));
+      AG.client = google.accounts.oauth2.initTokenClient({
+        client_id: id,
+        scope: GCAL_SCOPE,
+        callback: (r) => AG.cb && AG.cb(r),
+        error_callback: (e) => AG.cbErr && AG.cbErr(e)
+      });
+    }
+    AG.cb = (r) => {
+      if (r.error) return ko(new Error(r.error === "access_denied" ? "Autorisation refusée." : "Connexion impossible (" + r.error + ")."));
+      AG.token = r.access_token;
+      AG.tokenExp = Date.now() + (+r.expires_in || 3600) * 1000;
+      try {
+        localStorage.setItem("sv_gcal_ok", "1");
+      } catch (e) {
+      }
+      ok(AG.token);
+    };
+    AG.cbErr = (e) => ko(new Error("Connexion interrompue" + (e && e.type ? " (" + e.type + ")" : "") + "."));
+    AG.client.requestAccessToken({ prompt: silencieux ? "" : "consent" });
+  }));
+}
+async function agApi(chemin, opt) {
+  const tok = await agJeton(true);
+  const o = opt || {};
+  const r = await fetch("https://www.googleapis.com/calendar/v3" + chemin, {
+    method: o.method || "GET",
+    headers: { Authorization: "Bearer " + tok, "Content-Type": "application/json" },
+    body: o.body ? JSON.stringify(o.body) : undefined
+  });
+  if (r.status === 401) {
+    AG.token = null;
+    throw new Error("Session Google expirée : clique sur « Reconnecter ».");
+  }
+  if (!r.ok) {
+    let t = "";
+    try {
+      t = (await r.json()).error.message;
+    } catch (e) {
+    }
+    throw new Error("Google Agenda : " + (t || r.status));
+  }
+  return r.status === 204 ? null : r.json();
+}
+
+/* Agenda « Réparations » : créé une fois dans Google Agenda s’il n’existe pas */
+async function agCalRep() {
+  if (AG.repId) return AG.repId;
+  const l = await agApi("/users/me/calendarList");
+  let c = (l.items || []).find((x) => x.summary === GCAL_REP_NOM && (x.accessRole === "owner" || x.accessRole === "writer"));
+  if (!c) c = await agApi("/calendars", { method: "POST", body: { summary: GCAL_REP_NOM, timeZone: GCAL_FUSEAU } });
+  AG.repId = c.id;
+  return c.id;
+}
+function agNorm(e, c, rep) {
+  const toute = !!(e.start && e.start.date);
+  const debut = toute ? new Date(e.start.date + "T00:00") : new Date(e.start.dateTime);
+  let fin = toute ? new Date(e.end.date + "T00:00") : new Date(e.end.dateTime);
+  if (toute) fin = new Date(fin.getTime() - 1);
+  const priv = (e.extendedProperties && e.extendedProperties.private) || {};
+  return {
+    id: e.id, cal: c.id, calNom: c.summary || "", modif: c.id === rep,
+    titre: e.summary || "(sans titre)", debut, fin, toute,
+    lieu: e.location || "", desc: e.description || "", dossier: priv.dossierId || ""
+  };
+}
+async function agChargerEvts() {
+  const rep = await agCalRep();
+  const l = await agApi("/users/me/calendarList");
+  const cals = (l.items || []).filter((c) => c.selected !== false && ["owner", "writer", "reader"].includes(c.accessRole));
+  if (!cals.some((c) => c.id === rep)) cals.push({ id: rep, summary: GCAL_REP_NOM });
+  const p = agPlage();
+  const tous = [];
+  for (const c of cals) {
+    let page = "", n = 0;
+    do {
+      const q = "/calendars/" + encodeURIComponent(c.id) + "/events?singleEvents=true&orderBy=startTime&maxResults=250&timeMin=" + encodeURIComponent(p.debut.toISOString()) + "&timeMax=" + encodeURIComponent(p.fin.toISOString()) + (page ? "&pageToken=" + encodeURIComponent(page) : "");
+      const r = await agApi(q);
+      (r.items || []).forEach((e) => {
+        if (e.status !== "cancelled") tous.push(agNorm(e, c, rep));
+      });
+      page = r.nextPageToken || "";
+      n++;
+    } while (page && n < 10);
+  }
+  tous.forEach((e, i) => {
+    e.k = i;
+  });
+  AG.evts = tous;
+}
+async function agRafraichir(manuel) {
+  if (AG.busy || !agClientId()) return;
+  if (!agConnecte() && !manuel) return;
+  AG.busy = true;
+  try {
+    await agChargerEvts();
+    AG.sync = new Date();
+    AG.err = "";
+  } catch (e) {
+    AG.err = e.message || String(e);
+  }
+  AG.busy = false;
+  agRendu();
+}
+function agRendu() {
+  const g = document.getElementById("agGrille"), s = document.getElementById("agStatut");
+  if (g) g.innerHTML = agGrilleHtml();
+  if (s) s.innerHTML = agStatutHtml();
+}
+function agStatutHtml() {
+  let h = "";
+  if (AG.busy) h += '<span class="m">Synchronisation…</span>';
+  else if (AG.sync) h += '<span class="m">Synchronisé à ' + agHm(AG.sync) + " · mise à jour automatique chaque minute</span>";
+  if (AG.err) h += '<div class="err">' + esc(AG.err) + "</div>";
+  return h;
+}
+function agAuto() {
+  if (VIEW !== "agenda" || !agConnecte() || AG.busy) return;
+  if (AG.sync && Date.now() - AG.sync.getTime() < 30000) return;
+  agRafraichir(false);
+}
+function agMinuteur() {
+  if (AG.timer) return;
+  AG.timer = setInterval(() => {
+    if (!document.hidden) agAuto();
+  }, 60000);
+}
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) agAuto();
+});
+function agConnecter() {
+  AG.err = "";
+  agJeton(false)
+    .then(() => {
+      try {
+        localStorage.setItem("sv_gcal_ok", "1");
+      } catch (e) {
+      }
+      render();
+      return agRafraichir(true);
+    })
+    .catch((e) => {
+      AG.err = e.message;
+      render();
+    });
+}
+function agDeconnecter() {
+  AG.token = null;
+  AG.tokenExp = 0;
+  AG.repId = null;
+  AG.evts = [];
+  AG.sync = null;
+  AG.form = null;
+  AG.lu = null;
+  AG.err = "";
+  try {
+    localStorage.removeItem("sv_gcal_ok");
+  } catch (e) {
+  }
+  render();
+}
+function agSauverCid() {
+  const v = ($("agCid").value || "").trim();
+  if (!v) {
+    AG.err = "Colle l’ID client.";
+    render();
+    return;
+  }
+  try {
+    localStorage.setItem("sv_gcal_client", v);
+  } catch (e) {
+  }
+  AG.client = null;
+  AG.err = "";
+  render();
+}
+function agChangerCid() {
+  try {
+    localStorage.removeItem("sv_gcal_client");
+    localStorage.removeItem("sv_gcal_ok");
+  } catch (e) {
+  }
+  AG.client = null;
+  AG.token = null;
+  AG.repId = null;
+  AG.err = "";
+  render();
+}
+
+/* Navigation */
+function agChangePlage() {
+  render();
+  if (agConnecte()) agRafraichir(false);
+}
+function agNav(n) {
+  if (AG.vue === "semaine") AG.jour = agAjoute(AG.jour, 7 * n);
+  else AG.jour = new Date(AG.jour.getFullYear(), AG.jour.getMonth() + n, 1);
+  agChangePlage();
+}
+function agAujourdhui() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  AG.jour = d;
+  agChangePlage();
+}
+function agVueMode(v) {
+  AG.vue = v;
+  agChangePlage();
+}
+
+/* Grille : mois et semaine */
+function agEvtsJour(iso) {
+  return AG.evts.filter((e) => agIso(e.debut) <= iso && agIso(e.fin) >= iso).sort((a, b) => a.debut - b.debut);
+}
+function agPastille(e) {
+  return '<div class="ag-ev ' + (e.modif ? "ag-rep" : "ag-ext") + '" title="' + esc(e.titre) + '" onclick="event.stopPropagation();agEditer(' + e.k + ')">' + (e.toute ? "" : agHm(e.debut) + " ") + esc(e.titre) + "</div>";
+}
+function agGrilleHtml() {
+  return AG.vue === "semaine" ? agSemaineHtml() : agMoisHtml();
+}
+function agMoisHtml() {
+  const debut = agDebutSemaine(agDebutMois(AG.jour)), mois = AG.jour.getMonth(), auj = agIso(new Date());
+  let h = '<div class="ag-entetes"><div>Lun</div><div>Mar</div><div>Mer</div><div>Jeu</div><div>Ven</div><div>Sam</div><div>Dim</div></div><div class="ag-mois">';
+  for (let i = 0; i < 42; i++) {
+    const d = agAjoute(debut, i), iso = agIso(d), evs = agEvtsJour(iso);
+    h += '<div class="ag-case' + (d.getMonth() !== mois ? " ag-autre" : "") + (iso === auj ? " ag-auj" : "") + '" onclick="agClicJour(\'' + iso + '\')"><div class="ag-num">' + d.getDate() + "</div>";
+    evs.slice(0, 3).forEach((e) => {
+      h += agPastille(e);
+    });
+    if (evs.length > 3) h += '<div class="ag-plus">+' + (evs.length - 3) + " autres</div>";
+    h += "</div>";
+  }
+  return h + "</div>";
+}
+/* Blocs horaires d’une journée, répartis en colonnes quand ils se chevauchent */
+function agBlocsJour(iso) {
+  const lim0 = AG_H0 * 60, lim1 = AG_H1 * 60, bl = [];
+  agEvtsJour(iso).filter((e) => !e.toute).forEach((e) => {
+    const s = agIso(e.debut) === iso ? e.debut.getHours() * 60 + e.debut.getMinutes() : 0;
+    const f = agIso(e.fin) === iso ? e.fin.getHours() * 60 + e.fin.getMinutes() : 1440;
+    const s2 = Math.max(s, lim0), f2 = Math.min(Math.max(f, s + 20), lim1);
+    if (f2 > s2) bl.push({ e, s: s2, f: f2 });
+  });
+  bl.sort((a, b) => a.s - b.s);
+  const fins = [];
+  bl.forEach((b) => {
+    let c = fins.findIndex((t) => t <= b.s);
+    if (c < 0) {
+      c = fins.length;
+      fins.push(b.f);
+    } else fins[c] = b.f;
+    b.c = c;
+  });
+  const n = Math.max(1, fins.length);
+  return bl.map((b) => ({ e: b.e, s: b.s, f: b.f, c: b.c, n }));
+}
+function agSemaineHtml() {
+  const debut = agDebutSemaine(AG.jour), auj = agIso(new Date());
+  const noms = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
+  let entetes = "", journee = "", colonnes = "", heures = "";
+  for (let H = AG_H0; H < AG_H1; H++) heures += "<div>" + String(H).padStart(2, "0") + ":00</div>";
+  for (let i = 0; i < 7; i++) {
+    const d = agAjoute(debut, i), iso = agIso(d);
+    entetes += '<div class="ag-hd' + (iso === auj ? " ag-auj" : "") + '">' + noms[i] + " " + d.getDate() + "</div>";
+    journee += '<div class="ag-toute-c">' + agEvtsJour(iso).filter((e) => e.toute).map((e) => agPastille(e)).join("") + "</div>";
+    let blocs = "";
+    agBlocsJour(iso).forEach((b) => {
+      const top = (b.s - AG_H0 * 60) / 60 * AG_PAS, haut = Math.max(18, (b.f - b.s) / 60 * AG_PAS - 2);
+      blocs += '<div class="ag-blk ' + (b.e.modif ? "ag-rep" : "ag-ext") + '" title="' + esc(b.e.titre) + '" style="top:' + top + "px;height:" + haut + "px;left:" + b.c * 100 / b.n + "%;width:" + 100 / b.n + '%" onclick="event.stopPropagation();agEditer(' + b.e.k + ')">' + agHm(b.e.debut) + " " + esc(b.e.titre) + "</div>";
+    });
+    colonnes += '<div class="ag-jcol" style="height:' + (AG_H1 - AG_H0) * AG_PAS + 'px" onclick="agClicCol(event,\'' + iso + '\')">' + blocs + "</div>";
+  }
+  return '<div class="ag-sem"><div></div>' + entetes + '<div class="ag-hlab">Journée</div>' + journee + '<div class="ag-heures">' + heures + "</div>" + colonnes + "</div>";
+}
+function agClicCol(ev, iso) {
+  const y = ev.offsetY;
+  const min = AG_H0 * 60 + Math.round(y / AG_PAS * 60 / 15) * 15;
+  agNouveau(iso, min);
+}
+function agClicJour(iso) {
+  const avant = agPlage();
+  AG.jour = new Date(iso + "T00:00");
+  AG.form = agFormNouveau(iso, 540);
+  AG.lu = null;
+  AG.err = "";
+  if (agPlage().debut.getTime() !== avant.debut.getTime()) agChangePlage();
+  else render();
+}
+function agFormNouveau(iso, min) {
+  return { id: null, date: iso, debut: agHmDe(min), fin: agHmDe(min + 60), titre: "", dossier: "", lieu: "", desc: "" };
+}
+function agNouveau(iso, min) {
+  AG.form = agFormNouveau(iso, min == null ? 540 : min);
+  AG.lu = null;
+  AG.err = "";
+  render();
+}
+function agEditer(k) {
+  const e = AG.evts[k];
+  if (!e) return;
+  if (!e.modif) {
+    AG.lu = { id: e.id, cal: e.cal };
+    AG.form = null;
+    render();
+    return;
+  }
+  AG.form = {
+    id: e.id, date: agIso(e.debut),
+    debut: e.toute ? "09:00" : agHm(e.debut), fin: e.toute ? "10:00" : agHm(e.fin),
+    titre: e.titre, dossier: e.dossier, lieu: e.lieu, desc: e.desc
+  };
+  AG.lu = null;
+  AG.err = "";
+  render();
+}
+function agAnnuler() {
+  AG.form = null;
+  render();
+}
+function agFermerLecture() {
+  AG.lu = null;
+  render();
+}
+
+/* Formulaire du rendez-vous de réparation, rempli à partir de la prestation choisie */
+function agFormHtml() {
+  const f = AG.form;
+  if (!f) return "";
+  const opts = (S.dossiers || []).filter((d) => d.statut !== "Remis").map((d) => {
+    const c = d.clients || (S.clients || []).find((x) => x.id === d.client_id);
+    return '<option value="' + esc(d.id) + '"' + (d.id === f.dossier ? " selected" : "") + ">" + esc([c ? fullName(c) : "", d.appareil, d.panne].filter(Boolean).join(" · ")) + "</option>";
+  }).join("");
+  return '<div class="card ag-form"><div class="t">' + (f.id ? "Modifier le rendez-vous" : "Nouveau rendez-vous de réparation") + "</div>" +
+    '<label>Prestation liée (remplissage auto)</label><select id="agDos" onchange="agPrendreDossier()"><option value="">— Aucune (rendez-vous libre) —</option>' + opts + "</select>" +
+    '<label>Titre *</label><input id="agTitre" value="' + esc(f.titre) + '">' +
+    '<label>Date *</label><input id="agDate" type="date" value="' + esc(f.date) + '">' +
+    '<div class="two"><div><label>Début *</label><input id="agDeb" type="time" value="' + esc(f.debut) + '"></div><div><label>Fin *</label><input id="agFin" type="time" value="' + esc(f.fin) + '"></div></div>' +
+    '<label>Lieu</label><input id="agLieu" value="' + esc(f.lieu) + '">' +
+    '<label>Description</label><textarea id="agDesc" rows="4">' + esc(f.desc) + "</textarea>" +
+    '<div class="err" id="agErr"></div>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn" onclick="agEnregistrer()">Enregistrer</button><button class="btn ghost" onclick="agAnnuler()">Annuler</button>' +
+    (f.id ? '<button class="btn ghost" style="color:var(--bad);border-color:var(--bad)" onclick="agSupprimer()">Supprimer</button>' : "") + "</div></div>";
+}
+function agPrendreDossier() {
+  const d = (S.dossiers || []).find((x) => x.id === $("agDos").value);
+  if (!d) return;
+  const c = d.clients || (S.clients || []).find((x) => x.id === d.client_id) || null;
+  const nomCli = c ? fullName(c) : "";
+  $("agTitre").value = [nomCli, d.appareil, d.panne].filter(Boolean).join(" · ");
+  $("agDate").value = d.echeance || agIso(new Date());
+  const deb = $("agDeb").value || "09:00";
+  $("agDeb").value = deb;
+  $("agFin").value = agHmDe(agMinDe(deb) + agDuree(d.duree));
+  $("agDesc").value = [
+    "Réparation : " + (d.panne || "—"),
+    nomCli ? "Client : " + nomCli + (c && c.tel ? " · " + c.tel : "") : "",
+    "Statut : " + (d.statut || "—"),
+    d.prix != null ? "Prix : " + eur(d.prix) : "",
+    d.duree ? "Durée : " + d.duree : "",
+    d.notes ? "Notes : " + d.notes : ""
+  ].filter(Boolean).join("\n");
+}
+async function agEnregistrer() {
+  const err = $("agErr");
+  err.textContent = "";
+  const titre = $("agTitre").value.trim(), date = $("agDate").value, deb = $("agDeb").value, fin = $("agFin").value;
+  if (!titre) {
+    err.textContent = "Ajoute un titre.";
+    return;
+  }
+  if (!date) {
+    err.textContent = "Choisis une date.";
+    return;
+  }
+  if (!deb || !fin) {
+    err.textContent = "Indique l’heure de début et de fin.";
+    return;
+  }
+  if (agMinDe(fin) <= agMinDe(deb)) {
+    err.textContent = "L’heure de fin doit être après le début.";
+    return;
+  }
+  const corps = {
+    summary: titre,
+    location: $("agLieu").value.trim(),
+    description: $("agDesc").value,
+    start: { dateTime: date + "T" + deb + ":00", timeZone: GCAL_FUSEAU },
+    end: { dateTime: date + "T" + fin + ":00", timeZone: GCAL_FUSEAU },
+    extendedProperties: { private: { source: "seconde-vie", dossierId: $("agDos").value } }
+  };
+  const id = AG.form && AG.form.id;
+  try {
+    const cal = await agCalRep();
+    const chemin = "/calendars/" + encodeURIComponent(cal) + "/events" + (id ? "/" + encodeURIComponent(id) : "");
+    await agApi(chemin, { method: id ? "PATCH" : "POST", body: corps });
+    AG.form = null;
+    render();
+    agRafraichir(true);
+  } catch (e) {
+    err.textContent = e.message;
+  }
+}
+async function agSupprimer() {
+  if (!AG.form || !AG.form.id) return;
+  if (!confirm("Supprimer ce rendez-vous de Google Agenda ?")) return;
+  const err = $("agErr");
+  try {
+    const cal = await agCalRep();
+    await agApi("/calendars/" + encodeURIComponent(cal) + "/events/" + encodeURIComponent(AG.form.id), { method: "DELETE" });
+    AG.form = null;
+    render();
+    agRafraichir(true);
+  } catch (e) {
+    if (err) err.textContent = e.message;
+  }
+}
+function agLectureHtml() {
+  const e = AG.lu && AG.evts.find((x) => x.id === AG.lu.id && x.cal === AG.lu.cal);
+  if (!e) return "";
+  return '<div class="card ag-form"><div class="m">' + esc(e.calNom) + " · lecture seule</div><div class=\"t\">" + esc(e.titre) + "</div>" +
+    '<div class="m">' + (e.toute ? "Toute la journée · " + fr(agIso(e.debut)) : fr(agIso(e.debut)) + " · " + agHm(e.debut) + " – " + agHm(e.fin)) + "</div>" +
+    (e.lieu ? '<div class="m">' + esc(e.lieu) + "</div>" : "") +
+    (e.desc ? '<div style="white-space:pre-wrap;margin-top:6px">' + esc(e.desc) + "</div>" : "") +
+    '<div style="margin-top:8px"><button class="btn ghost" onclick="agFermerLecture()">Fermer</button></div></div>';
+}
+
+/* Vue principale */
+function agVue() {
+  agInit();
+  agMinuteur();
+  setTimeout(agAuto, 0);
+  const conf = !!agClientId(), connecte = agConnecte();
+  let titre = AG.vue === "semaine"
+    ? "Semaine du " + agDebutSemaine(AG.jour).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })
+    : AG.jour.toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+  titre = titre.charAt(0).toUpperCase() + titre.slice(1);
+  let h = "<h1>Agenda</h1>";
+  if (!conf) {
+    h += '<div class="card"><div class="t">Connexion à Google Agenda</div><p class="m">Une seule fois : crée un identifiant OAuth dans Google Cloud, puis colle-le ici.</p>' +
+      '<ol class="m" style="padding-left:18px;line-height:1.6"><li>console.cloud.google.com : crée un projet.</li><li>API et services : active « Google Calendar API ».</li><li>Écran de consentement OAuth : type Externe, ajoute ton adresse Google comme « utilisateur test ».</li><li>Identifiants : Créer, puis ID client OAuth, type « Application Web ». Dans « Origines JavaScript autorisées », mets l’adresse exacte où tourne cette application.</li></ol>' +
+      '<label>ID client OAuth</label><input id="agCid" placeholder="xxxx.apps.googleusercontent.com"><div style="margin-top:10px"><button class="btn" onclick="agSauverCid()">Enregistrer l’ID</button></div>' +
+      (AG.err ? '<div class="err">' + esc(AG.err) + "</div>" : "") + "</div>";
+  } else if (!connecte) {
+    h += '<div class="card"><div class="t">Google Agenda non connecté</div><p class="m">Connecte-toi pour voir tes événements et créer les rendez-vous de réparation dans l’agenda « ' + GCAL_REP_NOM + " ».</p>" +
+      '<button class="btn" onclick="agConnecter()">Connecter Google Agenda</button> <button class="btn ghost" onclick="agChangerCid()">Changer l’ID client</button>' +
+      (AG.err ? '<div class="err">' + esc(AG.err) + "</div>" : "") + "</div>";
+  } else {
+    h += '<div class="card ag-statbar" style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between"><div id="agStatut">' + agStatutHtml() +
+      '</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" onclick="agRafraichir(true)">Actualiser</button><button class="btn ghost" onclick="agConnecter()">Reconnecter</button><button class="btn ghost" onclick="agDeconnecter()">Déconnecter</button></div></div>';
+  }
+  if (conf && connecte) {
+    h += '<div class="ag-barre"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><button class="btn ghost" onclick="agNav(-1)" aria-label="Précédent">‹</button><button class="btn ghost" onclick="agAujourdhui()">Aujourd’hui</button><button class="btn ghost" onclick="agNav(1)" aria-label="Suivant">›</button><span class="t" style="margin-left:6px">' + esc(titre) + '</span></div>' +
+      '<div style="display:flex;gap:6px;align-items:center"><button class="btn' + (AG.vue === "mois" ? "" : " ghost") + '" onclick="agVueMode(\'mois\')">Mois</button><button class="btn' + (AG.vue === "semaine" ? "" : " ghost") + '" onclick="agVueMode(\'semaine\')">Semaine</button><button class="btn" onclick="agNouveau(agIso(AG.jour),540)">+ Rendez-vous</button></div></div>';
+    h += agFormHtml() + agLectureHtml();
+    h += '<div id="agGrille" class="ag-cadre">' + agGrilleHtml() + "</div>";
+  }
+  return h;
+}
 const REP = {
   dbadmin: () => dbaHtml(),
-  vueclient: () => '<h1>Vue client</h1><p class="m">Ouvre un aperçu de l’espace client avec des données fictives. Tu peux cliquer et modifier comme le ferait un client : rien n’est enregistré, et « Quitter l’aperçu » te ramène ici.</p><button class="btn" onclick="startDemo()">Ouvrir l’aperçu</button><h2>Ce que le client voit</h2><ul class="vue-note" style="padding-left:18px"><li>Ses informations, qu’il peut corriger.</li><li>Ses appareils, qu’il peut ajouter ou modifier.</li><li>Ses réparations : étapes, remise prévue, prix et reste à régler.</li><li>Ses achats : rendez-vous ou envoi avec numéro de suivi, et les appareils achetés dans « Mes appareils ».</li><li>Une suggestion ou un bug depuis la bulle en bas à gauche.</li></ul><p class="vue-note">Il ne peut pas retirer un appareil ni modifier une réparation : il contacte son réparateur.</p>',
   qualirepar: () => qualireparHtml(),
   accueil: () => {
     const D = dashData();
@@ -7095,6 +7783,9 @@ const REP = {
     return '<h1>Accueil</h1><h2>Les plus importants</h2><div class="acc-grid">' + statH + '</div><h2>Accès rapide</h2><div class="acc-grid">' + navH + "</div>";
   },
   dashboard: () => dashboardView(),
+  depenses: () => depensesPage(),
+  agenda: () => agVue(),
+  frp: () => frpHtml(),
   dashpage: () => dashPageView(),
   dossiers() {
     const aCommander = S.pieces.filter((p) => p.statut === "À commander"), enRoute = S.pieces.filter((p) => p.statut === "Commandé");
@@ -7173,7 +7864,7 @@ const REP = {
       <div class="two"><div><label>Prix (€)</label><input id="nP" inputmode="decimal" placeholder="à définir" oninput="nFinal()"></div><div><label>Durée de réparation</label><input id="nDu" placeholder="Ex. 1h"></div></div>
       <div class="two"><div><label>Remise</label><input id="nRm" inputmode="decimal" placeholder="0" oninput="nFinal()"></div><div><label>Unité</label><select id="nRu" onchange="nFinal()"><option value="eur">€</option><option value="pct">%</option></select></div></div>
       <div class="m" id="nFinal" style="margin:4px 0 8px">Prix final : à définir</div>
-      <label>Retour prévu</label><input id="nE" type="date">
+      <label>Retour prévu</label><input id="nE" type="date"><label class="sg-lbl"><input type="checkbox" id="nSG" class="sg-case"${NEW_SANS_GAR ? " checked" : ""} onchange="nSgBascule()"> Pas de garantie</label>
       <label>Notes</label><textarea id="nNo" rows="2"></textarea>
       ${piecesChoixHtml("n")}
       <button class="btn" onclick="createD()">Créer le dossier</button>
@@ -8172,7 +8863,7 @@ function venteLignes(v) {
   return [];
 }
 function venteTitre(v) {
-  const t = venteLignes(v).map((l) => [l.appareil, l.categorie, l.modele, l.couleur].filter(Boolean).join(" · ") + (l.quantite > 1 ? " × " + l.quantite : "")).join(" + ");
+  const t = venteLignes(v).map((l) => [l.appareil, l.categorie, l.modele, l.couleur, l.sn ? "SN " + l.sn : null].filter(Boolean).join(" · ") + (l.quantite > 1 ? " × " + l.quantite : "")).join(" + ");
   return t || "Vente";
 }
 function lignesRes(lignes) {
@@ -8208,6 +8899,7 @@ function vLigneFromForm() {
   return { line: l };
 }
 function vLignesHtml() {
+  if (venteEnCli()) return cliLignesHtml();
   return VENTE_LIGNES.map((l, i) => {
     const dev = l.appareil_id ? (S.stockApp || []).find((x) => x.id === l.appareil_id) : null;
     return '<span class="chip ok" style="margin:2px 4px 2px 0">' + esc([l.appareil, l.categorie, l.modele, l.couleur].filter(Boolean).join(" · ")) + (l.quantite > 1 ? " × " + l.quantite : "") + (dev ? " · réservé du stock" : "") + (l.acheter ? " · à acheter" : "") + ' <button style="border:0;background:none;cursor:pointer;font-weight:700" onclick="vDelLigne(' + i + ')">×</button></span>';
@@ -8244,6 +8936,7 @@ function vAddLigne() {
   VENTE_LIGNES.push(r.line);
   resetPicker();
   vDrawLignes();
+  if (venteEnCli()) cliPickFerme();
 }
 function vDelLigne(i) {
   VENTE_LIGNES.splice(i, 1);
@@ -8300,7 +8993,7 @@ function ventesFormHtml(ed) {
       <label>Quantité de ce modèle</label><input id="vQte" inputmode="numeric" oninput="numOnly(this)" value="1">
       <button class="chip ok" type="button" onclick="vAddLigne()">+ Ajouter ce modèle à la vente</button></div>
       <div class="row" style="align-items:center;justify-content:space-between;margin-top:12px"><label style="margin:0">Client</label><label style="margin:0;font-weight:400;display:flex;align-items:center;gap:6px"><input type="checkbox" id="vPasse" style="width:auto;margin:0" ${passe ? "checked" : ""} onchange="toggleVPasse(this.checked)"> Client de passage</label></div>
-      <div id="vAcc" style="display:${passe ? "none" : "block"}"><select id="vCli"><option value="">- Sélectionner -</option>${S.clients.filter((c) => !c.deleted_at).map((c) => `<option value="${c.id}"${ed && ed.client_id === c.id ? " selected" : ""}>${esc(fullName(c))}</option>`).join("")}</select></div>
+      <div id="vAcc" style="display:${passe ? "none" : "block"}"><select id="vCli"><option value="">- Sélectionner -</option>${S.clients.filter((c) => !c.deleted_at).map((c) => `<option value="${c.id}"${(ed ? ed.client_id : VENTE_CLI_PRE) === c.id ? " selected" : ""}>${esc(fullName(c))}</option>`).join("")}</select></div>
       <div id="vPas" style="display:${passe ? "block" : "none"}"><select id="vTyp" onchange="vTypChange(this.value)"><option value="">- Sélectionner -</option>${opt("sans", "sans nom")}${opt("avec", "avec nom")}${opt("leboncoin", "leboncoin (nécessite pseudo)")}</select>
         <div id="vNomBox" style="display:${t === "avec" ? "block" : "none"}"><label>Nom (n’apparaît que dans cette vente)</label><input id="vNom" value="${esc(nomVal)}"></div>
         <div id="vPseudoBox" style="display:${t === "leboncoin" ? "block" : "none"}"><label>Pseudo leboncoin *</label><input id="vPseudo" value="${esc(pseudoVal)}"></div>
@@ -8642,6 +9335,15 @@ async function saveVente() {
     }
   }
   const envoi = passe && $("vTyp").value === "leboncoin" && $("vEnvoi").checked;
+  const cliMode = !!$("vPayE");
+  if (cliMode && prixT === "") {
+    err.textContent = "Indique le prix : il est obligatoire.";
+    return;
+  }
+  if (cliMode && !VENTE_LIGNES.length && !(VT_SEL && VT_SEL.mod)) {
+    err.textContent = "Ajoute au moins un modèle à la vente.";
+    return;
+  }
   if (!VENTE_LIGNES.length) {
     const r = vLigneFromForm();
     if (r.error) {
@@ -8697,7 +9399,7 @@ async function saveVente() {
     modele: first.modele,
     lignes: VENTE_LIGNES,
     lieu: envoi ? null : $("vLieu").value.trim() || null,
-    prix: prixT === "" ? null : parseFloat(prixT),
+    prix: prixT === "" ? null : cliMode ? nRemise(parseFloat(prixT), cliNum("vRm"), $("vRmU").value === "pct") : parseFloat(prixT),
     date_rdv: date,
     heure_rdv: envoi ? null : $("vHeure").value || null,
     lien_conv: $("vConv").value.trim() || null,
@@ -8708,6 +9410,18 @@ async function saveVente() {
     client_id,
     client_nom
   };
+  if (cliMode) {
+    Object.assign(row, {
+      prix_base: parseFloat(prixT),
+      remise: cliNum("vRm") || null,
+      remise_pct: $("vRmU").value === "pct",
+      acompte_especes: cliNum("vAcoE") || null,
+      acompte_virement: cliNum("vAcoV") || null,
+      paye_especes: cliNum("vPayE") || null,
+      paye_virement: cliNum("vPayV") || null,
+      notes: $("vNote").value.trim() || null
+    });
+  }
   const { error } = editing ? await SB.from("ventes").update(row).eq("id", VENTE_EDIT) : await SB.from("ventes").insert(row);
   if (error) {
     err.textContent = msgErr(error);
@@ -8728,6 +9442,7 @@ async function saveVente() {
   MP.v = [];
   PKS.v = { app: "", cat: "" };
   VT_SEL = null;
+  CLI_VENTE = null;
   flash(editing ? "Vente modifiée" : "Vente enregistrée");
   await reload();
 }
@@ -8819,6 +9534,7 @@ async function deleteVente(id) {
   VENTE_OPEN = false;
   VENTE_EDIT = null;
   VENTE_LIGNES = [];
+  CLI_VENTE = null;
   flash("Vente supprimée");
   await reload();
 }
@@ -8846,7 +9562,7 @@ function cliAddToggle() {
   b.setAttribute("aria-label", b.title);
   $("addBox").classList.toggle("hide", !CLI_ADD);
 }
-var CLI_SORT = "nom";
+var CLI_SORT = "creation_recent";
 var CLI_F = { compte: "", infos: "", app: "" };
 function cliCmp(a, b) {
   if (CLI_SORT === "creation_recent" || CLI_SORT === "creation_ancien") {
@@ -9153,6 +9869,15 @@ function abCoulCell(v) {
   if (!l.length) return '<span class="m">–</span>';
   return l.map((c) => '<span style="display:inline-flex;align-items:center;gap:4px;margin-right:6px">' + abCoulSwatch(c, 14) + esc(c.nom) + "</span>").join("");
 }
+/* Colonne « couleur » de la liste : pastille de couleur seulement, sans le nom, le code hexa ni l’image */
+function abCoulCellSimple(v) {
+  const l = abCoulParse(v);
+  if (!l.length) return '<span class="m">–</span>';
+  return l.map((c) => {
+    const fond = c.hex ? c.hex : "repeating-conic-gradient(#ddd 0 25%, #fff 0 50%) 0 0/10px 10px";
+    return '<span style="display:inline-flex;align-items:center;gap:4px;margin-right:6px"><span style="display:inline-block;width:14px;height:14px;border-radius:4px;border:1px solid var(--line);flex:none;background:' + fond + '"></span>' + "</span>";
+  }).join("");
+}
 async function abAjouter() {
   const err = $("abErr");
   err.textContent = "";
@@ -9208,8 +9933,30 @@ function abCancel() {
   AB_EDIT = null;
   render();
 }
+/* Renommer un modèle : suit partout où le nom est utilisé (catalogue, appareils des clients, stock, prestations) */
+async function abCascade(ancien, nouv) {
+  const erreurs = [];
+  const note = (r) => {
+    if (r && r.error) erreurs.push(r.error.message);
+  };
+  const devs = (S.devices || []).filter((d) => d.type === ancien.type && nz(d.modele) === nz(ancien.modele));
+  const ids = devs.map((d) => d.id);
+  note(await SB.from("catalogue").update({ appareil: nouv.type, modele: nouv.modele }).eq("appareil", ancien.type).eq("modele", ancien.modele));
+  note(await SB.from("stock_appareils").update({ appareil: nouv.type, modele: nouv.modele }).eq("appareil", ancien.type).eq("modele", ancien.modele));
+  if (ids.length) {
+    note(await SB.from("devices").update({ type: nouv.type, modele: nouv.modele }).in("id", ids));
+    const prestations = (S.dossiers || []).filter((x) => ids.indexOf(x.device_id) > -1 && String(x.appareil || "").indexOf(ancien.modele) > -1);
+    for (const x of prestations) {
+      note(await SB.from("dossiers").update({ appareil: String(x.appareil).replace(ancien.modele, nouv.modele) }).eq("id", x.id));
+    }
+  }
+  if (erreurs.length) toast("Renommage incomplet : " + erreurs[0]);
+}
 async function abSauver(id) {
-  const type = abSelVal("abET").trim(), marque = abSelVal("abEMa").trim(), base = abSelVal("abEM").trim();
+  const avantB = (S.appBase || []).find((b) => b.id === id) || null;
+  const nomSaisi = $("abENom") ? $("abENom").value.trim() : "";
+  const origine = avantB ? abSplit(avantB.modele).base || avantB.modele : "";
+  const type = abSelVal("abET").trim(), marque = abSelVal("abEMa").trim(), base = nomSaisi && nomSaisi !== origine ? nomSaisi : abSelVal("abEM").trim();
   if (!type) {
     toast("Choisis un type.");
     return;
@@ -9223,7 +9970,13 @@ async function abSauver(id) {
     return;
   }
   const modele = abComp(abSelVal("abEG").trim(), base);
+  const doublon = (S.appBase || []).find((b) => b.id !== id && b.type === type && b.marque === marque && b.modele === modele);
+  if (doublon) {
+    toast("Cet appareil existe déjà dans la base.");
+    return;
+  }
   const cl = abCoulFinal("edit");
+  const avant = avantB;
   const row = { type, marque, modele };
   if (cl.length || abHasCouleur()) row.couleur = cl.length ? abCoulJSON(cl) : null;
   const { error } = await SB.from("appareils_base").update(row).eq("id", id);
@@ -9234,6 +9987,7 @@ async function abSauver(id) {
   AB_EDIT = null;
   AB_CL.edit = [];
   AB_DRAFT.edit = { nom: "", hex: "", img: "" };
+  if (avant && (avant.modele !== modele || avant.type !== type)) await abCascade(avant, { type, modele });
   toast("Appareil modifié");
   await reload();
 }
@@ -9259,11 +10013,11 @@ async function abPhotos(id) {
   }
 }
 function abLigne(x) {
-  if (AB_EDIT === x.id) return '<div class="card" style="margin:4px 0"><div class="two"><div><label>Type *</label>' + abSelHtml("abET", x.type, abTypes(), "— Choisir un type —", "Nouveau type", true) + "</div><div><label>Marque *</label>" + abSelHtml("abEMa", x.marque || "", abMarquesFor(x.type), "— Choisir une marque —", "Nouvelle marque", true) + "</div></div><label>Gamme (facultatif)</label>" + abSelHtml("abEG", abSplit(x.modele).g, abGammesFor(x.type, x.marque), "— Aucune gamme —", "Nouvelle gamme", true) + "<label>Modèle *</label>" + abSelHtml("abEM", abSplit(x.modele).g ? abSplit(x.modele).base : x.modele, abSplit(x.modele).g ? abBasesFor(x.type, x.marque, abSplit(x.modele).g) : abModelesFor(x.type, x.marque), "— Choisir un modèle —", "Nouveau modèle", true) + '<label>Couleurs (facultatif)</label><div id="abCB_edit">' + abCoulBox("edit") + `</div><div style="display:flex;gap:6px;margin-top:6px"><button class="chip ok" onclick="abSauver('` + x.id + `')">Enregistrer</button><button class="chip" onclick="abCancel()">Annuler</button></div></div>`;
+  if (AB_EDIT === x.id) return '<div class="card" style="margin:4px 0"><div class="two"><div><label>Type *</label>' + abSelHtml("abET", x.type, abTypes(), "— Choisir un type —", "Nouveau type", true) + "</div><div><label>Marque *</label>" + abSelHtml("abEMa", x.marque || "", abMarquesFor(x.type), "— Choisir une marque —", "Nouvelle marque", true) + "</div></div><label>Gamme (facultatif)</label>" + abSelHtml("abEG", abSplit(x.modele).g, abGammesFor(x.type, x.marque), "— Aucune gamme —", "Nouvelle gamme", true) + "<label>Modèle *</label>" + abSelHtml("abEM", abSplit(x.modele).g ? abSplit(x.modele).base : x.modele, abSplit(x.modele).g ? abBasesFor(x.type, x.marque, abSplit(x.modele).g) : abModelesFor(x.type, x.marque), "— Choisir un modèle —", "Nouveau modèle", true) + '<label>Nom du modèle (pour le renommer)</label><input id="abENom" value="' + esc(abSplit(x.modele).base || x.modele) + '" placeholder="Nom de l’appareil">' + '<label>Couleurs (facultatif)</label><div id="abCB_edit">' + abCoulBox("edit") + `</div><div style="display:flex;gap:6px;margin-top:6px"><button class="chip ok" onclick="abSauver('` + x.id + `')">Enregistrer</button><button class="chip" onclick="abCancel()">Annuler</button></div></div>`;
   const nPh = (S.photos || []).filter((p) => p.appareil_base_id === x.id).length, ouvert = AB_PHOTO_OPEN === x.id;
   const vig = baseModelePhoto(x, "");
-  const vignette = vig ? '<img src="' + esc(vig) + '" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:8px;flex:none;display:block;background:#fff">' : '<span style="width:44px;height:44px;border-radius:8px;flex:none;display:flex;align-items:center;justify-content:center;background:#EEF1EC">' + ICON_IMG + "</span>";
-  return `<div class="row" onclick="abRowClick(event,'` + x.id + `')" style="align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(128,128,128,.25);flex-wrap:nowrap;cursor:pointer">` + vignette + '<div class="ab-grid"><span class="ab-cell">' + esc(x.type) + '</span><span class="ab-cell">' + esc(x.marque || "Sans marque") + '</span><b class="ab-cell">' + esc(x.modele) + '</b><span class="ab-cell' + (x.couleur ? "" : " m") + '">' + abCoulCell(x.couleur) + '</span></div><div class="ab-acts"><button class="btn sq ghost" title="' + (ouvert ? "Fermer la galerie" : "Photos du modèle") + '" aria-label="' + (ouvert ? "Fermer la galerie" : "Photos du modèle (" + nPh + ")") + '" aria-pressed="' + (ouvert ? "true" : "false") + `" style="position:relative" onclick="abPhotos('` + x.id + `')">` + ICON_IMG + (nPh ? '<span style="position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:var(--line);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center">' + nPh + "</span>" : "") + `</button><button class="chip" onclick="abEdit('` + x.id + `')">Modifier</button><button class="btn sq ghost" title="Retirer cet appareil" aria-label="Retirer cet appareil" onclick="abSupprimer('` + x.id + `')"><span class="ic" style="transform:rotate(45deg)"></span></button></div></div>` + (ouvert ? abFicheHtml(x) : "");
+  const vignette = vig ? '<img src="' + esc(vig) + '" alt="" style="width:44px;height:44px;object-fit:contain;border-radius:8px;flex:none;display:block;background:#fff">' : '<span style="width:44px;height:44px;border-radius:8px;flex:none;display:flex;align-items:center;justify-content:center;background:#EEF1EC">' + ICON_IMG + "</span>";
+  return `<div class="row" onclick="abRowClick(event,'` + x.id + `')" style="align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(128,128,128,.25);flex-wrap:nowrap;cursor:pointer">` + vignette + '<div class="ab-grid"><span class="ab-cell">' + esc(x.type) + '</span><span class="ab-cell">' + esc(x.marque || "Sans marque") + '</span><b class="ab-cell">' + esc(x.modele) + '</b><span class="ab-cell' + (x.couleur ? "" : " m") + '">' + abCoulCellSimple(x.couleur) + '</span></div><div class="ab-acts"><button class="btn sq ghost" title="' + (ouvert ? "Fermer la galerie" : "Photos du modèle") + '" aria-label="' + (ouvert ? "Fermer la galerie" : "Photos du modèle (" + nPh + ")") + '" aria-pressed="' + (ouvert ? "true" : "false") + `" style="position:relative" onclick="abPhotos('` + x.id + `')">` + ICON_IMG + (nPh ? '<span style="position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:var(--line);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center">' + nPh + "</span>" : "") + `</button><button class="chip" onclick="abEdit('` + x.id + `')">Modifier</button><button class="btn sq ghost" title="Retirer cet appareil" aria-label="Retirer cet appareil" onclick="abSupprimer('` + x.id + `')"><span class="ic" style="transform:rotate(45deg)"></span></button></div></div>` + (ouvert ? abFicheHtml(x) : "");
 }
 function colId(baseId, nom) {
   return baseId + "::" + encodeURIComponent(nom);
@@ -9417,8 +10171,13 @@ async function abColImg(key, input) {
 }
 function baseModelePhoto(base, coul) {
   const ph = (S.photos || []).filter((x) => x.appareil_base_id === base.id).slice().sort((a, b) => photoOrdre(a) - photoOrdre(b));
-  const pick = coul ? ph.find((x) => x.couleur && nz(x.couleur) === nz(coul)) : null;
-  const p = pick || ph.find((x) => !x.couleur);
+  let p = coul ? ph.find((x) => x.couleur && nz(x.couleur) === nz(coul)) : null;
+  /* Sans couleur demandée : la première couleur de la fiche qui a une photo, puis la suivante */
+  for (const c of abCoulParse(base.couleur)) {
+    if (p) break;
+    p = ph.find((x) => x.couleur && nz(x.couleur) === nz(c.nom)) || null;
+  }
+  p = p || ph.find((x) => !x.couleur) || ph[0];
   return p ? photoUrl(p) : "";
 }
 var AB_NC = {};
@@ -9545,7 +10304,7 @@ function appareilsHtml() {
   AB_MM.abMo = false;
   AB_MM.abG = false;
   AB_MM.abC = false;
-  return head + '<div class="row" style="gap:8px;align-items:center;flex-wrap:nowrap;margin-top:4px">' + abAddHtml() + '<input id="abQ" placeholder="Rechercher (type, marque, modèle)" value="' + esc(AB_F.q) + '" oninput="AB_F.q=this.value;abRefresh()" style="flex:1;min-width:0;margin:0"></div><div id="abAdd" class="card' + (AB_MM.abAdd ? "" : " hide") + '"><label>Type *</label>' + abSelHtml("abT", "", abTypes(), "— Choisir un type —", "Nouveau type", true) + "<label>Marque *</label>" + abSelHtml("abM", "", [], "— Choisir une marque —", "Nouvelle marque", false) + "<label>Gamme (facultatif)</label>" + abSelHtml("abG", "", [], "— Aucune gamme —", "Nouvelle gamme", false) + "<label>Modèle *</label>" + abSelHtml("abMo", "", [], "— Choisir un modèle —", "Nouveau modèle", false) + '<label>Couleurs (facultatif)</label><div id="abCB_add">' + abCoulBox("add") + '</div><button class="btn" onclick="abAjouter()">Ajouter à la base</button><div class="err" id="abErr"></div></div>' + abFiltresHtml() + '<div class="row" style="gap:6px;flex-wrap:wrap;margin:8px 0"><select onchange="AB_SORT=this.value;abRefresh()">' + selOpts([["nom", "Trier : nom"], ["type", "Trier : type"], ["marque", "Trier : marque"], ["recent", "Trier : ajouté récemment"]], AB_SORT) + '</select></div><div class="ab-scroll" id="abL">' + abListe() + "</div>";
+  return head + '<div class="row" style="gap:8px;align-items:center;flex-wrap:nowrap;margin-top:4px">' + abAddHtml() + '<input id="abQ" placeholder="Rechercher (type, marque, modèle)" value="' + esc(AB_F.q) + '" oninput="AB_F.q=this.value;abRefresh()" style="flex:1;min-width:0;margin:0"></div><div id="abAdd" class="card' + (AB_MM.abAdd ? "" : " hide") + '"><label>Type *</label>' + abSelHtml("abT", "", abTypes(), "— Choisir un type —", "Nouveau type", true) + "<label>Marque *</label>" + abSelHtml("abM", "", [], "— Choisir une marque —", "Nouvelle marque", false) + "<label>Gamme (facultatif)</label>" + abSelHtml("abG", "", [], "— Aucune gamme —", "Nouvelle gamme", false) + "<label>Modèle *</label>" + abSelHtml("abMo", "", [], "— Choisir un modèle —", "Nouveau modèle", false) + '<label>Couleurs (facultatif)</label><div id="abCB_add">' + abCoulBox("add") + '</div><button class="btn" onclick="abAjouter()">Ajouter à la base</button><div class="err" id="abErr"></div></div>' + abFiltresHtml() + '<div class="row" style="gap:6px;flex-wrap:wrap;margin:8px 0"><select onchange="AB_SORT=this.value;abRefresh()">' + selOpts([["nom", "Trier : nom"], ["type", "Trier : type"], ["marque", "Trier : marque"], ["recent", "Trier : plus récents"]], AB_SORT) + '</select></div><div class="ab-scroll" id="abL">' + abListe() + "</div>";
 }
 var ICON_EDIT = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>';
 var ICON_UPLOAD = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4"></path><path d="M7 9l5-5 5 5"></path><path d="M5 20h14"></path></svg>';
@@ -9554,7 +10313,7 @@ var ICON_TRASH = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" st
 function devCompact(d) {
   const r = S.dossiers.filter((x) => x.device_id === d.id).sort((a, b) => String(b.created_at || "").localeCompare(String(a.created_at || "")))[0];
   const couleur = d.couleur ? " · " + esc(d.couleur) : "";
-  return `<div style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:stretch;padding:8px 0;border-bottom:1px solid var(--line)"><div style="min-width:0;display:flex;flex-direction:column"><button class="dev-sq" onclick="openDevPage('` + d.id + `')" title="Ouvrir l’appareil" style="flex:none;align-self:flex-start;height:230px;aspect-ratio:1/1;width:230px;display:flex;align-items:center;justify-content:center;padding:0;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#fff">` + (modelePhoto(d) ? '<img src="' + modelePhoto(d) + '" alt="' + esc(devNom(d)) + '" style="width:100%;height:100%;object-fit:cover;background:#fff">' : ICON_IMG) + '</button><div class="t" style="font-size:12px;margin-top:4px;line-height:14px;height:14px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(devNom(d)) + '</div></div><div class="cli-dev-last" style="min-width:0;display:flex;flex-direction:column">' + (r ? repCardHtml(r, true, true) : devEmptyHtml(d)) + "</div></div>";
+  return `<div style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:stretch;padding:8px 0;border-bottom:1px solid var(--line)"><div style="min-width:0;display:flex;flex-direction:column"><button class="dev-sq" onclick="openDevPage('` + d.id + `')" title="Ouvrir l’appareil" style="flex:none;align-self:flex-start;height:230px;aspect-ratio:1/1;width:230px;display:flex;align-items:center;justify-content:center;padding:0;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#fff">` + (modelePhoto(d) ? '<img src="' + modelePhoto(d) + '" alt="' + esc(devNom(d)) + '" style="width:100%;height:100%;object-fit:contain;background:#fff">' : ICON_IMG) + '</button><div class="t" style="font-size:12px;margin-top:4px;line-height:14px;height:14px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(devNom(d)) + '</div></div><div class="cli-dev-last" style="min-width:0;display:flex;flex-direction:column">' + (r ? repCardHtml(r, true, true) : devEmptyHtml(d)) + "</div></div>";
 }
 var CLI_CARET_DOWN = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg>';
 var CLI_CARET_UP = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"></path></svg>';
@@ -9572,11 +10331,284 @@ function cliHtml(q) {
     const icones = c.deleted_at ? actions : `<div style="display:flex;gap:8px;margin-left:auto"><button class="btn ghost sq" title="Modifier" aria-label="Modifier" onclick="editCli('` + c.id + `')">` + ICON_EDIT + `</button><button class="btn ghost sq" title="Supprimer" aria-label="Supprimer" style="color:var(--bad);border-color:var(--bad)" onclick="softDelCli('` + c.id + `')">` + ICON_TRASH + "</button></div>";
     const barre = '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-bottom:8px;border-bottom:1px solid var(--line)"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">' + acc + "</div>" + icones + "</div>";
     const devs = S.devices.filter((d) => d.client_id === c.id);
-    const inner = barre + (dp ? devPage(dp) : (c.notes ? '<div class="m" style="margin-top:6px">' + esc(c.notes) + "</div>" : "") + '<div id="cEd"></div><h2 style="font-size:15px;margin:12px 0 4px">Appareils</h2>' + (devs.map((d) => devCompact(d)).join("") || '<p class="m">Aucun appareil.</p>') + `<div style="display:flex;align-items:center;gap:10px;margin-top:10px"><button class="btn ghost sq" title="Ajouter un appareil" aria-label="Ajouter un appareil" onclick="showDevForm(null,'` + c.id + `')"><span class="ic"></span></button><span class="m">Ajouter un appareil</span></div><div id="devForm"></div><div class="err" id="cliErr"></div>` + cliQualiHtml(c));
+    const inner = barre + (dp ? devPage(dp) : (c.notes ? '<div class="m" style="margin-top:6px">' + esc(c.notes) + "</div>" : "") + '<div id="cEd"></div><h2 style="font-size:15px;margin:12px 0 4px">Appareils</h2>' + (devs.map((d) => devCompact(d)).join("") || '<p class="m">Aucun appareil.</p>') + `<div style="display:flex;align-items:center;gap:10px;margin-top:10px"><button class="btn ghost sq" title="Ajouter un appareil" aria-label="Ajouter un appareil" onclick="showDevForm(null,'` + c.id + `')"><span class="ic"></span></button><span class="m">Ajouter un appareil</span></div><div id="devForm"></div><div class="err" id="cliErr"></div>` + cliAchatsHtml(c) + cliQualiHtml(c));
     return '<div class="card cli-card">' + row + '<div class="cli-body-wrap' + (CLI_NOANIM ? " cli-still" : "") + '" data-cli-body="' + c.id + '"><div class="cli-body"><div class="cli-in">' + inner + "</div></div></div></div>";
   }).join("");
   if (!rows) return '<p class="m">' + (CLI_TRASH ? "La corbeille est vide." : "Aucun client.") + "</p>";
   return (list.length ? '<div class="cli-head"><div>Prénom Nom</div><div>Numéro</div><div>Mail</div><div>Adresse</div><div>CP</div><div>Créé le</div><div></div></div>' : "") + rows;
+}
+var CLI_VENTE = null, VENTE_CLI_PRE = null;
+function cliVenteReset() {
+  CLI_LIGNE_EDIT = null;
+  VENTE_OPEN = false;
+  VENTE_EDIT = null;
+  VENTE_LIGNES = [];
+  VT_COMPAT = false;
+  MP.v = [];
+  PKS.v = { app: "", cat: "" };
+  VT_SEL = null;
+}
+function cliVenteToggle(id) {
+  const fermer = CLI_VENTE === id;
+  cliVenteReset();
+  CLI_VENTE = fermer ? null : id;
+  VENTE_CLI_PRE = id;
+  render();
+}
+function cliVenteEdit(id) {
+  const v = (S.ventes || []).find((x) => x.id === id);
+  if (!v) return;
+  cliVenteReset();
+  VENTE_EDIT = id;
+  VENTE_OPEN = true;
+  VENTE_LIGNES = venteLignes(v).map((l) => Object.assign({}, l));
+  CLI_VENTE = v.client_id;
+  VENTE_CLI_PRE = v.client_id;
+  render();
+}
+function venteImage(v) {
+  for (const l of venteLignes(v)) {
+    if (!l.appareil) continue;
+    const u = modelePhoto({ id: null, type: l.appareil, modele: l.modele || "", couleur: l.couleur || "" });
+    if (u) return u;
+  }
+  return "";
+}
+function venteTitreCli(v) {
+  const t = venteLignes(v).map((l) => [l.modele || l.appareil, l.couleur, l.sn ? "SN " + l.sn : null].filter(Boolean).join(" · ") + (l.quantite > 1 ? " × " + l.quantite : "")).join(" + ");
+  return t || "Vente";
+}
+function venteCliCard(v) {
+  const img = venteImage(v), titre = venteTitreCli(v);
+  const stop = ' onclick="event.stopPropagation()"';
+  const ap = venteLignes(v).filter((l) => l.appareil_id).map((l) => {
+    const x = (S.stockApp || []).find((s) => s.id === l.appareil_id);
+    return '<div class="m">Réservé : ' + esc(x ? x.nom : "appareil") + (l.quantite > 1 ? " × " + l.quantite : "") + "</div>";
+  }).join("");
+  const pause = v.probleme ? '<div class="m" style="color:var(--bad);font-weight:600">⚠ Problème · transaction en pause</div>' : "";
+  const rdv = v.envoi ? "" : '<div class="m">Rendez-vous le ' + fr(v.date_rdv) + (v.heure_rdv ? " à " + esc(String(v.heure_rdv).slice(0, 5)) : "") + (v.lieu ? " · " + esc(v.lieu) + ' · <a href="' + mapsUrl(v.lieu) + '" target="_blank" rel="noopener"' + stop + ">Carte</a>" : "") + "</div>";
+  const conv = v.lien_conv ? '<div class="m"><a href="' + esc(convHref(v.lien_conv)) + '" target="_blank" rel="noopener"' + stop + ">Ouvrir la conversation</a></div>" : "";
+  const envoi = v.envoi ? '<div' + stop + '><div class="row" style="align-items:center;gap:6px;margin-top:6px;flex-wrap:wrap"><select onchange="setEnvoiStatut(\'' + v.id + '\',this.value)">' + ENVOI_STATUTS.map((x) => "<option" + (v.envoi_statut === x ? " selected" : "") + ">" + x + "</option>").join("") + "</select>" + (v.envoi_statut === "Reçu" && !v.probleme ? ' <button class="chip late" onclick="setProbleme(\'' + v.id + '\',true)">Un problème est survenu</button>' : "") + '</div><div class="m">Transporteur : ' + (v.transporteur ? esc(v.transporteur) : "non renseigné") + " · Suivi : " + (v.suivi ? esc(v.suivi) : "non renseigné") + "</div>" + (v.transporteur && v.suivi ? '<div class="row" style="margin-top:6px"><button class="chip" onclick="suivreColis(\'' + v.id + '\')">Suivre le colis</button></div>' : "") + "</div>" : "";
+  const actions = '<div class="row" style="margin-top:8px;align-items:center;gap:6px;flex-wrap:wrap"' + stop + '><button class="chip ok" onclick="rdvFait(\'' + v.id + '\')">' + (v.envoi ? "Vente effectuée" : "RDV effectué") + "</button>" + (v.probleme ? ' <button class="chip ok" onclick="setProbleme(\'' + v.id + '\',false)">Problème résolu</button>' : "") + "</div>";
+  return '<div class="vc-cli" role="button" tabindex="0" title="Modifier la vente" onclick="cliVenteEdit(\'' + v.id + '\')" onkeydown="if(event.key===\'Enter\')cliVenteEdit(\'' + v.id + '\')" style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:stretch;padding:10px;margin:8px 0;border:1px solid var(--line);border-radius:14px;background:var(--surf);cursor:pointer;' + (v.probleme ? "border:2px solid var(--bad);" : "") + '"><div style="min-width:0;display:flex;flex-direction:column"><div style="flex:none;width:230px;max-width:42vw;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#fff">' + (img ? '<img src="' + img + '" alt="' + esc(titre) + '" style="width:100%;height:100%;object-fit:contain;background:#fff">' : ICON_IMG) + '</div><div class="t" style="font-size:12px;margin-top:4px;line-height:14px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(titre) + '</div></div><div style="min-width:0;display:flex;flex-direction:column;gap:2px"><div class="row" style="align-items:center;gap:6px;flex-wrap:wrap"><span class="chip">' + (v.prix == null ? "Prix à définir" : eur(v.prix)) + "</span></div>" + pause + rdv + conv + ap + envoi + garVente(v) + actions + "</div></div>";
+}
+var ICON_TRUCK = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h11v9H3z"></path><path d="M14 10h4l3 3v3h-7"></path><circle cx="7" cy="17.5" r="1.8"></circle><circle cx="17" cy="17.5" r="1.8"></circle></svg>';
+var ICON_ARROW_LEFT = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"></path><path d="M11 6l-6 6 6 6"></path></svg>';
+function venteEnCli() {
+  return !!CLI_VENTE && VIEW === "clients" && !DOSSIER;
+}
+var CLI_LIGNE_EDIT = null;
+var ICON_ARROW_RIGHT = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"></path><path d="M13 6l6 6-6 6"></path></svg>';
+function cliNum(id) {
+  const el = $(id);
+  const v = parseFloat(String(el ? el.value : "").replace(",", "."));
+  return isNaN(v) ? 0 : v;
+}
+function cliLignesHtml() {
+  return VENTE_LIGNES.map((l, i) => {
+    const img = venteImage({ lignes: [l] });
+    const titre = [l.modele || l.appareil, l.couleur, l.sn ? "SN " + l.sn : null].filter(Boolean).join(" · ");
+    const edit = CLI_LIGNE_EDIT === i ? '<div style="display:grid;gap:6px;margin-top:8px"><input id="lnM" value="' + esc(l.modele || "") + '" placeholder="Nom de l’appareil"><input id="lnC" value="' + esc(l.couleur || "") + '" placeholder="Couleur"><input id="lnS" value="' + esc(l.sn || "") + '" placeholder="Numéro de série"><div class="row" style="gap:8px"><button type="button" class="chip ok" style="width:auto" onclick="cliLigneSauver(' + i + ')">Enregistrer</button><button type="button" class="chip" style="width:auto" onclick="cliLigneEditer(' + i + ')">Annuler</button></div></div>' : "";
+    return '<div style="padding:8px 0;border-bottom:1px solid var(--line)"><div style="display:flex;align-items:center;gap:10px"><div style="flex:none;width:40px;height:40px;border-radius:8px;overflow:hidden;border:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center">' + (img ? '<img src="' + img + '" alt="" style="width:100%;height:100%;object-fit:contain">' : ICON_IMG) + '</div><div style="min-width:0;flex:1"><div style="font-size:18px;font-weight:600;line-height:1.25">' + esc(titre) + (l.quantite > 1 ? " × " + l.quantite : "") + (l.acheter ? ' <span title="À commander" style="display:inline-flex;vertical-align:middle;color:var(--mut)">' + ICON_TRUCK + "</span>" : "") + '</div></div><button type="button" class="btn ghost" title="Modifier l’appareil" aria-label="Modifier l’appareil" onclick="cliLigneEditer(' + i + ')" style="width:34px;height:34px;padding:0;margin:0;display:flex;align-items:center;justify-content:center;flex:none">' + ICON_EDIT + '</button><button type="button" style="border:0;background:none;cursor:pointer;font-weight:700;font-size:20px;margin:0 2px" aria-label="Supprimer de la vente" title="Supprimer de la vente" onclick="cliLigneDel(' + i + ')">×</button></div>' + edit + "</div>";
+  }).join("") || '<p class="m">Aucun modèle ajouté pour le moment.</p>';
+}
+function cliLigneEditer(i) {
+  CLI_LIGNE_EDIT = CLI_LIGNE_EDIT === i ? null : i;
+  vDrawLignes();
+}
+function cliLigneSauver(i) {
+  const l = VENTE_LIGNES[i];
+  if (!l) return;
+  const m = $("lnM").value.trim();
+  if (!m) {
+    $("vErr").textContent = "Indique le nom de l’appareil.";
+    return;
+  }
+  l.modele = m;
+  l.couleur = $("lnC").value.trim() || null;
+  l.sn = $("lnS").value.trim() || null;
+  CLI_LIGNE_EDIT = null;
+  vDrawLignes();
+}
+function cliLigneDel(i) {
+  if (!confirm("Supprimer cet appareil de la vente ? Il sera retiré de la vente à l’enregistrement.")) return;
+  VENTE_LIGNES.splice(i, 1);
+  CLI_LIGNE_EDIT = null;
+  vDrawLignes();
+}
+function vStockOpts() {
+  const list = (S.stockApp || []).slice().sort((a, b) => String(a.nom || "").localeCompare(String(b.nom || ""), "fr"));
+  return '<option value="">- Choisir dans le stock -</option>' + list.map((x) => '<option value="' + x.id + '">' + esc(x.nom) + " (" + (x.qte || 0) + " dispo)</option>").join("");
+}
+function vPlusToggle() {
+  const box = $("vPicker"), b = $("vPlus");
+  if (!box) return;
+  const ouvrir = box.style.display === "none";
+  box.style.display = ouvrir ? "block" : "none";
+  if (b) {
+    b.textContent = ouvrir ? "×" : "+";
+    b.setAttribute("aria-label", ouvrir ? "Fermer" : "Ajouter un modèle");
+  }
+}
+function cliPickFerme() {
+  const box = $("vPicker"), b = $("vPlus");
+  if (box) box.style.display = "none";
+  if (b) {
+    b.textContent = "+";
+    b.setAttribute("aria-label", "Ajouter un modèle");
+  }
+}
+function vAchatToggle() {
+  const c = $("vAchat");
+  if (!c) return;
+  c.checked = !c.checked;
+  if (c.checked && $("vAppId")) $("vAppId").value = "";
+  vAchatSync();
+}
+function vAchatSync() {
+  const c = $("vAchat"), b = $("vAchatBtn");
+  if (c && b) {
+    b.classList.toggle("ok", c.checked);
+    b.setAttribute("aria-pressed", c.checked ? "true" : "false");
+  }
+  vStockSync();
+}
+function vStockSync() {
+  const btn = $("vStockAdd"), app = $("vAppId");
+  if (!btn || !app) return;
+  const coulOk = !$("vCouleurRow") || $("vCouleurRow").style.display === "none" || !!$("vCouleur").value.trim();
+  const pret = !!(VT_SEL && VT_SEL.mod) && !VT_COMPAT && coulOk;
+  btn.style.display = pret && !app.value && !(($("vAchat") || {}).checked) ? "inline-flex" : "none";
+}
+function cliStockChange() {
+  if ($("vAppId").value && $("vAchat")) $("vAchat").checked = false;
+  vAchatSync();
+}
+async function vStockAjout() {
+  const err = $("vErr");
+  err.textContent = "";
+  if (!VT_SEL || !VT_SEL.mod) return;
+  const coul = $("vCouleurRow").style.display !== "none" ? $("vCouleur").value.trim() : "";
+  const nom = [VT_SEL.app, VT_SEL.cat, VT_SEL.mod, coul].filter(Boolean).join(" · ");
+  if ((S.stockApp || []).some((x) => x.nom === nom)) {
+    vAutoDev();
+    return;
+  }
+  const { data, error } = await SB.from("stock_appareils").insert({ nom, appareil: VT_SEL.app, categorie: VT_SEL.cat, modele: VT_SEL.mod, qte: 1, grade: null }).select().single();
+  if (error) {
+    err.textContent = msgErr(error);
+    return;
+  }
+  if (data && data.id) {
+    S.stockApp = (S.stockApp || []).concat([data]);
+    $("vAppId").innerHTML = vStockOpts();
+    $("vAppId").value = data.id;
+  }
+  if ($("vAchat")) $("vAchat").checked = false;
+  vAchatSync();
+  flash("Ajouté au stock");
+}
+function cliVenteOuvrir(p) {
+  const plus = $(p + "Plus"), box = $(p + "Box");
+  if (plus) plus.style.display = "none";
+  if (box) box.style.display = "block";
+  const f = box && box.querySelector("input");
+  if (f) f.focus();
+}
+function cliVenteAller(cid) {
+  cliVenteReset();
+  CLI_VENTE = null;
+  VENTE_CLI_PRE = null;
+  CLI_OPEN = cid;
+  render();
+}
+function cliVenteTotaux() {
+  const box = $("vReste");
+  if (!box || !$("vPrix")) return;
+  const pRaw = $("vPrix").value.trim().replace(",", ".");
+  if (pRaw === "" || isNaN(parseFloat(pRaw))) {
+    box.textContent = "Prix obligatoire";
+    box.style.color = "var(--bad)";
+    return;
+  }
+  const fin = nRemise(parseFloat(pRaw), cliNum("vRm"), $("vRmU").value === "pct");
+  const paye = cliNum("vAcoE") + cliNum("vAcoV") + cliNum("vPayE") + cliNum("vPayV");
+  const reste = Math.max(0, Math.round((fin - paye) * 100) / 100);
+  box.style.color = "";
+  box.innerHTML = "Prix après remise : " + eur(fin) + '<br><b style="font-size:19px">Reste à régler : ' + eur(reste) + "</b>";
+}
+function cliVenteFormHtml(ed) {
+  const cid = ed ? ed.client_id : VENTE_CLI_PRE;
+  const cli = (S.clients || []).find((c) => c.id === cid);
+  const nomCli = cli ? fullName(cli) : "";
+  const val = (x) => (x == null || x === "" ? "" : esc(String(x)));
+  const pct = !!(ed && ed.remise_pct);
+  const basePrix = ed ? (ed.prix_base != null ? ed.prix_base : ed.prix) : null;
+  const showRdv = !!(ed && ed.date_rdv), showLieu = !!(ed && ed.lieu), showConv = !!(ed && ed.lien_conv);
+  const plus = (p, label, shown) => '<div id="' + p + 'Plus" style="display:' + (shown ? "none" : "flex") + ';align-items:center;gap:10px;margin-top:10px"><span class="t" style="font-size:14px;margin:0">' + label + '</span><button type="button" class="btn ghost" aria-label="' + label + '" onclick="cliVenteOuvrir(\'' + p + '\')" style="width:34px;height:34px;padding:0;margin:0;font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center;flex:none">+</button></div>';
+  return `<div class="card cli-vente" style="margin:8px 0;padding:14px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="btn ghost" type="button" title="Retour aux achats" aria-label="Retour aux achats" onclick="cliVenteToggle('${esc(cid || "")}')" style="width:56px;height:40px;padding:0;margin:0;border-radius:10px;display:flex;align-items:center;justify-content:center;flex:none">${ICON_ARROW_LEFT}</button>
+        <div class="t" style="margin:0;flex:1;text-align:center">${ed ? "Modification" : "Nouvelle vente"}</div>
+        <div style="width:56px;flex:none"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
+        <span class="t" style="margin:0;font-size:16px;flex:1">${esc(nomCli)}</span>
+        <button class="btn ghost" type="button" title="Aller à l’espace du client" aria-label="Aller à l’espace du client" onclick="cliVenteAller('${esc(cid || "")}')" style="width:44px;height:36px;padding:0;margin:0;border-radius:10px;display:flex;align-items:center;justify-content:center;flex:none">${ICON_ARROW_RIGHT}</button>
+      </div>
+      <input type="hidden" id="vCli" value="${esc(cid || "")}">
+      <div class="t" style="font-size:14px;margin-top:12px">Modèles de la vente</div>
+      <div id="vLignes">${cliLignesHtml()}</div>
+      <button type="button" id="vPlus" class="btn ghost" title="Ajouter un modèle" aria-label="Ajouter un modèle" onclick="vPlusToggle()" style="width:34px;height:34px;padding:0;margin:6px 0 0;font-size:20px;line-height:1;display:flex;align-items:center;justify-content:center">+</button>
+      <div id="vPicker" style="display:none;margin-top:8px">
+        <label>Type / marque / modèle</label><div id="mp-v"></div>
+        <div id="vCouleurRow" style="display:none"><label>Couleur</label><input id="vCouleur" list="vCouleurDl" placeholder="Ex. Bleu" autocomplete="off" oninput="vAutoDev()"><datalist id="vCouleurDl"></datalist></div>
+        <label>Appareil du stock</label>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><select id="vAppId" style="flex:1;min-width:160px" onchange="cliStockChange()">${vStockOpts()}</select><button type="button" id="vStockAdd" class="chip" style="display:none;white-space:nowrap;width:auto" onclick="vStockAjout()">+ Ajouter au stock (1)</button><button type="button" id="vAchatBtn" class="chip" aria-pressed="false" title="À commander" aria-label="À commander" onclick="vAchatToggle()" style="width:auto;padding:6px 10px">${ICON_TRUCK}</button></div>
+        <label>Quantité</label><input id="vQte" inputmode="numeric" oninput="numOnly(this)" value="1">
+        <button type="button" class="chip ok" onclick="vAddLigne()" style="width:auto">+ Ajouter ce modèle à la vente</button>
+      </div>
+      <div class="t" style="margin-top:14px">Paiement</div>
+      <div class="two"><div><label>Prix (€) *</label><input id="vPrix" inputmode="decimal" placeholder="obligatoire" oninput="numOnly(this);cliVenteTotaux()" value="${val(basePrix)}"></div>
+        <div><label>Remise</label><div style="display:flex;gap:6px"><input id="vRm" inputmode="decimal" placeholder="0" oninput="numOnly(this);cliVenteTotaux()" value="${val(ed ? ed.remise : "")}" style="flex:1;min-width:0"><select id="vRmU" onchange="cliVenteTotaux()" style="width:auto;margin:0"><option value="eur"${pct ? "" : " selected"}>€</option><option value="pct"${pct ? " selected" : ""}>%</option></select></div></div></div>
+      <div class="two"><div><label>Acompte espèces (€)</label><input id="vAcoE" inputmode="decimal" placeholder="0" oninput="numOnly(this);cliVenteTotaux()" value="${val(ed ? ed.acompte_especes : "")}"></div><div><label>Acompte virement (€)</label><input id="vAcoV" inputmode="decimal" placeholder="0" oninput="numOnly(this);cliVenteTotaux()" value="${val(ed ? ed.acompte_virement : "")}"></div></div>
+      <div class="two"><div><label>Paiement espèces (€)</label><input id="vPayE" inputmode="decimal" placeholder="0" oninput="numOnly(this);cliVenteTotaux()" value="${val(ed ? ed.paye_especes : "")}"></div><div><label>Paiement virement (€)</label><input id="vPayV" inputmode="decimal" placeholder="0" oninput="numOnly(this);cliVenteTotaux()" value="${val(ed ? ed.paye_virement : "")}"></div></div>
+      <div id="vReste" style="text-align:center;font-size:17px;margin:10px 0"></div>
+      <label>Note</label><textarea id="vNote" rows="2">${ed && ed.notes ? esc(ed.notes) : ""}</textarea>
+      ${plus("vRdv", "Ajouter un rendez-vous", showRdv)}
+      <div id="vRdvBox" style="display:${showRdv ? "block" : "none"}"><div class="two"><div><label>Date du rendez-vous *</label><input id="vDate" type="date" value="${ed ? esc(ed.date_rdv || "") : ""}"></div>
+        <div><label>Heure (optionnel)</label><input id="vHeure" type="time" value="${ed && ed.heure_rdv ? esc(String(ed.heure_rdv).slice(0, 5)) : ""}"></div></div></div>
+      ${plus("vLieu", "Lieu de la remise", showLieu)}
+      <div id="vLieuBox" style="display:${showLieu ? "block" : "none"}"><label>Lieu de la remise</label><input id="vLieu" placeholder="Ex. Gare de Nantes" value="${ed ? esc(ed.lieu || "") : ""}">
+      ${GMAPS_KEY ? "" : '<button class="chip" type="button" onclick="mapsLieu()">Chercher sur Google Maps</button>'}
+      </div>
+      ${plus("vConv", "Lien de la conversation", showConv)}
+      <div id="vConvBox" style="display:${showConv ? "block" : "none"}"><label>Lien de la conversation</label><input id="vConv" placeholder="Lien de la discussion" value="${ed ? esc(ed.lien_conv || "") : ""}"></div>
+      <button class="btn" onclick="saveVente()">${ed ? "Enregistrer les modifications" : "Enregistrer la vente"}</button>
+      ${ed ? `<button class="btn ghost" type="button" style="color:var(--bad);border-color:var(--bad);margin-top:8px" onclick="deleteVente('` + ed.id + `')">Supprimer cette vente</button>` : ""}
+      <div class="err" id="vErr"></div>
+      <div style="display:none">
+        <input type="checkbox" id="vPasse"><div id="vAcc"></div>
+        <div id="vPas"><select id="vTyp"><option value=""></option></select>
+          <div id="vNomBox"><input id="vNom"></div><div id="vPseudoBox"><input id="vPseudo"></div>
+          <div id="vEnvoiBox"><input type="checkbox" id="vEnvoi"><div id="vEnvoiDet"><select id="vTransp"><option value=""></option></select><input id="vSuivi"><select id="vEnvStat"><option></option></select></div></div></div>
+        <input type="checkbox" id="vCompat"><div id="vCompatBox"><input id="vCompatTxt"></div><input id="vExact">
+        <input type="checkbox" id="vAchat">
+      </div>
+    </div>`;
+}
+function cliAchatsHtml(c) {
+  if (ROLE !== "rep") return "";
+  const ventes = (S.ventes || []).filter((v) => v.client_id === c.id).sort((a, b) => String(b.date_rdv || "").localeCompare(String(a.date_rdv || "")));
+  const entete = '<h2 style="font-size:15px;margin:14px 0 4px">Achats</h2>';
+  if (CLI_VENTE === c.id && VENTE_EDIT) {
+    const ed = ventes.find((v) => v.id === VENTE_EDIT);
+    if (ed) return entete + '<div id="cliVenteForm">' + cliVenteFormHtml(ed) + "</div>";
+  }
+  const on = CLI_VENTE === c.id;
+  const titre = on ? "Fermer le formulaire" : "Ajouter une vente";
+  const bouton = '<div class="dr-empty" style="margin-top:10px"><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><button class="btn ghost sq" title="' + titre + '" aria-label="' + titre + '" onclick="cliVenteToggle(\'' + c.id + '\')" style="transition:background-color .6s ease;' + (on ? "background:var(--bad);color:#fff;border-color:var(--bad)" : "") + '"><span class="ic' + (on ? " minus" : "") + '"></span></button><div style="min-width:0"><div class="t" style="font-size:14px">' + (on ? "Nouvelle vente" : "Ajouter une vente") + '</div><div class="m">' + (on ? "Choisis les modèles puis enregistre la vente." : "Crée une vente pour ce client.") + "</div></div></div></div>";
+  return entete + (ventes.map(venteCliCard).join("") || '<p class="m">Aucun achat pour ce client.</p>') + bouton + (on ? '<div id="cliVenteForm">' + cliVenteFormHtml(null) + "</div>" : "");
 }
 function cliQualiHtml(c) {
   if (ROLE !== "rep") return "";
@@ -9631,7 +10663,7 @@ function vCouleurRefresh(app, mod) {
   $("vCouleurDl").innerHTML = list ? coulDlHtml(list) : "";
   $("vCouleur").value = "";
 }
-function vAutoDev() {
+function vAutoDevCore() {
   const app = $("vAppId");
   if (!app) return;
   if (VT_COMPAT || !VT_SEL || !VT_SEL.mod) {
@@ -9648,6 +10680,10 @@ function vAutoDev() {
   const x = (S.stockApp || []).find((y) => y.nom === nom);
   app.value = x ? x.id : "";
   if (app.value && $("vAchat")) $("vAchat").checked = false;
+}
+function vAutoDev() {
+  vAutoDevCore();
+  if (typeof vAchatSync === "function") vAchatSync();
 }
 function vAchatChange(on) {
   if (on && $("vAppId")) $("vAppId").value = "";
@@ -9713,9 +10749,36 @@ function catLibelle(r) {
   const absent = !S.appBaseErr && ROLE === "rep" && !baseHasTrio(t, r.categorie, r.modele);
   return '<div class="m" style="margin:10px 0 4px">' + esc([t, r.categorie, r.modele].filter(Boolean).join(" · ")) + (absent ? repere("Marque ou modèle absent de la base Appareils : à corriger") : "") + "</div>";
 }
+// Types de réparation : pour en ajouter un plus tard, ajoute son nom dans TYPES_REP.
+const TYPES_REP = ["Écran", "Batterie", "Caméra", "Bouton", "Devis", "Autre"];
+// Types qui ne doivent pas apparaître dans Qualirépar.
+const TYPES_HORS_QUALI = ["Devis", "Autre"];
+function typeRepOpts(sel) {
+  return '<option value="">Type…</option>' + TYPES_REP.map((t) => '<option value="' + esc(t) + '"' + (t === sel ? " selected" : "") + ">" + esc(t) + "</option>").join("");
+}
+async function setTypeRep(id, v) {
+  const { error } = await SB.from("catalogue").update({ type_rep: v || null }).eq("id", id);
+  if (error) {
+    toast(msgErr(error));
+    render();
+    return;
+  }
+  toast("Type enregistré");
+  await reload();
+}
+// Type de la réparation liée à une fiche (retrouvé dans le catalogue par nom, modèle et type d’appareil).
+function typeRepDossier(d) {
+  const v = (S.devices || []).find((x) => x.id === d.device_id);
+  if (!v) return null;
+  const r = (S.catalogue || []).find((c) => c.reparation === d.panne && nz(c.modele) === nz(v.modele) && (c.appareil === "Mods" ? c.cible === v.type : c.appareil === v.type));
+  return r && r.type_rep ? r.type_rep : null;
+}
+function eligibleQuali(d) {
+  return !TYPES_HORS_QUALI.includes(typeRepDossier(d));
+}
 function catRow(r) {
   const ok = r.prix != null && !isNaN(+r.prix);
-  return '<div class="card"><div class="row"><div><div class="t">' + esc(r.reparation) + '</div><div class="m">' + (r.duree ? "Durée : " + esc(r.duree) : "Durée à définir") + (r.joy ? " · joystick (1 ou 2)" + (ok ? " · 2 joysticks : " + eur(2 * r.prix - 5) : "") : "") + '</div></div><div style="display:flex;gap:6px;align-items:center"><input inputmode="decimal" value="' + esc(r.prix == null ? "" : r.prix) + `" placeholder="à définir" style="width:90px;margin:0" onchange="setPrixCat('` + r.id + `',this.value)"><span class="m">€</span></div></div><button class="chip late" style="margin-top:6px" onclick="delCat('` + r.id + `')">Supprimer</button></div>`;
+  return '<div class="card"><div class="row"><div><div class="t">' + esc(r.reparation) + ' <button class="chip" title="Renommer la réparation" aria-label="Renommer la réparation" onclick="catRenommer(\'' + r.id + '\')">✏️</button></div><div class="m">' + (r.duree ? "Durée : " + esc(r.duree) : "Durée à définir") + (r.joy ? " · joystick (1 ou 2)" + (ok ? " · 2 joysticks : " + eur(2 * r.prix - 5) : "") : "") + '</div><div style="margin-top:6px"><select style="width:auto;margin:0;padding:6px 8px" aria-label="Type de réparation" onchange="setTypeRep(\'' + r.id + '\', this.value)">' + typeRepOpts(r.type_rep) + '</select></div></div><div style="display:flex;gap:6px;align-items:center"><input inputmode="decimal" value="' + esc(r.prix == null ? "" : r.prix) + `" placeholder="à définir" style="width:90px;margin:0" onchange="setPrixCat('` + r.id + `',this.value)"><span class="m">€</span></div></div><button class="chip late" style="margin-top:6px" onclick="delCat('` + r.id + `')">Supprimer</button></div>`;
 }
 function addCatForm() {
   return '<div class="card" style="margin-top:10px"><div class="t">Ajouter une réparation pour ce modèle</div><label>Réparation *</label><input id="cR"><div class="two"><div><label>Prix (€)</label><input id="cP" inputmode="decimal" placeholder="à définir"></div><div><label>Durée de réparation</label><input id="cD" placeholder="Ex. 1h"></div></div><button class="btn" onclick="addCat()">Ajouter</button><div class="err" id="cRErr"></div></div>';
@@ -9756,6 +10819,27 @@ async function setPrixCat(id, v) {
   toast("Prix enregistré");
   await reload();
 }
+async function catRenommer(id) {
+  const r = S.catalogue.find((x) => x.id === id);
+  if (!r) return;
+  const nom = (prompt("Nouveau nom de la réparation", r.reparation) || "").trim();
+  if (!nom || nom === r.reparation) return;
+  const { error } = await SB.from("catalogue").update({ reparation: nom }).eq("id", id);
+  if (error) {
+    toast(msgErr(error));
+    return;
+  }
+  const ids = (S.devices || []).filter((d) => nz(d.modele) === nz(r.modele) && (r.appareil === "Mods" || d.type === r.appareil)).map((d) => d.id);
+  if (ids.length) {
+    const { error: e2 } = await SB.from("dossiers").update({ panne: nom }).in("device_id", ids).eq("panne", r.reparation);
+    if (e2) {
+      toast(msgErr(e2));
+      return;
+    }
+  }
+  toast("Réparation renommée");
+  await reload();
+}
 async function delCat(id) {
   if (!confirm("Supprimer cette réparation du catalogue ?")) return;
   const { error } = await SB.from("catalogue").delete().eq("id", id);
@@ -9786,6 +10870,7 @@ function plus6m(dateStr) {
   return b.getFullYear() + "-" + String(b.getMonth() + 1).padStart(2, "0") + "-" + String(b.getDate()).padStart(2, "0");
 }
 function garantieHtml(d) {
+  if (d.sans_garantie) return '<div class="m" style="margin-top:6px">Pas de garantie sur cette réparation.</div>';
   if (d.statut !== "Remis" || !d.echeance)
     return '<div class="m" style="margin-top:6px">La garantie de 6 mois démarre à la remise de l’appareil.</div>';
   const fin = plus6m(d.echeance);
@@ -9820,10 +10905,25 @@ function modeleCorrespond(txt, key) {
   if (i < 0) return false;
   return !/^(pro|plus|a|se|e|\d)/.test(k.slice(i + key.length));
 }
+function photoBaseCouleur(base, coul) {
+  const ph = (S.photos || []).filter((x) => x.appareil_base_id === base.id && (coul == null || x.couleur && nz(x.couleur) === nz(coul))).sort((a, b) => photoOrdre(a) - photoOrdre(b));
+  const p = ph.find((x) => !x.couleur) || ph[0];
+  return p ? photoUrl(p) : "";
+}
 function modelePhoto(d) {
-  const base = (S.appBase || []).find((b) => b.type === d.type && b.modele === d.modele) || (S.appBase || []).find((b) => b.type === d.type && modeleKey(b.modele) === modeleKey(d.modele));
-  if (base && baseModelePhoto(base, d.couleur)) return baseModelePhoto(base, d.couleur);
-  const cands = [d.modele, base ? (base.marque || "") + " " + (base.modele || "") : ""].concat(S.dossiers.filter((x) => x.device_id === d.id).map((x) => x.appareil || ""));
+  /* Toutes les fiches de la base qui portent ce modèle */
+  const memes = modeleKey(d.modele) ? (S.appBase || []).filter((b) => b.type === d.type && modeleKey(b.modele) === modeleKey(d.modele)) : [];
+  /* 1. La couleur de l’appareil */
+  if (d.couleur) for (const b of memes) { const u = photoBaseCouleur(b, d.couleur); if (u) return u; }
+  /* 2. Sinon la première couleur de la fiche qui a une photo, puis la suivante… */
+  for (const b of memes) for (const c of abCoulParse(b.couleur)) { const u = photoBaseCouleur(b, c.nom); if (u) return u; }
+  /* 3. Sinon n’importe quelle photo de la fiche */
+  for (const b of memes) { const u = photoBaseCouleur(b, null); if (u) return u; }
+  /* 4. Sinon la photo de l’appareil dans l’espace client */
+  if (d.id) { const ph = photosFor("device", d.id); if (ph.length) return photoUrl(ph[0]); }
+  const base = memes[0] || null;
+  /* Modèle connu dans la base : seul ce modèle compte (les anciens textes de réparations peuvent dater d’un autre modèle) */
+  const cands = base ? [d.modele, (base.marque || "") + " " + (base.modele || "")] : [d.modele].concat(d.id ? S.dossiers.filter((x) => x.device_id === d.id).map((x) => x.appareil || "") : []);
   for (const key of Object.keys(MODELE_PHOTOS)) {
     if (cands.some((c) => modeleCorrespond(c, key))) return MODELE_PHOTOS[key];
   }
@@ -10080,7 +11180,7 @@ function devPage(d) {
   const tel = d.type === "Téléphone", rep = ROLE === "rep";
   const ph = photosFor("device", d.id).filter((p) => !isQuali(p));
   const grille = ph.length ? '<div class="gal-grid">' + ph.map((p) => `<div class="gal-item"><a href="#" onclick="openImg('` + esc(photoUrl(p)) + `');return false"><img src="` + esc(photoUrl(p)) + '" alt="Photo"></a><div class="m" style="font-size:12px;margin:4px 0">' + esc(photoOrigine(p)) + "</div>" + (rep ? `<button class="chip late" onclick="delPhoto('` + p.id + "','device','" + d.id + `')">Supprimer</button>` : "") + "</div>").join("") + "</div>" : '<p class="m">Aucune photo pour cet appareil.</p>';
-  return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><button class="chip" onclick="closeDevPage()">← Retour au client</button><span class="m">Appareil</span></div><div style="display:flex;gap:12px;align-items:center;margin-top:10px"><div style="flex:0 0 84px">' + (modelePhoto(d) ? '<img src="' + modelePhoto(d) + '" alt="' + esc(devNom(d)) + '" style="width:84px;height:84px;object-fit:cover;border-radius:12px;border:1px solid var(--line);background:#fff">' : '<div style="width:84px;height:84px;border-radius:12px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center">' + ICON_IMG + "</div>") + '</div><div style="min-width:0"><div class="t">' + esc(devNom(d)) + (d.couleur ? " · " + esc(d.couleur) : "") + '</div><div class="m">' + esc(d.type || "") + '</div></div></div><div class="m" style="margin-top:10px">' + (tel ? "IMEI" : "N° de série") + ' : <span class="code">' + esc((tel ? d.imei : d.sn) || "–") + "</span></div>" + (tel && d.pin ? '<div class="m">Code PIN : <span class="code">' + esc(d.pin) + "</span></div>" : "") + (tel && d.schema_code ? '<div class="m">Schéma : <span class="code">' + esc(d.schema_code) + "</span></div>" : "") + (d.etat ? '<div class="m">État : ' + esc(d.etat) + "</div>" : "") + `<div style="margin-top:6px;display:flex;gap:6px"><button class="chip" onclick="showDevForm('` + d.id + `')">✏️ Modifier</button>` + (rep ? `<button class="chip late" onclick="delDev('` + d.id + `')">Effacer</button>` : "") + '</div><div id="de-' + d.id + '"></div><h2 style="font-size:15px;margin:12px 0 6px">Photos</h2>' + grille + photoAddHtml("device", d.id, 8) + (rep && tel ? '<h2 style="font-size:15px;margin:14px 0 4px">Qualirépar · IMEI</h2><p class="m" style="font-size:12px">Visible uniquement par toi, jamais par le client.</p>' + photosBloc("quali", d.id) : "") + devRepsBloc(d);
+  return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><button class="chip" onclick="closeDevPage()">← Retour au client</button><span class="m">Appareil</span></div><div style="display:flex;gap:12px;align-items:center;margin-top:10px"><div style="flex:0 0 84px">' + (modelePhoto(d) ? '<img src="' + modelePhoto(d) + '" alt="' + esc(devNom(d)) + '" style="width:84px;height:84px;object-fit:contain;border-radius:12px;border:1px solid var(--line);background:#fff">' : '<div style="width:84px;height:84px;border-radius:12px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center">' + ICON_IMG + "</div>") + '</div><div style="min-width:0"><div class="t">' + esc(devNom(d)) + (d.couleur ? " · " + esc(d.couleur) : "") + '</div><div class="m">' + esc(d.type || "") + '</div></div></div><div class="m" style="margin-top:10px">' + (tel ? "IMEI" : "N° de série") + ' : <span class="code">' + esc((tel ? d.imei : d.sn) || "–") + "</span></div>" + (tel && d.pin ? '<div class="m">Code PIN : <span class="code">' + esc(d.pin) + "</span></div>" : "") + (tel && d.schema_code ? '<div class="m">Schéma : <span class="code">' + esc(d.schema_code) + "</span></div>" : "") + (d.etat ? '<div class="m">État : ' + esc(d.etat) + "</div>" : "") + `<div style="margin-top:6px;display:flex;gap:6px"><button class="chip" onclick="showDevForm('` + d.id + `')">✏️ Modifier</button>` + (rep ? `<button class="chip late" onclick="delDev('` + d.id + `')">Effacer</button>` : "") + '</div><div id="de-' + d.id + '"></div><h2 style="font-size:15px;margin:12px 0 6px">Photos</h2>' + grille + photoAddHtml("device", d.id, 8) + (rep && tel ? '<h2 style="font-size:15px;margin:14px 0 4px">Qualirépar · IMEI</h2><p class="m" style="font-size:12px">Visible uniquement par toi, jamais par le client.</p>' + photosBloc("quali", d.id) : "") + devRepsBloc(d);
 }
 var DEV_REP_OPEN = null;
 function devRepToggle(id) {
@@ -10247,6 +11347,7 @@ function cliApply(cur, next) {
 function toggleCli(id) {
   if (CLI_BUSY) return;
   CLI_DEV = null;
+  CLI_VENTE = null;
   CLI_NOANIM = false;
   const cur = CLI_OPEN, next = cur === id ? null : id;
   if (!cur) {
@@ -10288,21 +11389,24 @@ function editCli(id) {
   }
   const c = S.clients.find((x) => x.id === id);
   box.dataset.cid = id;
-  box.innerHTML = '<div class="card" style="margin:8px 0 0"><div class="two"><div><label>Prénom *</label><input id="eP" value="' + esc(c.prenom) + '"></div><div><label>Nom *</label><input id="eN" value="' + esc(c.nom) + '"></div></div><label>Téléphone *</label><input id="eT" value="' + esc(c.tel) + '"><label>Email *</label><input id="eM" value="' + esc(c.mail) + '"><label>Adresse</label><input id="eA" value="' + esc(c.adr) + '"><div class="two"><div><label>Code postal</label><input id="eCp" maxlength="5" value="' + esc(c.cp) + '"></div><div><label>Ville</label><input id="eV" value="' + esc(c.ville) + '"></div></div><label>Notes</label><textarea id="eNo" rows="2">' + esc(c.notes || "") + `</textarea><button class="btn" onclick="saveCli('` + id + `')">Enregistrer les modifications</button><div class="err" id="eErr"></div></div>`;
+  box.innerHTML = '<div class="card" style="margin:8px 0 0"><div class="two"><div><label>Prénom *</label><input id="eP" value="' + esc(c.prenom) + '"></div><div><label>Nom *</label><input id="eN" value="' + esc(c.nom) + '"></div></div><label>Téléphone *</label><input id="eT" value="' + esc(c.tel) + '"><label>Email de connexion</label><input id="eM" value="' + esc(c.mail) + '" disabled><label>Email de contact (facultatif)</label><input id="eMc" value="' + esc(c.mail_contact || "") + '"><label>Adresse</label><input id="eA" value="' + esc(c.adr) + '"><div class="two"><div><label>Code postal</label><input id="eCp" maxlength="5" value="' + esc(c.cp) + '"></div><div><label>Ville</label><input id="eV" value="' + esc(c.ville) + '"></div></div><label>Notes</label><textarea id="eNo" rows="2">' + esc(c.notes || "") + `</textarea><button class="btn" onclick="saveCli('` + id + `')">Enregistrer les modifications</button><div class="err" id="eErr"></div></div>`;
 }
 async function saveCli(id) {
   const v = (x) => $(x).value.trim(), err = $("eErr");
   err.textContent = "";
-  const r = { prenom: v("eP") || null, nom: v("eN") || null, tel: v("eT") || null, mail: v("eM") || null, adr: v("eA") || null, cp: v("eCp") || null, ville: v("eV") || null, notes: v("eNo") || null };
+  const r = { prenom: v("eP") || null, nom: v("eN") || null, tel: v("eT") || null, adr: v("eA") || null, cp: v("eCp") || null, ville: v("eV") || null, notes: v("eNo") || null };
   if (r.cp && !/^\d{5}$/.test(r.cp)) {
     err.textContent = "Le code postal doit comporter 5 chiffres.";
     return;
   }
-  if (r.mail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(r.mail)) {
-    err.textContent = "L’email n’est pas valide.";
+  const avant = S.clients.find((x) => x.id === id) || {};
+  const mc = v("eMc");
+  if (mc && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mc)) {
+    err.textContent = "L’email de contact n’est pas valide.";
     return;
   }
-  const dig = (r.tel || "").replace(/\D/g, ""), m = (r.mail || "").toLowerCase();
+  if ((avant.mail_contact || "") !== mc) r.mail_contact = mc || null;
+  const dig = (r.tel || "").replace(/\D/g, ""), m = (avant.mail || "").toLowerCase();
   const dup = S.clients.find((c) => c.id !== id && !c.deleted_at && (dig && c.tel && c.tel.replace(/\D/g, "") === dig || m && c.mail && c.mail.toLowerCase() === m));
   if (dup) {
     showDup(fullName(dup));
@@ -10601,17 +11705,9 @@ function nCPick(cid) {
   nDPick();
 }
 function nRepOpts(dv) {
-  const nm = nz(dv.modele), mq = nz(devMarqueOf(dv));
-  let rows = S.catalogue.filter((r) => r.appareil !== "Mods" && nz(r.modele) === nm), lib = (r) => r.reparation;
-  if (!rows.length && mq) {
-    rows = S.catalogue.filter((r) => r.appareil === dv.type && nz(r.categorie) === mq);
-    lib = (r) => r.reparation + (r.modele ? " · " + r.modele : "");
-  }
-  if (!rows.length) {
-    rows = S.catalogue.filter((r) => r.appareil === dv.type);
-    lib = (r) => r.reparation + (r.modele ? " · " + r.modele : "");
-  }
-  return rows.slice().sort((a, b) => String(a.reparation).localeCompare(String(b.reparation), "fr")).map((r) => '<option value="' + esc(r.id) + '">' + esc(lib(r)) + (r.prix != null && !isNaN(+r.prix) ? " — " + eur(r.prix) : "") + "</option>").join("");
+  const nm = nz(dv.modele);
+  const rows = S.catalogue.filter((r) => r.appareil !== "Mods" && nz(r.modele) === nm);
+  return rows.slice().sort((a, b) => String(a.reparation).localeCompare(String(b.reparation), "fr")).map((r) => '<option value="' + esc(r.id) + '">' + esc(r.reparation) + (r.prix != null && !isNaN(+r.prix) ? " — " + eur(r.prix) : "") + "</option>").join("");
 }
 function nDPick() {
   const dv = S.devices.find((d) => d.id === $("nD").value);
@@ -10649,6 +11745,11 @@ function nFinal() {
   const rm = parseFloat(String($("nRm").value).replace(",", ".")) || 0, pct = $("nRu").value === "pct";
   const fin = nRemise(base, rm, pct);
   $("nFinal").textContent = isNaN(fin) ? "Prix final : à définir" : "Prix final : " + eur(fin) + (rm > 0 ? " (remise " + rm + (pct ? " %" : " €") + ")" : "");
+}
+var NEW_SANS_GAR = false;
+function nSgBascule() {
+  const b = $("nSG");
+  NEW_SANS_GAR = !!(b && b.checked);
 }
 async function createD() {
   const err = $("nErr");
@@ -10692,8 +11793,10 @@ async function createD() {
     prix: fin,
     duree: durNorm($("nDu").value),
     echeance: $("nE").value || null,
-    notes: notes || null
+    notes: notes || null,
+    ...(NEW_SANS_GAR ? { sans_garantie: true } : {})
   }).select().single();
+  NEW_SANS_GAR = false;
   if (error) {
     err.textContent = msgErr(error);
     return;
@@ -10805,14 +11908,19 @@ function modelePhotoPath(baseId, ext, taken) {
   return "modeles/" + baseId + "/" + slug + "-" + n + "." + ext;
 }
 var PHOTOS_SQL = "alter table photos add column if not exists couleur text; alter table photos add column if not exists ordre integer; alter table photos add column if not exists appareil_base_id uuid references appareils_base(id) on delete cascade; alter table photos add column if not exists device_id uuid; alter table photos add column if not exists dossier_id uuid;";
+function ordreModele(kind, id, n) {
+  const base = baseOfKey(kind, id), coul = kind === "modcol" ? colKey(id).nom : null;
+  const vals = (S.photos || []).filter((p) => p.appareil_base_id === base && (coul !== null ? (p.couleur || "") === coul : !p.couleur)).map((p) => photoOrdre(p)).filter((v) => v < 1e9);
+  return Math.min(0, ...vals) - n;
+}
 async function addPhotos(kind, id, input) {
   const files = [...input.files || []];
   if (!files.length) return;
   PHOTO_ERR = "";
   if (DEMO) {
-    S.photos = (S.photos || []).concat(files.map((f) => ({ id: "demo-p-" + Math.random().toString(36).slice(2), dossier_id: kind === "dossier" ? id : null, device_id: kind === "dossier" || kind === "modele" || kind === "modcol" ? null : id, appareil_base_id: kind === "modele" || kind === "modcol" ? baseOfKey(kind, id) : null, couleur: kind === "modcol" ? colKey(id).nom : null, quali: kind === "quali", path: URL.createObjectURL(f), demo: true })));
+    S.photos = (S.photos || []).concat(files.map((f, idx) => ({ ordre: ordreModele(kind, id, files.length) + idx, id: "demo-p-" + Math.random().toString(36).slice(2), dossier_id: kind === "dossier" ? id : null, device_id: kind === "dossier" || kind === "modele" || kind === "modcol" ? null : id, appareil_base_id: kind === "modele" || kind === "modcol" ? baseOfKey(kind, id) : null, couleur: kind === "modcol" ? colKey(id).nom : null, quali: kind === "quali", path: URL.createObjectURL(f), demo: true })));
   } else {
-    const taken = [];
+    const taken = [], ordreBase = ordreModele(kind, id, files.length);
     for (const f of files) {
       const rawExt = (f.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
       const prep = await photoPrep(f) || { body: f, ext: rawExt, type: f.type || "image/jpeg" };
@@ -10833,6 +11941,7 @@ async function addPhotos(kind, id, input) {
       if (kind === "modele" || kind === "modcol") {
         row.appareil_base_id = baseOfKey(kind, id);
         if (kind === "modcol") row.couleur = colKey(id).nom;
+        row.ordre = ordreBase + taken.length - 1;
       } else row[kind === "dossier" ? "dossier_id" : "device_id"] = id;
       const ins = await SB.from("photos").insert(row);
       if (ins.error) {
@@ -11116,7 +12225,7 @@ function clientDeAppareil(dev, d0) {
   return d0 && d0.clients ? fullName(d0.clients) : "";
 }
 function qualireparHtml() {
-  const ds = S.dossiers.filter((d) => !estManette(d));
+  const ds = S.dossiers.filter((d) => !estManette(d) && eligibleQuali(d));
   const groups = {}, order = [];
   const ajout = (k, init) => {
     if (!groups[k]) {
@@ -11132,7 +12241,7 @@ function qualireparHtml() {
   (S.devices || []).forEach((v) => {
     if (v.type !== "Manette" && photosForRaw("quali", v.id).length) ajout("dev:" + v.id, { dev: v.id, dossier: null, dossiers: [] });
   });
-  return '<h1>Qualirépar</h1><p class="m">Photos des réparations éligibles, rattachées à l’appareil du client. Les manettes de jeu ne sont pas éligibles au label et n’apparaissent pas ici.</p>' + (order.length ? order.map((k) => {
+  return '<h1>Qualirépar</h1><p class="m">Photos des réparations éligibles, rattachées à l’appareil du client. Les manettes de jeu ne sont pas éligibles au label et n’apparaissent pas ici. Les réparations de type Devis ou Autre non plus.</p>' + (order.length ? order.map((k) => {
     const g = groups[k], d0 = g.dossiers[0];
     if (g.dev) {
       const dev = (S.devices || []).find((x) => x.id === g.dev) || {};
@@ -11276,6 +12385,13 @@ function dateBarHtml(d, legend) {
   const complet = passed + " j passés · " + restants;
   return '<div style="margin-top:10px"><div class="m">' + complet + "</div>" + barre + "</div>";
 }
+async function sgBascule(id) {
+  const d = S.dossiers.find((x) => x.id === id);
+  if (!d) return;
+  DOSSIER = id;
+  await fSave("sans_garantie", !d.sans_garantie);
+  render();
+}
 async function fSave(field, value) {
   const d = S.dossiers.find((x) => x.id === DOSSIER);
   if (!d) return;
@@ -11296,6 +12412,15 @@ async function fSave(field, value) {
     v = t === "" ? null : parseFloat(t);
   } else if (field === "duree") {
     v = durNorm(value);
+  } else if (field === "sans_garantie") {
+    v = !!value;
+  } else if (["piece_client", "mo_client"].includes(field)) {
+    const t = String(value || "").trim().replace(",", ".");
+    v = t === "" ? null : parseFloat(t);
+    if (v !== null && (isNaN(v) || v < 0)) {
+      toast("Montant invalide.");
+      return;
+    }
   } else if (["acompte", "acompte_especes", "acompte_virement", "paye_virement", "paye_especes", "reprise_montant"].includes(field)) {
     const t = parseFloat(String(value || "0").replace(",", "."));
     if (isNaN(t) || t < 0) {
@@ -11321,14 +12446,19 @@ async function fSave(field, value) {
   if (["acompte_especes", "acompte_virement"].includes(field)) {
     upd.acompte = (+(field === "acompte_especes" ? v : d.acompte_especes) || 0) + (+(field === "acompte_virement" ? v : d.acompte_virement) || 0);
   }
+  if (["piece_client", "mo_client"].includes(field)) {
+    const pc = field === "piece_client" ? v : d.piece_client, mo = field === "mo_client" ? v : d.mo_client;
+    if (pc != null || mo != null) upd.prix = (+pc || 0) + (+mo || 0);
+  }
   const tmp = Object.assign({}, d, upd);
-  if (["prix", "acompte", "acompte_especes", "acompte_virement", "paye_virement", "paye_especes", "reprise_montant"].includes(field)) upd.paye = tmp.prix != null && payInfo(tmp).reste === 0;
+  if (["prix", "piece_client", "mo_client", "acompte", "acompte_especes", "acompte_virement", "paye_virement", "paye_especes", "reprise_montant"].includes(field)) upd.paye = tmp.prix != null && payInfo(tmp).reste === 0;
   const { error } = await SB.from("dossiers").update(upd).eq("id", d.id);
   if (error) {
     toast(msgErr(error));
     return;
   }
   Object.assign(d, upd);
+  if (upd.prix !== undefined && $("dPx")) $("dPx").value = upd.prix == null ? "" : upd.prix;
   paintDetail();
   flash("Enregistré ✓");
 }
@@ -11399,13 +12529,38 @@ function rcEdit() {
 }
 function openD(id) {
   DOSSIER = id;
+  MOD_EDIT = null;
+  render();
+}
+var MOD_EDIT = null;
+function modEdit(id) {
+  MOD_EDIT = MOD_EDIT === id ? null : id;
   render();
 }
 function modifHtml(d) {
+  const edit = MOD_EDIT === d.id;
   const mes = (S.devices || []).filter((v) => v.client_id === d.client_id);
-  const opts = mes.map((v) => '<option value="' + esc(v.id) + '"' + (v.id === d.device_id ? " selected" : "") + ">" + esc(appareilTexte(v)) + "</option>").join("");
   const alerte = d.appAlerte ? '<div class="t" style="color:#dc2626;margin-bottom:8px">' + esc(d.appAlerte) + "</div>" : "";
-  return '<div class="card"' + (d.appAlerte ? ' style="border-color:#dc2626"' : "") + '><div class="t">Modifier la réparation</div>' + alerte + (mes.length ? `<label>Appareil du client</label><select onchange="relierAppareil('` + d.id + `', this.value)"><option value="">- choisir un appareil -</option>` + opts + "</select>" : '<p class="m">Ce client n’a aucun appareil : ajoute-le dans sa fiche, puis rattache-le ici.</p>') + '<label id="lbl-panne">Nom de la réparation *</label><input id="dNom" value="' + esc(d.panne || "") + `" placeholder="Ex. Remplacement écran" onchange="fSave('panne', this.value)"><div class="two"><div><label id="lbl-prix">Prix (€)</label><input id="dPx" inputmode="decimal" value="` + esc(d.prix == null ? "" : d.prix) + `" placeholder="à définir" oninput="numOnly(this);updateReste()" onchange="fSave('prix', this.value)"></div><div><label id="lbl-duree">Durée de réparation</label><input id="dDu" value="` + esc(d.duree || "") + `" placeholder="Ex. 2h" onchange="fSave('duree', this.value)"></div></div></div>`;
+  const titre = edit ? "Terminer la modification" : "Modifier la réparation";
+  const crayon = '<button class="btn ghost sq" title="' + titre + '" aria-label="' + titre + '" onclick="modEdit(\'' + d.id + '\')">' + ICON_EDIT + "</button>";
+  const entete = '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><div class="t">' + (edit ? "Modifier la réparation" : "Réparation") + "</div>" + crayon + "</div>";
+  const cadre = '<div class="card"' + (d.appAlerte ? ' style="border-color:#dc2626"' : "") + ">";
+
+  if (!edit) {
+    const actuel = mes.find((v) => v.id === d.device_id);
+    const champ = (lbl, val) => '<div style="margin-top:8px"><div class="m" style="font-size:13px">' + lbl + '</div><div style="font-size:15px">' + val + "</div></div>";
+    const prix = d.prix == null ? '<span class="m">à définir</span>' : esc(eur(d.prix));
+    const duree = d.duree ? esc(d.duree) : '<span class="m">à définir</span>';
+    return cadre + entete + alerte +
+      champ("Appareil du client", actuel ? esc(appareilTexte(actuel)) : '<span class="m">Aucun appareil lié</span>') +
+      champ("Nom de la réparation", d.panne ? esc(d.panne) : '<span class="m">à définir</span>') +
+      '<div class="two">' + champ("Prix", prix) + champ("Durée de réparation", duree) + "</div>" +
+      '<div class="two">' + champ("Pièce affichée au client", d.piece_client == null ? '<span class="m">—</span>' : esc(eur(d.piece_client))) + champ("Main-d’œuvre affichée au client", d.mo_client == null ? '<span class="m">—</span>' : esc(eur(d.mo_client))) + "</div>" +
+      '<div class="two">' + champ("Pièce, coût réel", pieceReel(d) == null ? '<span class="m">à saisir sur les pièces</span>' : esc(eur(pieceReel(d)))) + champ("Gain sur la réparation", gainRep(d) == null ? '<span class="m">à définir</span>' : esc(eur(gainRep(d))) + ' <span class="m">(hors chiffre d’affaires)</span>') + "</div></div>";
+  }
+
+  const opts = mes.map((v) => '<option value="' + esc(v.id) + '"' + (v.id === d.device_id ? " selected" : "") + ">" + esc(appareilTexte(v)) + "</option>").join("");
+  return cadre + entete + alerte + (mes.length ? `<label>Appareil du client</label><select onchange="relierAppareil('` + d.id + `', this.value)"><option value="">- choisir un appareil -</option>` + opts + "</select>" : '<p class="m">Ce client n’a aucun appareil : ajoute-le dans sa fiche, puis rattache-le ici.</p>') + '<label id="lbl-panne">Nom de la réparation *</label><input id="dNom" value="' + esc(d.panne || "") + `" placeholder="Ex. Remplacement écran" onchange="fSave('panne', this.value)"><div class="two"><div><label id="lbl-prix">Prix (€)</label><input id="dPx" inputmode="decimal" value="` + esc(d.prix == null ? "" : d.prix) + `" placeholder="à définir" oninput="numOnly(this);updateReste()" onchange="fSave('prix', this.value)"></div><div><label id="lbl-duree">Durée de réparation</label><input id="dDu" value="` + esc(d.duree || "") + `" placeholder="Ex. 2h" onchange="fSave('duree', this.value)"></div></div><div class="two"><div><label>Pièce affichée au client (€)</label><input id="dPc" inputmode="decimal" value="` + esc(d.piece_client == null ? "" : d.piece_client) + `" placeholder="0" oninput="numOnly(this)" onchange="fSave('piece_client', this.value)"></div><div><label>Main-d’œuvre affichée au client (€)</label><input id="dMo" inputmode="decimal" value="` + esc(d.mo_client == null ? "" : d.mo_client) + `" placeholder="0" oninput="numOnly(this)" onchange="fSave('mo_client', this.value)"></div></div><label class="sg-lbl"><input type="checkbox" class="sg-case"${d.sans_garantie ? " checked" : ""} onchange="sgBascule('${d.id}')"> Pas de garantie</label></div>`;
 }
 async function relierAppareil(dossierId, devId) {
   if (!devId) return;
@@ -11422,6 +12577,7 @@ async function relierAppareil(dossierId, devId) {
 }
 function closeD() {
   DOSSIER = null;
+  MOD_EDIT = null;
   render();
 }
 async function applyPst(p, v) {
@@ -11702,7 +12858,7 @@ async function seedPuces() {
 var PROF_EDIT = false;
 function profForm(c, label, fn) {
   const f = (id, lbl, val, extra) => "<label>" + lbl + '</label><input id="' + id + '" value="' + esc(val || "") + '"' + (extra || "") + ">";
-  return '<div class="card" style="margin:8px 0 0"><div class="two"><div>' + f("pfP", "Prénom *", c.prenom) + "</div><div>" + f("pfN", "Nom *", c.nom) + "</div></div>" + f("pfT", "Téléphone *", c.tel, ' inputmode="tel" maxlength="20"') + f("pfM", "Email (identifiant de connexion)", c.mail, " disabled") + '<p class="m" style="margin:4px 0 0">Pour changer ton email de connexion, contacte ton réparateur.</p>' + f("pfA", "Adresse *", c.adr) + '<div class="two"><div>' + f("pfC", "Code postal *", c.cp, ' inputmode="numeric" maxlength="5"') + "</div><div>" + f("pfV", "Ville *", c.ville) + '</div></div><button class="btn" onclick="' + fn + '()">' + label + "</button>" + (PROF_EDIT && fn === "saveProfile" ? '<button class="btn ghost" onclick="PROF_EDIT=false;render()">Annuler</button>' : "") + '<div class="err" id="pfErr"></div></div>';
+  return '<div class="card" style="margin:8px 0 0"><div class="two"><div>' + f("pfP", "Prénom *", c.prenom) + "</div><div>" + f("pfN", "Nom *", c.nom) + "</div></div>" + f("pfT", "Téléphone *", c.tel, ' inputmode="tel" maxlength="20"') + f("pfM", "Email (identifiant de connexion)", c.mail, " disabled") + '<p class="m" style="margin:4px 0 0">Pour changer ton email de connexion, contacte ton réparateur.</p>' + f("pfMc", "Email de contact (facultatif)", c.mail_contact, ' type="email"') + f("pfA", "Adresse *", c.adr) + '<div class="two"><div>' + f("pfC", "Code postal *", c.cp, ' inputmode="numeric" maxlength="5"') + "</div><div>" + f("pfV", "Ville *", c.ville) + '</div></div><button class="btn" onclick="' + fn + '()">' + label + "</button>" + (PROF_EDIT && fn === "saveProfile" ? '<button class="btn ghost" onclick="PROF_EDIT=false;render()">Annuler</button>' : "") + '<div class="err" id="pfErr"></div></div>';
 }
 async function saveProfile() {
   await writeProfile(false);
@@ -11726,6 +12882,12 @@ async function writeProfile(confirmNow) {
     err.textContent = "Le code postal doit comporter 5 chiffres.";
     return;
   }
+  const mc = v("pfMc"), avant = (S.clients || []).find((c) => c.auth_user_id === ME.id);
+  if (mc && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mc)) {
+    err.textContent = "L’email de contact n’est pas valide.";
+    return;
+  }
+  if (avant && (avant.mail_contact || "") !== mc) r.mail_contact = mc || null;
   if (confirmNow) r.infos_verifiees_at = (/* @__PURE__ */ new Date()).toISOString();
   const { data, error } = await SB.from("clients").update(r).eq("auth_user_id", ME.id).select();
   if (error) {
@@ -11772,7 +12934,7 @@ function cliView() {
 function cliInfo(me) {
   return PROF_EDIT ? profForm(me, "Enregistrer", "saveProfile") : `<div class="card" style="position:relative"><button class="chip" style="position:absolute;top:10px;right:12px;padding:4px 10px" title="Modifier mes informations" onclick="PROF_EDIT=true;render()">✏️</button>
        <div class="t">${esc(fullName(me))}</div>
-       <div class="m">${esc(me.tel)} · ${esc(me.mail)}</div>
+       <div class="m">${esc(me.tel)} · Connexion : ${esc(me.mail)}</div>${me.mail_contact ? '<div class="m">Contact : ' + esc(me.mail_contact) + "</div>" : ""}
        <div class="m">${esc(me.adr)}, ${esc(me.cp)} ${esc(me.ville)}</div></div>`;
 }
 var CL_DESK_MQ = window.matchMedia ? window.matchMedia("(min-width: 900px)") : null;
@@ -11859,7 +13021,7 @@ function clDeskView(me) {
   const nbAppareils = S.devices.filter((d) => d.client_id === me.id).length;
   const totalAvoirs = (S.avoirs || []).filter((a) => a.client_id === me.id).reduce((t, a) => t + (+a.montant || 0), 0);
   const devs = S.devices.filter((d) => d.client_id === me.id);
-  const devTuile = (d) => `<button type="button" class="cl-tile cl-tile-btn" onclick="return clDevOpen('` + d.id + `')"><span class="cl-thumb" aria-hidden="true" style="overflow:hidden;background:#fff">` + (modelePhoto(d) ? '<img src="' + modelePhoto(d) + '" alt="" style="width:100%;height:100%;object-fit:cover">' : "") + '</span><div style="min-width:0;text-align:left"><div class="cl-tile-t">' + esc(devNom(d)) + '</div><div class="cl-tile-s">' + esc([d.couleur, d.etat].filter(Boolean).join(" · ") || "–") + "</div></div></button>";
+  const devTuile = (d) => `<button type="button" class="cl-tile cl-tile-btn" onclick="return clDevOpen('` + d.id + `')"><span class="cl-thumb" aria-hidden="true" style="overflow:hidden;background:#fff">` + (modelePhoto(d) ? '<img src="' + modelePhoto(d) + '" alt="" style="width:100%;height:100%;object-fit:contain">' : "") + '</span><div style="min-width:0;text-align:left"><div class="cl-tile-t">' + esc(devNom(d)) + '</div><div class="cl-tile-s">' + esc([d.couleur, d.etat].filter(Boolean).join(" · ") || "–") + "</div></div></button>";
   const tuile = (d) => '<div class="cl-tile"><span class="cl-thumb" aria-hidden="true"></span><div style="min-width:0"><div class="cl-tile-t">' + esc(d.appareil || "Réparation") + '</div><div class="cl-tile-s">' + esc(d.statut || "") + "</div></div></div>";
   return `<div class="cl-desk" id="cl-top">
     ${clDeskHead(me)}
@@ -11895,12 +13057,67 @@ function clAvoirsHtml(me) {
   if (!av.length) return '<p class="m">Aucun avoir pour le moment.</p>';
   return '<div class="card-grid">' + av.map((a) => '<div class="card"><div class="t">' + eur(a.montant) + '</div><div class="m">' + esc(a.motif || "Avoir") + "</div>" + (a.date ? '<div class="m">Le ' + fr(a.date) + "</div>" : "") + "</div>").join("") + "</div>";
 }
+/* Espace client : ajouter un rendez-vous à l’agenda du téléphone ou de l’ordinateur (fichier .ics, sans compte) */
+function cliIcsDate(d) {
+  const p = (n) => String(n).padStart(2, "0");
+  return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + "T" + p(d.getHours()) + p(d.getMinutes()) + "00";
+}
+function cliIcsEchap(t) {
+  return String(t == null ? "" : t).replace(/\\/g, "\\\\").replace(/;/g, "\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
+}
+function cliIcs(v) {
+  const date = String(v.date_rdv).slice(0, 10), heure = v.heure_rdv ? String(v.heure_rdv).slice(0, 5) : "";
+  const ymd = date.replace(/-/g, "");
+  const maintenant = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  const l = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Seconde Vie//Rendez-vous//FR", "CALSCALE:GREGORIAN", "METHOD:PUBLISH", "BEGIN:VEVENT", "UID:rdv-" + v.id + "@seconde-vie", "DTSTAMP:" + maintenant];
+  if (heure) {
+    const debut = new Date(date + "T" + heure + ":00");
+    const fin = new Date(debut.getTime() + 60 * 60 * 1000);
+    l.push("DTSTART:" + cliIcsDate(debut), "DTEND:" + cliIcsDate(fin));
+  } else {
+    const fin = new Date(date + "T00:00:00");
+    fin.setDate(fin.getDate() + 1);
+    l.push("DTSTART;VALUE=DATE:" + ymd, "DTEND;VALUE=DATE:" + cliIcsDate(fin).slice(0, 8));
+  }
+  l.push("SUMMARY:" + cliIcsEchap(venteTitre(v)));
+  if (v.lieu) l.push("LOCATION:" + cliIcsEchap(v.lieu));
+  l.push("DESCRIPTION:" + cliIcsEchap("Rendez-vous Seconde Vie" + (v.lieu ? "\n" + v.lieu : "")), "END:VEVENT", "END:VCALENDAR");
+  return l.join("\r\n") + "\r\n";
+}
+function cliAgendaCle(v) {
+  return String(v.date_rdv) + "|" + (v.heure_rdv || "");
+}
+function cliAgendaBouton(v) {
+  let ajoute = false;
+  try {
+    ajoute = localStorage.getItem("sv_ics_" + v.id) === cliAgendaCle(v);
+  } catch (e) {
+  }
+  return ajoute ? '<div class="m" style="margin-top:8px">✓ Ajouté à ton agenda</div>' : '<button class="btn small" style="margin-top:8px" onclick="cliAgenda(\'' + v.id + '\')">Ajouter à mon agenda</button>';
+}
+function cliAgenda(id) {
+  const v = (S.ventes || []).find((x) => x.id === id);
+  if (!v || !v.date_rdv) return;
+  const url = URL.createObjectURL(new Blob([cliIcs(v)], { type: "text/calendar;charset=utf-8" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "rendez-vous-seconde-vie.ics";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  try {
+    localStorage.setItem("sv_ics_" + id, cliAgendaCle(v));
+  } catch (e) {
+  }
+  render();
+}
 function cliVentesHtml(me) {
   const vs = (S.ventes || []).filter((v) => v.client_id === me.id);
   if (!vs.length) return '<p class="m">Aucun achat pour le moment.</p>';
   return vs.map((v) => {
     const quand = v.archivee ? "Terminée" + (v.date_effectue ? " le " + fr(v.date_effectue) : "") : v.envoi ? "Envoi : " + (v.envoi_statut || "En préparation") + (v.transporteur ? " · " + v.transporteur : "") : v.date_rdv ? "Rendez-vous le " + fr(v.date_rdv) + (v.lieu ? " · " + v.lieu : "") : "Rendez-vous à fixer";
-    return '<div class="card"><div class="t">' + esc(venteTitre(v)) + '</div><div class="m">' + esc(quand) + "</div>" + (v.envoi && v.suivi ? '<div class="m">Numéro de suivi : ' + esc(v.suivi) + "</div>" : "") + '<div class="m" style="margin-top:6px">' + (v.prix == null ? "Prix à définir" : "Prix : " + eur(v.prix)) + "</div></div>";
+    return '<div class="card"><div class="t">' + esc(venteTitre(v)) + '</div><div class="m">' + esc(quand) + "</div>" + (v.envoi && v.suivi ? '<div class="m">Numéro de suivi : ' + esc(v.suivi) + "</div>" : "") + '<div class="m" style="margin-top:6px">' + (v.prix == null ? "Prix à définir" : "Prix : " + eur(v.prix)) + "</div>" + (v.date_rdv && !v.archivee && !v.envoi ? cliAgendaBouton(v) : "") + "</div>";
   }).join("");
 }
 var DEMO = false, DEMO_REAL = null;
