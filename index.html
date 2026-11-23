@@ -205,8 +205,7 @@ html.stk-on{overflow-y:scroll;overflow-x:scroll}
 .stk-row>.stk-act{position:sticky;right:0;z-index:1;background:var(--bg)}
 .stk-head>.stk-act{background:var(--bg)}
 /* Modification d'une pièce : collée en haut de l'écran pendant le défilement, défile elle-même si elle est plus haute que l'écran */
-.stk-edit-box{position:sticky;top:10px;z-index:6;max-height:calc(100vh - 20px);overflow:auto;margin-bottom:8px}
-.stk-edit-box:empty{display:none}
+.stk-tir{display:none}
 /* Icônes d'état des réparations : la flèche tourne autour */
 .rep-tourne{transform-origin:24px 24px;animation:rep-tourne 2.4s linear infinite}
 @keyframes rep-tourne{to{transform:rotate(360deg)}}
@@ -221,14 +220,25 @@ html.stk-on{overflow-y:scroll;overflow-x:scroll}
 @media (min-width:601px){.stk-row>.ab-cell{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}}
 /* Téléphone : chaque pièce se fait glisser à gauche et à droite ; seul le nombre de pièces reste à l'écran */
 @media (max-width:600px){
-  .stk-head{display:none}
-  .stk-mod .stk-fl{display:none !important}
-  .stk-mod-t{overflow:visible;text-overflow:clip}
+  .stk-row.stk-head{display:none}
+  /* Modèles : coupés avec « … » dans leur colonne ; la flèche déroule la liste vers le bas, dans la ligne */
+  .stk-row>.stk-mod{flex-wrap:wrap;white-space:nowrap;overflow:hidden}
+  .stk-mod-t{flex:1 1 0}
+  .stk-mod .stk-menu{position:static;flex-basis:100%;min-width:0;max-height:none;white-space:normal;box-shadow:none;margin-top:4px;padding:6px 10px}
   .stk-row{display:grid;grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:max-content;gap:14px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:10px 0;min-width:0}
-  .stk-row>.ab-cell{white-space:nowrap;overflow:visible;text-overflow:clip}
+  .stk-row>.ab-cell{white-space:normal;overflow:visible;overflow-wrap:anywhere;text-overflow:clip}
   .stk-row>.stk-act{display:contents;position:static}
   .stk-row>.stk-act>*{flex:none}
   .stk-row>.stk-act>.chip.ok,.stk-row>.stk-act>.chip.late{position:sticky;left:0;z-index:2;background:var(--bg)}
+  /* Une seule zone de défilement pour toute la liste : glisser à gauche/droite fait bouger toutes les lignes ensemble, pas une ligne à la fois */
+  .stk-wrap{padding-bottom:96px}
+  .stk-list{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;scrollbar-width:none}
+  .stk-list::-webkit-scrollbar{display:none}
+  /* Colonnes identiques sur toutes les lignes : elles s'alignent entre elles */
+  .stk-row{overflow-x:visible;width:max-content;min-width:100%;grid-template-columns:184px 104px 150px 112px 112px 28px 28px 36px 44px 44px;grid-auto-flow:row;gap:0 10px;align-items:center}
+  /* Tirette fixe au-dessus de la barre de navigation, toujours visible */
+  .stk-tir{display:block;position:fixed;left:76px;right:12px;bottom:calc(env(safe-area-inset-bottom) + 74px);z-index:6;background:var(--surf);border:1px solid var(--line);border-radius:12px;padding:6px 14px;box-shadow:0 4px 14px rgba(0,0,0,.12)}
+  .stk-tir input{width:100%;margin:0;padding:0;height:26px;border:0;background:none;accent-color:var(--brand)}
 }
 .ab-cell{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ab-grid{flex:1;min-width:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.3fr) minmax(0,.8fr);gap:8px}
@@ -11823,13 +11833,27 @@ function mpDel(key, v) {
   MP[key] = MP[key].filter((x) => x !== v);
   mpDraw(key);
 }
+/* Tirette du stock (téléphone) : reliée au défilement de la liste, toujours visible en bas */
+function stkTirSync(L) {
+  const r = $("stkTir");
+  if (!r || !L) return;
+  const max = L.scrollWidth - L.clientWidth;
+  r.disabled = max <= 0;
+  r.value = max > 0 ? Math.round((L.scrollLeft / max) * 100) : 0;
+}
+function stkTirMove(v) {
+  const L = document.querySelector(".stk-list");
+  if (!L) return;
+  const max = L.scrollWidth - L.clientWidth;
+  L.scrollLeft = (v / 100) * max;
+}
 function editPiece(sku) {
   const x = S.stock.find((y) => y.sku === sku);
   MP.e = x.modeles && x.modeles.length ? x.modeles.slice() : x.modele ? [x.modele] : [];
   MP_PLUS.e = false;
-  $("stkEditBox").innerHTML = '<div class="card" style="margin:0"><div class="row" style="justify-content:space-between;align-items:center"><span class="t">Modifier la pièce</span><button class="chip" onclick="$(\'stkEditBox\').innerHTML=\'\'">Fermer</button></div><label>SKU</label><input id="ep-s" value="' + esc(x.sku) + '"><label>Nom</label><input id="ep-n" value="' + esc(x.nom) + `"><label>Type de pièce</label>${catSelHtml("ep-cat", x.categorie || "", "— Aucun —")}<label>Prix (€)</label><input id="ep-px" inputmode="decimal" value="${x.prix == null ? "" : x.prix}"><label>Date du prix</label><input id="ep-dt" type="date" value="${x.prix_date ? String(x.prix_date).slice(0, 10) : ""}"><label>Lien pour commander</label><input id="ep-li" value="${esc(x.lien || "")}" placeholder="https://…"><label>Modèles</label><div id="mp-e"></div><label>Photos de la pièce</label>${photosBloc("piece", x.sku)}${photoAddHtml("piece", x.sku, 6)}<button class="btn" onclick="savePiece2('` + sku + `')">Enregistrer</button><div class="err" id="ep-err"></div></div>`;
+  $("pe-" + sku).innerHTML = '<div class="card" style="margin:8px 0 12px"><div class="row" style="justify-content:space-between;align-items:center"><span class="t">Modifier : ' + esc(x.nom) + '</span><button class="chip" onclick="$(\'pe-' + esc(x.sku) + '\').innerHTML=\'\'">Fermer</button></div><label>SKU</label><input id="ep-s" value="' + esc(x.sku) + '"><label>Nom</label><input id="ep-n" value="' + esc(x.nom) + `"><label>Type de pièce</label>${catSelHtml("ep-cat", x.categorie || "", "— Aucun —")}<label>Prix (€)</label><input id="ep-px" inputmode="decimal" value="${x.prix == null ? "" : x.prix}"><label>Date du prix</label><input id="ep-dt" type="date" value="${x.prix_date ? String(x.prix_date).slice(0, 10) : ""}"><label>Lien pour commander</label><input id="ep-li" value="${esc(x.lien || "")}" placeholder="https://…"><label>Modèles</label><div id="mp-e"></div><label>Photos de la pièce</label>${photosBloc("piece", x.sku)}${photoAddHtml("piece", x.sku, 6)}<button class="btn" onclick="savePiece2('` + sku + `')">Enregistrer</button><div class="err" id="ep-err"></div></div>`;
   mpDraw("e");
-  $("stkEditBox").scrollIntoView({ block: "start" });
+  $("pe-" + sku).scrollIntoView({ block: "nearest", inline: "nearest" });
 }
 async function deleteStock(sku) {
   const x = S.stock.find((y) => y.sku === sku);
@@ -13167,7 +13191,7 @@ function stkHtml(q) {
       <div class="stk-act"><button class="chip" title="Retirer une pièce" onclick="adjStock('${esc(s.sku)}',-1)">−</button><button class="chip" title="Ajouter une pièce" onclick="adjStock('${esc(s.sku)}',1)">+</button>${s.qte > 0 ? '<span class="chip ok">' + s.qte + '</span>' : '<span class="chip late" title="Rupture" style="background:none;color:var(--bad);font-size:18px;font-weight:700;padding:0 8px">×</span>'}<button class="btn sq ghost" title="Modifier cette pièce" aria-label="Modifier cette pièce" onclick="editPiece('${esc(s.sku)}')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button><button class="btn sq ghost" title="Supprimer cette pièce" aria-label="Supprimer cette pièce" onclick="deleteStock('${esc(s.sku)}')"><span class="ic" style="transform:rotate(45deg)"></span></button></div>
     </div>
     <div id="pe-${esc(s.sku)}"></div></div>`).join("");
-  return '<div class="stk-wrap">' + (STK_W ? '<div class="m" style="text-align:right;margin-bottom:4px"><button class="chip" onclick="stkResetW()">Largeurs par défaut</button></div>' : "") + '<div id="stkEditBox" class="stk-edit-box"></div>' + head + rows + "</div>";
+  return '<div class="stk-wrap">' + (STK_W ? '<div class="m" style="text-align:right;margin-bottom:4px"><button class="chip" onclick="stkResetW()">Largeurs par défaut</button></div>' : "") + head + '<div class="stk-list" onscroll="stkTirSync(this)">' + rows + '</div></div><div class="stk-tir"><input id="stkTir" type="range" min="0" max="100" value="0" aria-label="Faire défiler la liste de gauche à droite" oninput="stkTirMove(this.value)"></div>';
 }
 async function addStock() {
   const err = $("sErr");
