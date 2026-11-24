@@ -208,6 +208,12 @@ html.stk-on{overflow-y:scroll;overflow-x:scroll}
 .stk-tir{display:none}
 .stk-qh{display:none}
 .stk-nolien{flex:none;width:44px;height:44px}
+.stk-filt{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:8px 0}
+.stk-filt select{padding:8px 6px;font-size:13px}
+@media (max-width:600px){.stk-filt{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stk-nm{display:flex;align-items:center;gap:8px;min-width:0}
+.stk-th{flex:none;width:40px;height:40px;padding:0;border:0;border-radius:8px;background:#EEF1EC;display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;color:inherit}
+.stk-th img{width:100%;height:100%;object-fit:contain;background:#fff;display:block}
 /* Icônes d'état des réparations : la flèche tourne autour */
 .rep-tourne{transform-origin:24px 24px;animation:rep-tourne 2.4s linear infinite}
 @keyframes rep-tourne{to{transform:rotate(360deg)}}
@@ -281,11 +287,16 @@ body.lg nav{left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom))
 body.lg nav::-webkit-scrollbar{display:none}
 body.lg nav button{flex:0 0 auto;min-width:76px;font-size:11px;border-radius:12px;padding:9px 4px;color:var(--mut)}
 body.lg nav button.on{background:#eef4f1;color:var(--brand)}
-.nav-outils{position:relative}
-.outils-back{position:fixed;inset:0;z-index:59;background:transparent}
-.outils-pop{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom));z-index:60;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.2);padding:6px;display:flex;flex-direction:column;gap:2px;min-width:220px;max-width:calc(100vw - 32px)}
-.outils-pop button{display:block;width:100%;text-align:left;border:0;background:none;padding:13px 14px;border-radius:10px;font-family:inherit;font-weight:600;font-size:15px;color:var(--ink);cursor:pointer}
-.outils-pop button.on,.outils-pop button:hover{background:#eef4f1;color:var(--brand)}
+.nav-outils-item{position:relative}
+.nav-outils-item::before{content:"";position:absolute;left:10px;top:0;bottom:0;width:2px;background:var(--line)}
+body.lg nav button.nav-outils-item{padding-left:26px;font-size:13px}
+@media (max-width:899px){ .nav-outils-item{min-width:96px!important;font-size:10px!important} }
+.statut-step{display:flex;align-items:stretch;gap:8px;margin:4px 0 10px}
+.step-boxes{display:flex;flex:1;gap:6px;min-width:0}
+.step-box{flex:1;min-width:0;text-align:center;font-size:11px;line-height:1.25;font-weight:600;color:var(--mut);background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 4px;display:flex;align-items:center;justify-content:center}
+.step-box.on{background:var(--ok, #22703f);border-color:var(--ok, #22703f);color:#fff}
+.step-arrow{flex:none;width:38px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:18px;line-height:1;cursor:pointer}
+.step-arrow:disabled{opacity:.35;cursor:default}
 body.lg .app{padding-bottom:110px}
 
 /* Ordinateur : navigation en colonne à gauche, contenu élargi */
@@ -468,7 +479,6 @@ body:not(.rep-nav).lg .app{margin-left:auto !important;margin-right:auto !import
 <body class="lg">
 <div class="app" id="app"><div class="boot" id="boot" role="status"><div class="boot-dot"></div><p>Chargement…</p></div></div>
 <nav id="nav" class="hide"></nav>
-<div id="outilsPop"></div>
 <div id="modal" class="modal hide"></div>
 <div id="fbWrap" class="fb-wrap"></div>
 <div id="notifWrap" class="notif-wrap"></div>
@@ -6246,6 +6256,11 @@ const GMAPS_KEY = "";
 const REP_NAV = [["accueil", "Accueil"], ["dashboard", "Tableau de bord"], ["depenses", "Dépenses"], ["agenda", "Agenda"], ["dossiers", "Réparations et ventes"], ["qualirepar", "Qualirépar"], ["clients", "Clients"], ["appareils", "Appareils"], ["new", "Nouvelle prestation"], ["newvente", "Nouvelle vente"], ["ventes", "Ventes"], ["avis", "Suggestions & Bugs"], ["stock", "Stock"], ["catalogue", "Réparations & Mods"], ["dbadmin", "Bases de données"]];
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s != null ? s : "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const telLink = (t) => {
+  const s = String(t || "").trim();
+  if (!s) return "";
+  return '<a href="tel:' + esc(s.replace(/[^\d+]/g, "")) + '" onclick="event.stopPropagation()" style="color:inherit;text-decoration:underline">' + esc(s) + "</a>";
+};
 const fullName = (c) => [c && c.prenom, c && c.nom].filter(Boolean).join(" ") || "Sans nom";
 const nz = (s) => String(s != null ? s : "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 const fr = (d) => d ? (/* @__PURE__ */ new Date(d + "T00:00")).toLocaleDateString("fr-FR") : "–";
@@ -6636,6 +6651,16 @@ document.addEventListener("keydown", (e) => {
     toggleSidebar();
   }
 });
+function setRepApp(hdr, body) {
+  var app = document.getElementById("app");
+  var first = app.firstElementChild;
+  if (first && first.getAttribute("data-hdr") === "1") {
+    while (first.nextSibling) app.removeChild(first.nextSibling);
+    first.insertAdjacentHTML("afterend", body);
+  } else {
+    app.innerHTML = hdr + body;
+  }
+}
 function render() {
   const app = $("app"), nav = $("nav");
   applySidebar();
@@ -6653,7 +6678,6 @@ function render() {
   }
   if (!ME) {
     nav.classList.add("hide");
-    $("outilsPop").innerHTML = "";
     $("fbWrap").innerHTML = "";
     $("notifWrap").innerHTML = "";
     closeNotifPanel();
@@ -6662,9 +6686,12 @@ function render() {
   }
   if (ROLE === "rep") {
     nav.classList.remove("hide");
-    $("outilsPop").innerHTML = outilsPopHtml();
-    nav.innerHTML = REP_NAV.map(([v, l]) => `<button class="${VIEW === v ? "on" : ""}" onclick="go('${v}')">${l}</button>`).join("") + navOutils() + '<a class="nav-ecran" href="reparations-en-cours.html" target="_blank" rel="noopener">Réparations en cours ↗</a><button class="nav-copy" title="Copie toutes les suggestions et bugs non archivés" onclick="copierRecapNonArchive()">Copier le récap</button><button class="nav-logout" onclick="logout()">Déconnexion</button>';
-    app.innerHTML = '<div class="row" style="align-items:center;margin:4px 0 8px"><img class="logo-h" src="' + LOGO_SRC + '" alt="Seconde Vie"><button class="btn small ghost hdr-logout" onclick="logout()">Déconnexion</button></div>' + (DOSSIER ? detailView() : REP[VIEW]());
+    const __navTop = nav.scrollTop, __navLeft = nav.scrollLeft;
+    nav.innerHTML = REP_NAV.map(([v, l]) => `<button class="${VIEW === v ? "on" : ""}" onclick="go('${v}')">${l}</button>`).join("") + navOutils() + outilsInlineHtml() + '<a class="nav-ecran" href="reparations-en-cours.html" target="_blank" rel="noopener">Réparations en cours ↗</a><button class="nav-copy" title="Copie toutes les suggestions et bugs non archivés" onclick="copierRecapNonArchive()">Copier le récap</button><button class="nav-logout" onclick="logout()">Déconnexion</button>';
+    nav.scrollTop = __navTop;
+    nav.scrollLeft = __navLeft;
+    /* L'en-tête (logo) est gardé tel quel d'une page à l'autre : on ne remplace que le contenu en dessous, sinon le haut de la page saute à chaque clic */
+    setRepApp('<div class="row" data-hdr="1" style="align-items:center;margin:4px 0 8px"><img class="logo-h" src="' + LOGO_SRC + '" alt="Seconde Vie"><button class="btn small ghost hdr-logout" onclick="logout()">Déconnexion</button></div>', DOSSIER ? detailView() : REP[VIEW]());
     if (VIEW === "stock" && !DOSSIER) {
       mpDraw("n");
       mpDraw("a");
@@ -6687,7 +6714,6 @@ function render() {
     }
   } else {
     nav.classList.add("hide");
-    $("outilsPop").innerHTML = "";
     app.innerHTML = (DEMO ? '<div class="demo-bar"><span>Aperçu · données fictives, rien n’est enregistré</span><button class="btn small ghost" onclick="endDemo()">Quitter l’aperçu</button></div>' : "") + cliView();
   }
   renderFb();
@@ -6722,7 +6748,6 @@ async function syncReservations() {
   return changes.length;
 }
 async function go(v) {
-  OUTILS_OPEN = false;
   if (v === "new") PIECES_PREV.n = [];
   if (v === "out") return logout();
   VIEW = v;
@@ -6975,6 +7000,7 @@ function dashboardView() {
   const { today, cur, act, aDeposer, enRetard, pret, aCmd, ouv, mois, archTous, stockBasL, depMois, achatL, achatQ, appResL, appResQ, pieceResL, pieceResQ } = dashData();
   const dLabel = (d) => esc(d.appareil || "Réparation") + (d.clients ? " · " + esc(fullName(d.clients)) : "");
   const dItem = (d) => ({ t: dLabel(d), f: () => openD(d.id) });
+  const bm = caDetail(cur);
   const T = {
     "Réparations en cours": dashTile("Réparations en cours", act.length, act.map(dItem), () => dashPage("act")),
     "À déposer": dashTile("À déposer", aDeposer.length, aDeposer.map(dItem), () => dashPage("depot")),
@@ -6986,6 +7012,7 @@ function dashboardView() {
     "C.A. global": dashTile("C.A. global", eur(caBilan().net), [{ t: "Gains · " + eur(caBilan().gains), f: scrollStats }, { t: "Dépenses · −" + eur(caBilan().dep), f: () => dashPage("depenses") }].concat(ultimes6(cur).reverse().map((m) => ({ t: esc(m.lbl) + " · " + eur(caDetail(m.key).net), f: scrollStats }))), scrollStats),
     "Stock bas": dashTile("Stock bas", stockBasL.length, stockBasL.map((x) => ({ t: esc(x.nom + (x.modele ? " · " + x.modele : "")) + " · " + (+x.qte || 0) + " en stock", f: () => dashGo("stock", { focus: "s-" + x.sku }) })), () => dashPage("stockBas"), stockBasL.length > 0),
     "Dépenses": dashTile("Dépenses", eur(depMois.reduce((t, x) => t + (+x.montant || 0), 0)), depMois.map((x) => ({ t: eur(x.montant) + " · " + esc(x.libelle), f: () => dashPage("depenses") })), () => dashPage("depenses")),
+    "Bénéfice": dashTile("Bénéfice", eur(bm.net), [{ t: "C.A. du mois · " + eur(bm.rep + bm.ven), f: scrollStats }, { t: "Dépenses · −" + eur(bm.dep), f: () => dashPage("depenses") }], scrollStats, bm.net < 0),
     "Appareils à commander": dashTile("Appareils à commander", achatQ, achatL.map((x) => ({ t: esc(x.l.quantite + " × " + [x.l.appareil, x.l.categorie, x.l.modele, x.l.couleur].filter(Boolean).join(" · ")), f: () => dashPage("achat") })), () => dashPage("achat")),
     "Appareils réservés": dashTile("Appareils réservés", appResQ, appResL.map((x) => ({ t: esc(x.res + " × " + x.nom), f: () => dashPage("appRes") })), () => dashPage("appRes")),
     "Pièces réservées": dashTile("Pièces réservées", pieceResQ, pieceResL.map((p) => ({ t: esc(p.qte + " × " + p.nom), f: () => dashPage("pieceRes") })), () => dashPage("pieceRes"))
@@ -7019,7 +7046,7 @@ function dashboardView() {
   const next = act.filter((d) => d.echeance).sort((x, y) => x.echeance < y.echeance ? -1 : x.echeance > y.echeance ? 1 : 0).slice(0, 6);
   const rows = next.map((d) => `<div class="card" style="cursor:pointer" onclick="openD('` + d.id + `')"><div class="row" style="align-items:center"><div><div class="t">` + esc(d.appareil || "Réparation") + '</div><div class="m">' + esc(d.clients ? fullName(d.clients) : "") + '</div></div><span class="chip' + (d.echeance < today ? " late" : "") + '">' + fr(d.echeance) + "</span></div></div>").join("");
   const section = (titre, cartes) => "<h2>" + titre + '</h2><div class="dash-grid">' + cartes + "</div>";
-  return '<div class="dash-page"><h1>Tableau de bord</h1>' + section("Réparations", grp(["Réparations en cours", "À déposer", "En retard", "Prêts à récupérer"])) + section("Ventes", grp(["Ventes en cours", "Ventes du mois", "C.A. global", "Dépenses", "Appareils à commander", "Appareils réservés"])) + section("Stock", grp(["Pièces à commander", "Pièces réservées", "Stock bas"])) + "<h2>Statistiques</h2>" + charts + "<h2>Prochaines remises</h2>" + rows + "</div>";
+  return '<div class="dash-page"><h1>Tableau de bord</h1>' + section("Réparations", grp(["Réparations en cours", "À déposer", "En retard", "Prêts à récupérer"])) + section("Ventes", grp(["Ventes en cours", "Ventes du mois", "C.A. global", "Dépenses", "Bénéfice", "Appareils à commander", "Appareils réservés"])) + section("Stock", grp(["Pièces à commander", "Pièces réservées", "Stock bas"])) + "<h2>Statistiques</h2>" + charts + "<h2>Prochaines remises</h2>" + rows + "</div>";
 }
 var DASH_PAGE = null;
 function dashPage(key) {
@@ -7228,15 +7255,31 @@ var OUTILS_OPEN = false;
 function toggleOutils(ev) {
   if (ev) ev.stopPropagation();
   OUTILS_OPEN = !OUTILS_OPEN;
-  render();
+  var nav = document.getElementById("nav");
+  var btn = nav && nav.querySelector(".nav-outils");
+  if (!btn) {
+    render();
+    return;
+  }
+  /* On ne touche qu'à la barre : la page principale n'est pas redessinée */
+  nav.querySelectorAll(".nav-outils-item").forEach(function (e) { e.remove(); });
+  var on = VIEW === "frp" || VIEW === "liens";
+  btn.className = "nav-outils";
+  btn.textContent = "Outils " + (OUTILS_OPEN ? "\u25b4" : "\u25be");
+  if (OUTILS_OPEN) {
+    btn.insertAdjacentHTML("afterend", outilsInlineHtml());
+    var its = nav.querySelectorAll(".nav-outils-item");
+    var last = its[its.length - 1];
+    if (last && last.scrollIntoView) last.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }
 }
 function navOutils() {
   const on = VIEW === "frp" || VIEW === "liens";
-  return '<button class="nav-outils' + (on ? " on" : "") + '" onclick="toggleOutils(event)">Outils \u25be</button>';
+  return '<button class="nav-outils" onclick="toggleOutils(event)">Outils ' + (OUTILS_OPEN ? "\u25b4" : "\u25be") + "</button>";
 }
-function outilsPopHtml() {
+function outilsInlineHtml() {
   if (!OUTILS_OPEN) return "";
-  return '<div class="outils-back" onclick="toggleOutils(event)"></div><div class="outils-pop">' + '<button class="' + (VIEW === "frp" ? "on" : "") + '" onclick="go(\'frp\')">FRP Bypass</button>' + '<button class="' + (VIEW === "liens" ? "on" : "") + '" onclick="go(\'liens\')">Liens utiles</button>' + "</div>";
+  return '<button class="nav-outils-item' + (VIEW === "frp" ? " on" : "") + '" onclick="go(\'frp\')">FRP Bypass</button>' + '<button class="nav-outils-item' + (VIEW === "liens" ? " on" : "") + '" onclick="go(\'liens\')">Liens utiles</button>';
 }
 /* Liens utiles : liens externes enregistrés dans ce navigateur (localStorage) */
 function liensLire() {
@@ -8013,6 +8056,7 @@ const REP = {
       <label>Lien pour commander</label><input id="sLi" placeholder="https://…">
       <label>Quantité</label><input id="sQt" inputmode="numeric" value="0">
       <label>Modèles</label><div id="mp-n"></div>
+      <label>Photos (facultatif)</label><input id="sPh" type="file" accept="image/*" multiple>
       <button class="btn" onclick="addStock()">Ajouter au stock</button>
       <div class="err" id="sErr"></div>
     </div>
@@ -8026,7 +8070,7 @@ const REP = {
     ${DEV_EDIT ? "" : `<details style="margin-top:10px"><summary class="btn ghost small" style="display:inline-block;list-style:none;cursor:pointer">+ Ajouter un appareil à vendre</summary><div class="card" style="margin-top:8px">
       <label>Type / marque / modèle</label><div id="mp-a"></div>
       <label>Modèle exact (si absent de la liste)</label><input id="aExact" placeholder="Ex. PS5 Slim Blanc" oninput="aExactChange(this.value)">
-      <div id="aCouleurBox" style="display:none"><label>Couleur</label><input id="aCouleur" list="aCouleurDl" placeholder="Ex. Bleu" autocomplete="off"><datalist id="aCouleurDl"></datalist></div>
+      <div id="aCouleurBox" style="display:none"><label>Couleur</label><select id="aCouleur"></select></div>
       <label>Quantité</label><input id="aQt" inputmode="numeric" value="1">
       <label>Grade</label><select id="aGrade"><option value="">- Aucun -</option><option>A</option><option>B</option><option>C</option><option>HS</option></select>
       <button class="btn" onclick="addAppareil()">Ajouter au stock</button>
@@ -9763,8 +9807,15 @@ function cliPasFiltre(c) {
   return true;
 }
 function cliFiltresHtml() {
-  const sel = (k, all, opts) => `<select onchange="cliSet('${k}',this.value)">${selOpts([["", all]].concat(opts), CLI_F[k])}</select>`;
-  return sel("compte", "Tous les comptes", [["ok", "Compte créé"], ["no", "Sans compte"]]) + sel("infos", "Toutes les infos", [["ok", "Infos vérifiées"], ["ko", "Infos à vérifier"]]) + sel("app", "Tous les appareils", [["ok", "Avec appareil"], ["no", "Sans appareil"]]) + `<select onchange="cliSet('sort',this.value)">${selOpts([["nom", "Trier : nom"], ["creation_recent", "Trier : création, récents d’abord"], ["creation_ancien", "Trier : création, anciens d’abord"]], CLI_SORT)}</select>`;
+  const sel = (k, all, opts) => `<select data-fk="${k}" onchange="cliSet('${k}',this.value)">${selOpts([["", all]].concat(opts), CLI_F[k])}</select>`;
+  return '<button class="btn ghost small" type="button" onclick="cliResetFiltres()">Supprimer les filtres</button>' + sel("compte", "Tous les comptes", [["ok", "Compte créé"], ["no", "Sans compte"]]) + sel("infos", "Toutes les infos", [["ok", "Infos vérifiées"], ["ko", "Infos à vérifier"]]) + sel("app", "Tous les appareils", [["ok", "Avec appareil"], ["no", "Sans appareil"]]) + `<select onchange="cliSet('sort',this.value)">${selOpts([["nom", "Trier : nom"], ["creation_recent", "Trier : création, récents d’abord"], ["creation_ancien", "Trier : création, anciens d’abord"]], CLI_SORT)}</select>`;
+}
+function cliResetFiltres() {
+  CLI_F.compte = "";
+  CLI_F.infos = "";
+  CLI_F.app = "";
+  document.querySelectorAll("select[data-fk]").forEach(function (e) { e.value = ""; });
+  $("cliL").innerHTML = cliHtml(nz($("cliQ").value));
 }
 function cliSet(k, v) {
   if (k === "sort") CLI_SORT = v;
@@ -10533,8 +10584,8 @@ function cliHtml(q) {
   const rows = list.map((c) => {
     const open = CLI_OPEN === c.id;
     const alerte = cliAlerte(c);
-    const row = `<div class="cli-row" style="cursor:pointer" onclick="toggleCli('` + c.id + `')"><div><b>` + esc(fullName(c)) + "</b>" + (c.deleted_at ? ' <span class="chip late">Supprimé</span>' : "") + '</div><div class="cli-c" data-l="Numéro">' + esc(c.tel || "") + '</div><div class="cli-c" data-l="Mail">' + esc(c.mail || "") + '</div><div class="cli-c" data-l="Adresse">' + esc([c.adr, c.ville].filter(Boolean).join(", ")) + '</div><div class="cli-c" data-l="CP">' + esc(c.cp || "") + '</div><div class="cli-c" data-l="Créé le">' + (c.created_at ? fr(String(c.created_at).slice(0, 10)) : "–") + '</div><button class="cli-caret" aria-label="' + (open ? "Replier" : "Dérouler") + '" title="' + (open ? "Replier" : "Dérouler") + '">' + (open ? UP : DOWN) + "</button></div>" + (alerte ? '<span class="cli-alert" title="Un appareil de ce client n’est plus dans la base Appareils">!</span>' : "");
-    if (!open) return '<div class="card cli-card">' + row + "</div>";
+    const row = `<div class="cli-row" style="cursor:pointer" onclick="toggleCli('` + c.id + `')"><div><b>` + esc(fullName(c)) + "</b>" + (c.deleted_at ? ' <span class="chip late">Supprimé</span>' : "") + '</div><div class="cli-c" data-l="Numéro">' + telLink(c.tel) + '</div><div class="cli-c" data-l="Mail">' + esc(c.mail || "") + '</div><div class="cli-c" data-l="Adresse">' + esc([c.adr, c.ville].filter(Boolean).join(", ")) + '</div><div class="cli-c" data-l="CP">' + esc(c.cp || "") + '</div><div class="cli-c" data-l="Créé le">' + (c.created_at ? fr(String(c.created_at).slice(0, 10)) : "–") + '</div><button class="cli-caret" aria-label="' + (open ? "Replier" : "Dérouler") + '" title="' + (open ? "Replier" : "Dérouler") + '">' + (open ? UP : DOWN) + "</button></div>" + (alerte ? '<span class="cli-alert" title="Un appareil de ce client n’est plus dans la base Appareils">!</span>' : "");
+    if (!open) return '<div class="card cli-card" data-cid="' + c.id + '">' + row + "</div>";
     const acc = c.auth_user_id ? '<span class="chip ok">Compte créé</span> ' + (c.infos_verifiees_at ? '<span class="chip ok">Infos vérifiées</span>' : '<span class="chip warn">Infos à vérifier</span>') : S.inv.find((i) => i.client_id === c.id && !i.used_at) ? 'Code : <span class="code">' + esc(S.inv.find((i) => i.client_id === c.id && !i.used_at).code) + "</span>" : `<button class="chip" onclick="newCode('` + c.id + `')">Générer un code</button>`;
     const actions = c.deleted_at ? `<button class="btn" onclick="restoreCli('` + c.id + `')">Restaurer</button><button class="btn ghost" style="color:var(--bad);border-color:var(--bad)" onclick="purgeCli('` + c.id + `')">Supprimer définitivement</button>` : `<button class="btn" onclick="editCli('` + c.id + `')">Modifier</button><button class="btn ghost" onclick="softDelCli('` + c.id + `')">Supprimer</button>`;
     const dp = CLI_DEV ? S.devices.find((x) => x.id === CLI_DEV && x.client_id === c.id) : null;
@@ -10542,7 +10593,7 @@ function cliHtml(q) {
     const barre = '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-bottom:8px;border-bottom:1px solid var(--line)"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">' + acc + "</div>" + icones + "</div>";
     const devs = S.devices.filter((d) => d.client_id === c.id);
     const inner = barre + (dp ? devPage(dp) : (c.notes ? '<div class="m" style="margin-top:6px">' + esc(c.notes) + "</div>" : "") + '<div id="cEd"></div><h2 style="font-size:15px;margin:12px 0 4px">Appareils</h2>' + (devs.map((d) => devCompact(d)).join("") || '<p class="m">Aucun appareil.</p>') + `<div style="display:flex;align-items:center;gap:10px;margin-top:10px"><button class="btn ghost sq" title="Ajouter un appareil" aria-label="Ajouter un appareil" onclick="showDevForm(null,'` + c.id + `')"><span class="ic"></span></button><span class="m">Ajouter un appareil</span></div><div id="devForm"></div><div class="err" id="cliErr"></div>` + cliAchatsHtml(c) + cliPretsHtml(c) + cliQualiHtml(c));
-    return '<div class="card cli-card">' + row + '<div class="cli-body-wrap' + (CLI_NOANIM ? " cli-still" : "") + '" data-cli-body="' + c.id + '"><div class="cli-body"><div class="cli-in">' + inner + "</div></div></div></div>";
+    return '<div class="card cli-card" data-cid="' + c.id + '">' + row + '<div class="cli-body-wrap' + (CLI_NOANIM ? " cli-still" : "") + '" data-cli-body="' + c.id + '"><div class="cli-body"><div class="cli-in">' + inner + "</div></div></div></div>";
   }).join("");
   if (!rows) return '<p class="m">' + (CLI_TRASH ? "La corbeille est vide." : "Aucun client.") + "</p>";
   return (list.length ? '<div class="cli-head"><div>Prénom Nom</div><div>Numéro</div><div>Mail</div><div>Adresse</div><div>CP</div><div>Créé le</div><div></div></div>' : "") + rows;
@@ -10848,9 +10899,10 @@ function cliAchatsHtml(c) {
     if (ed) return entete + '<div id="cliVenteForm">' + cliVenteFormHtml(ed) + "</div>";
   }
   const on = CLI_VENTE === c.id;
+  if (!ventes.length && !on) return '<div style="display:flex;align-items:center;gap:10px;margin-top:10px"><button class="btn ghost sq" title="Ajouter une vente" aria-label="Ajouter une vente" onclick="cliVenteToggle(\'' + c.id + '\')"><span class="ic"></span></button><span class="m">Ajouter une vente</span></div>';
   const titre = on ? "Fermer le formulaire" : "Ajouter une vente";
   const bouton = '<div class="dr-empty" style="margin-top:10px"><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><button class="btn ghost sq" title="' + titre + '" aria-label="' + titre + '" onclick="cliVenteToggle(\'' + c.id + '\')" style="transition:background-color .6s ease;' + (on ? "background:var(--bad);color:#fff;border-color:var(--bad)" : "") + '"><span class="ic' + (on ? " minus" : "") + '"></span></button><div style="min-width:0"><div class="t" style="font-size:14px">' + (on ? "Nouvelle vente" : "Ajouter une vente") + '</div><div class="m">' + (on ? "Choisis les modèles puis enregistre la vente." : "Crée une vente pour ce client.") + "</div></div></div></div>";
-  return entete + (ventes.map(venteCliCard).join("") || '<p class="m">Aucun achat pour ce client.</p>') + bouton + (on ? '<div id="cliVenteForm">' + cliVenteFormHtml(null) + "</div>" : "");
+  return entete + ventes.map(venteCliCard).join("") + bouton + (on ? '<div id="cliVenteForm">' + cliVenteFormHtml(null) + "</div>" : "");
 }
 var CLI_PRET = null, CLI_PRET_CID = null;
 function pretsDe(c) {
@@ -10862,10 +10914,29 @@ function pretEnRetard(p) {
   today.setHours(0, 0, 0, 0);
   return new Date(p.date_retour + "T00:00") < today;
 }
+function pretJours(p) {
+  if (!p.date_retour) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return Math.round((new Date(p.date_retour + "T00:00") - today) / 86400000);
+}
+function pretJoursTxt(p) {
+  const j = pretJours(p);
+  if (j == null) return "";
+  if (j < 0) return "Date dépassée de " + Math.abs(j) + (Math.abs(j) > 1 ? " jours" : " jour");
+  if (j === 0) return "À rapporter aujourd’hui";
+  return "Il reste " + j + (j > 1 ? " jours" : " jour") + " pour le rapporter";
+}
 function pretCard(p) {
   const img = modelePhoto({ id: null, type: p.type || "", modele: p.modele || "", couleur: p.couleur || "" });
   const nom = [p.modele, p.couleur].filter(Boolean).join(" · ") || "Appareil";
-  return '<div class="vc-cli" role="button" tabindex="0" title="Modifier le prêt" onclick="cliPretEdit(\'' + p.id + '\')" onkeydown="if(event.key===\'Enter\')cliPretEdit(\'' + p.id + '\')" style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:stretch;padding:10px;margin:8px 0;border:1px solid var(--line);border-radius:14px;background:var(--surf);cursor:pointer"><div style="min-width:0;display:flex;flex-direction:column"><div class="dev-sq" style="flex:none;box-sizing:border-box;width:230px;height:230px;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#fff">' + (img ? '<img src="' + img + '" alt="' + esc(nom) + '" style="width:100%;height:100%;object-fit:contain;background:#fff">' : ICON_IMG) + '</div><div class="t" style="font-size:12px;margin-top:4px;line-height:14px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(nom) + '</div></div><div style="min-width:0;display:flex;flex-direction:column;gap:4px"><div class="t" style="margin:0">À récupérer le ' + (p.date_retour ? fr(p.date_retour) : "date à définir") + "</div>" + (pretEnRetard(p) ? '<div class="m" style="color:var(--bad);font-weight:600">Date dépassée</div>' : "") + "</div></div>";
+  return '<div class="vc-cli" role="button" tabindex="0" title="Modifier le prêt" onclick="cliPretEdit(\'' + p.id + '\')" onkeydown="if(event.key===\'Enter\')cliPretEdit(\'' + p.id + '\')" style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:stretch;padding:10px;margin:8px 0;border:1px solid var(--line);border-radius:14px;background:var(--surf);cursor:pointer"><div style="min-width:0;display:flex;flex-direction:column"><div class="dev-sq" style="flex:none;box-sizing:border-box;width:230px;height:230px;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#fff">' + (img ? '<img src="' + img + '" alt="' + esc(nom) + '" style="width:100%;height:100%;object-fit:contain;background:#fff">' : ICON_IMG) + '</div><div class="t" style="font-size:12px;margin-top:4px;line-height:14px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(nom) + '</div></div><div style="min-width:0;display:flex;flex-direction:column;gap:4px"><div class="t" style="margin:0">À récupérer le ' + (p.date_retour ? fr(p.date_retour) : "date à définir") + "</div>" + (p.date_retour ? '<div class="m" style="' + (pretEnRetard(p) ? "color:var(--bad);font-weight:600" : "") + '">' + pretJoursTxt(p) + "</div>" : "") + "</div></div>";
+}
+function pretsClientHtml(me) {
+  const list = pretsDe(me);
+  if (!list.length) return "";
+  const ligne = (p) => '<div class="m" style="padding:6px 0;border-bottom:1px solid var(--line)"><b>' + esc([p.modele, p.couleur].filter(Boolean).join(" · ") || "Appareil") + "</b> · " + (p.date_retour ? '<span style="' + (pretEnRetard(p) ? "color:var(--bad);font-weight:600" : "") + '">' + pretJoursTxt(p) + "</span>" : "date à définir") + "</div>";
+  return '<div class="card" style="margin-top:10px"><div class="t">Appareil prêté</div>' + list.map(ligne).join("") + "</div>";
 }
 function pretBaseOpts(sel) {
   const bases = (S.appBase || []).slice().sort((a, b) => [a.type, a.marque, a.modele].join(" ").localeCompare([b.type, b.marque, b.modele].join(" "), "fr"));
@@ -10905,8 +10976,9 @@ function cliPretsHtml(c) {
     const p = CLI_PRET === "new" ? null : list.find((x) => x.id === CLI_PRET);
     if (CLI_PRET === "new" || p) return entete + '<div id="cliPretForm">' + cliPretFormHtml(c.id, p) + "</div>";
   }
+  if (!list.length) return '<div style="display:flex;align-items:center;gap:10px;margin-top:10px"><button class="btn ghost sq" title="Ajouter un appareil prêté" aria-label="Ajouter un appareil prêté" onclick="cliPretNouveau(\'' + c.id + '\')"><span class="ic"></span></button><span class="m">Ajouter un appareil prêté</span></div>';
   const ajout = '<div class="dr-empty" style="margin-top:10px"><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><button class="btn ghost sq" title="Ajouter un appareil prêté" aria-label="Ajouter un appareil prêté" onclick="cliPretNouveau(\'' + c.id + '\')" style="transition:background-color .6s ease"><span class="ic"></span></button><div style="min-width:0"><div class="t" style="font-size:14px">Ajouter un appareil prêté</div><div class="m">Note l’appareil prêté et la date de récupération.</div></div></div></div>';
-  return entete + (list.map(pretCard).join("") || '<p class="m">Aucun appareil prêté.</p>') + ajout;
+  return entete + list.map(pretCard).join("") + ajout;
 }
 function cliPretNouveau(cid) {
   CLI_PRET = "new";
@@ -11000,7 +11072,10 @@ function setStockTab(t) {
   render();
 }
 function couleursFor(app, mod) {
-  return app === "Manette" || app === "Téléphone" ? abCouleurs() : null;
+  const b = (S.appBase || []).find((x) => x.type === app && x.modele === mod);
+  if (!b) return null;
+  const list = abCoulParse(b.couleur).map((c) => c.nom);
+  return list.length ? list : null;
 }
 function coulDlHtml(list) {
   return list.map((c) => '<option value="' + esc(c) + '">').join("");
@@ -11363,6 +11438,23 @@ function cliDevHtml(me) {
   const ds = S.devices.filter((d) => d.client_id === me.id);
   return ds.map(cliDevCard).join("") + cliAchatsAppHtml(me) || '<p class="m">Aucun appareil pour le moment.</p>';
 }
+function dvSearchPick(input) {
+  const b = (S.appBase || []).find((x) => [x.type, x.marque, x.modele].filter(Boolean).join(" · ") === input.value);
+  if (!b) return;
+  AB_MM.dvT = false;
+  AB_MM.dvMa = false;
+  AB_MM.dvM = false;
+  abSetMode("dvT", false);
+  abSetMode("dvMa", false);
+  abSetMode("dvM", false);
+  $("dvTS").value = b.type;
+  abRefreshFor("dvT");
+  $("dvMaS").value = b.marque;
+  abRefreshFor("dvMa");
+  $("dvMS").value = b.modele;
+  dvCoulRefresh();
+  input.value = "";
+}
 function showDevForm(devId, cid) {
   const d = devId ? S.devices.find((x) => x.id === devId) : null;
   const box = devId ? $("de-" + devId) : $("devForm");
@@ -11376,7 +11468,7 @@ function showDevForm(devId, cid) {
   AB_MM.dvMa = false;
   AB_MM.dvM = false;
   DEV_TEL_LAST = tv === "Téléphone";
-  box.innerHTML = '<div class="card" style="margin:8px 0 0"><label>Type *</label>' + abSelHtml("dvT", tv, abTypes(), "— Choisir un type —", "Nouveau type", true) + "<label>Marque *</label>" + abSelHtml("dvMa", mq, tv ? abMarquesFor(tv) : [], "— Choisir une marque —", "Nouvelle marque", !!tv) + "<label>Modèle *</label>" + abSelHtml("dvM", mv, tv && mq ? abModelesFor(tv, mq) : [], "— Choisir un modèle —", "Nouveau modèle", !!(tv && mq)) + '<label>Couleur</label><select id="dvCS" onchange="dvCoulPick()"></select><input id="dvC" value="' + v(d && d.couleur) + '" placeholder="Ex. Bleu" style="display:none;margin-top:6px"><label id="dvIdL">' + devIdText(tv) + '</label><input id="dvI" inputmode="numeric" value="' + (unk ? "" : v(idv)) + '"' + (unk ? " disabled" : "") + '><label style="font-weight:400;display:flex;gap:8px;align-items:center;margin-top:6px"><input type="checkbox" id="dvU" onchange="devUnk()" style="width:auto;margin:0"' + (unk ? " checked" : "") + '> Je ne sais pas où le trouver</label><div id="dvCode"></div><label>État</label><input id="dvE" value="' + v(d && d.etat) + '" placeholder="Ex. rayure sur le dos"><button class="btn" onclick="saveDev(' + (devId ? "'" + devId + "'" : "null") + ",'" + owner + `')">` + (d ? "Enregistrer les modifications" : "Enregistrer l’appareil") + '</button><button class="btn ghost" onclick="render()">Annuler</button><div class="err" id="dvErr"></div></div>';
+  box.innerHTML = '<div class="card" style="margin:8px 0 0">' + appSearchHtml("dvDl", "", "dvSearchPick(this)") + '<label>Type *</label>' + abSelHtml("dvT", tv, abTypes(), "— Choisir un type —", "Nouveau type", true) + "<label>Marque *</label>" + abSelHtml("dvMa", mq, tv ? abMarquesFor(tv) : [], "— Choisir une marque —", "Nouvelle marque", !!tv) + "<label>Modèle *</label>" + abSelHtml("dvM", mv, tv && mq ? abModelesFor(tv, mq) : [], "— Choisir un modèle —", "Nouveau modèle", !!(tv && mq)) + '<label>Couleur</label><select id="dvCS" onchange="dvCoulPick()"></select><input id="dvC" value="' + v(d && d.couleur) + '" placeholder="Ex. Bleu" style="display:none;margin-top:6px"><label id="dvIdL">' + devIdText(tv) + '</label><input id="dvI" inputmode="numeric" value="' + (unk ? "" : v(idv)) + '"' + (unk ? " disabled" : "") + '><label style="font-weight:400;display:flex;gap:8px;align-items:center;margin-top:6px"><input type="checkbox" id="dvU" onchange="devUnk()" style="width:auto;margin:0"' + (unk ? " checked" : "") + '> Je ne sais pas où le trouver</label><div id="dvCode"></div><label>État</label><input id="dvE" value="' + v(d && d.etat) + '" placeholder="Ex. rayure sur le dos"><button class="btn" onclick="saveDev(' + (devId ? "'" + devId + "'" : "null") + ",'" + owner + `')">` + (d ? "Enregistrer les modifications" : "Enregistrer l’appareil") + '</button><button class="btn ghost" onclick="render()">Annuler</button><div class="err" id="dvErr"></div></div>';
   devCodeFields(d);
   dvCoulRefresh();
   /* La liste des couleurs suit le type, la marque et le modèle choisis */
@@ -11393,8 +11485,7 @@ function showDevForm(devId, cid) {
 function dvCoulOpts(cur) {
   const t = abSelVal("dvT").trim(), ma = abSelVal("dvMa").trim(), mo = abSelVal("dvM").trim();
   const b = (S.appBase || []).find((x) => x.type === t && x.marque === ma && x.modele === mo);
-  const duModele = b ? abCoulParse(b.couleur).map((c) => c.nom) : [];
-  const list = duModele.length ? duModele : abCouleurs();
+  const list = b ? abCoulParse(b.couleur).map((c) => c.nom) : [];
   const tout = cur && list.indexOf(cur) < 0 ? list.concat([cur]) : list;
   return '<option value="">— Aucune —</option>' + tout.map((n) => '<option value="' + esc(n) + '"' + (n === cur ? " selected" : "") + ">" + esc(n) + "</option>").join("") + '<option value="__autre">Autre (saisie libre)…</option>';
 }
@@ -11841,8 +11932,33 @@ function cliApply(cur, next) {
   else if (!next && flagged) history.back();
   render();
 }
+try { history.scrollRestoration = "manual"; } catch (e) {}
+/* Garde l'en-tête du client cliqué au même endroit à l'écran pendant que les fiches s'ouvrent / se ferment */
+var CLI_HOLD = 0;
+function cliAnchor(id) {
+  var q = '.cli-card[data-cid="' + id + '"]';
+  var el = document.querySelector(q);
+  if (!el) return;
+  var t0 = el.getBoundingClientRect().top, token = ++CLI_HOLD, end = performance.now() + 600, stopped = false;
+  var evs = ["wheel", "touchmove", "keydown"];
+  function onUser() { stopped = true; }
+  function clean() { evs.forEach(function (e) { window.removeEventListener(e, onUser); }); }
+  evs.forEach(function (e) { window.addEventListener(e, onUser, { passive: true }); });
+  function step() {
+    if (stopped || token !== CLI_HOLD) { clean(); return; }
+    var e2 = document.querySelector(q);
+    if (e2) {
+      var d = e2.getBoundingClientRect().top - t0;
+      if (Math.abs(d) > 0.5) window.scrollBy(0, d);
+    }
+    if (performance.now() < end) requestAnimationFrame(step);
+    else clean();
+  }
+  requestAnimationFrame(step);
+}
 function toggleCli(id) {
   if (CLI_BUSY) return;
+  cliAnchor(id);
   CLI_DEV = null;
   CLI_VENTE = null;
   CLI_PRET = null;
@@ -11962,6 +12078,20 @@ function modelsFor(app, cat, gam) {
   }
   return srt([...new Set(deBase())]);
 }
+function appBaseCombos() {
+  return [...new Set((S.appBase || []).map((x) => [x.type, x.marque, x.modele].filter(Boolean).join(" · ")))].sort((a, b) => a.localeCompare(b, "fr"));
+}
+function appSearchHtml(dlId, key, handler) {
+  return '<input list="' + dlId + '" placeholder="Rechercher un appareil (type, marque, modèle)…" oninput="' + (handler || "pkSearchPick(this)") + '" data-pk-key="' + key + '" style="margin-bottom:6px"><datalist id="' + dlId + '">' + appBaseCombos().map((c) => '<option value="' + esc(c) + '">').join("") + "</datalist>";
+}
+function pkSearchPick(input) {
+  const key = input.getAttribute("data-pk-key");
+  const b = (S.appBase || []).find((x) => [x.type, x.marque, x.modele].filter(Boolean).join(" · ") === input.value);
+  if (!b || !key) return;
+  pkSet(key, "app", b.type);
+  pkSet(key, "cat", b.marque);
+  pkMod(key, b.modele);
+}
 function pkHtml(key) {
   const st = PKS[key] = PKS[key] || { app: "", cat: "" };
   const brands = st.app ? marquesApp(st.app) : [];
@@ -11970,7 +12100,8 @@ function pkHtml(key) {
   const mods = showMod ? modelsFor(st.app, st.cat, st.gam) : [];
   const modSel = `<select onchange="pkMod('` + key + `',this.value)">` + modOpts(mods, gams.length ? st.gam : "", "") + "</select>";
   const gamSel = `<select onchange="pkSet('` + key + `','gam',this.value)">` + optList(gams, st.gam || "", "Gamme…") + "</select>";
-  let h = `<select onchange="pkSet('` + key + `','app',this.value)">` + optList(APPS, st.app, "Type d’appareil…") + "</select>";
+  let h = appSearchHtml("pkDl-" + key, key);
+  h += `<select onchange="pkSet('` + key + `','app',this.value)">` + optList(APPS, st.app, "Type d’appareil…") + "</select>";
   if (st.app) {
     h += `<div class="two" style="margin-top:6px"><select onchange="pkSet('` + key + `','cat',this.value)">` + optList(brands, st.cat, "Marque…") + "</select>" + (gams.length ? gamSel : key === "v" && VT_COMPAT ? "" : modSel) + "</div>";
     if (gams.length && showMod && !(key === "v" && VT_COMPAT)) h += '<div style="margin-top:6px">' + modSel + "</div>";
@@ -11984,7 +12115,7 @@ function pkBaseHtml(key) {
   const types = abTypes().filter((t) => base.some((x) => x.type === t));
   const brands = st.app ? abMarquesFor(st.app) : [];
   const mods = st.app && st.cat ? abModelesFor(st.app, st.cat) : [];
-  return `<select onchange="pkSet('` + key + `','app',this.value)">` + optList(types, st.app, "Type d’appareil…") + '</select><div class="two" style="margin-top:6px"><select' + (st.app ? "" : " disabled") + ` onchange="pkSet('` + key + `','cat',this.value)">` + optList(brands, st.cat, "Marque…") + "</select><select" + (st.cat ? "" : " disabled") + ` onchange="pkMod('` + key + `',this.value)">` + optList(mods, "", "Modèle…") + "</select></div>";
+  return appSearchHtml("pkDl-" + key, key) + `<select onchange="pkSet('` + key + `','app',this.value)">` + optList(types, st.app, "Type d’appareil…") + '</select><div class="two" style="margin-top:6px"><select' + (st.app ? "" : " disabled") + ` onchange="pkSet('` + key + `','cat',this.value)">` + optList(brands, st.cat, "Marque…") + "</select><select" + (st.cat ? "" : " disabled") + ` onchange="pkMod('` + key + `',this.value)">` + optList(mods, "", "Modèle…") + "</select></div>";
 }
 function pkSet(key, k, v) {
   const st = PKS[key] = PKS[key] || { app: "", cat: "" };
@@ -12125,7 +12256,13 @@ async function savePiece2(sku) {
       return;
     }
   }
-  toast("Pièce modifiée");
+  let msg = "Pièce modifiée";
+  if (nom !== (ancien.nom || "")) {
+    /* Le nom est recopié dans chaque réparation qui utilise la pièce : on le met à jour partout (repérage par SKU) */
+    const up = await SB.from("pieces_dossier").update({ nom }).in("sku", [sku, newSku]);
+    if (up.error) msg = "Pièce modifiée, mais le nom n’a pas pu être mis à jour dans les réparations : " + msgErr(up.error);
+  }
+  toast(msg);
   await reload();
 }
 function genCode() {
@@ -12538,6 +12675,8 @@ function refreshPhotos(kind, id) {
     const g = document.querySelector('[data-gal-kind="piece"][data-gal-id="' + id + '"]');
     if (g) {
       g.outerHTML = photosBloc("piece", id);
+      const th = document.getElementById("sth-" + id);
+      if (th) th.innerHTML = stkThumbInner(id);
       return;
     }
   }
@@ -12848,7 +12987,7 @@ function detailView() {
     <label>Notes</label>
     <textarea id="dNo" rows="2" onchange="fSave('notes', this.value)">${esc(d.notes || "")}</textarea>
     <label>Statut</label>
-    <select id="dSt" onchange="setStatut(this.value)">${STEPS.map((s) => `<option value="${s}" ${s === d.statut ? "selected" : ""}>${lblS(s)}</option>`).join("")}</select>
+    ${statutStepHtml(d)}
     ${ROLE === "rep" ? "" : devis ? `
     <label id="lbl-prix">Prix (€) *</label><input id="dPx" inputmode="decimal" value="${(_a = d.prix) != null ? _a : ""}" placeholder="à définir" oninput="numOnly(this);updateReste()" onchange="fSave('prix', this.value)">
     <label id="lbl-duree">Durée de réparation *</label><input id="dDu" value="${esc(d.duree || "")}" placeholder="Ex. 2h" onchange="fSave('duree', this.value)">` : `<div class="m" style="font-size:15px;margin-bottom:6px">Prix : ${d.prix == null ? "à définir" : eur(d.prix)}</div>
@@ -13034,12 +13173,26 @@ async function fSave(field, value) {
   paintDetail();
   flash("Enregistré ✓");
 }
+function statutStepHtml(d) {
+  const i = STEPS.indexOf(d.statut);
+  const boxes = '<div class="step-boxes">' + STEPS.map((s, k) => '<div class="step-box' + (k === i ? " on" : "") + '">' + esc(lblS(s)) + "</div>").join("") + "</div>";
+  if (ROLE !== "rep") return '<div class="statut-step">' + boxes + "</div>";
+  return '<div class="statut-step">' +
+    '<button type="button" class="step-arrow" onclick="stepStatut(-1)"' + (i <= 0 ? " disabled" : "") + ' aria-label="Statut précédent">‹</button>' +
+    boxes +
+    '<button type="button" class="step-arrow" onclick="stepStatut(1)"' + (i >= STEPS.length - 1 ? " disabled" : "") + ' aria-label="Statut suivant">›</button>' +
+    "</div>";
+}
+function stepStatut(dir) {
+  const d = S.dossiers.find((x) => x.id === DOSSIER);
+  if (!d) return;
+  const i = STEPS.indexOf(d.statut), j = i + dir;
+  if (j < 0 || j >= STEPS.length) return;
+  setStatut(STEPS[j]);
+}
 async function setStatut(st) {
-  const d = S.dossiers.find((x) => x.id === DOSSIER), sel = $("dSt");
-  const fail = (msg) => {
-    sel.value = d.statut;
-    toast(msg);
-  };
+  const d = S.dossiers.find((x) => x.id === DOSSIER);
+  const fail = (msg) => toast(msg);
   if (st === d.statut) return;
   if (st !== "Devis en cours") {
     if (d.statut === "Devis en cours" && !devisOk(d)) return fail("Renseigne la date de dépôt, le prix et la durée avant de quitter le devis.");
@@ -13321,7 +13474,8 @@ function stkMenuModeles(ev, sku) {
   m.id = "stkMenu";
   m.className = "stk-menu";
   m.dataset.sku = sku;
-  m.innerHTML = parts.length ? parts.map((p) => "<div>" + esc(p.mo) + "</div>").join("") : "<div>" + esc(s.modele) + "</div>";
+  const gr = stkGroupes(s);
+  m.innerHTML = gr.length ? gr.map((g) => "<div>" + stkGroupeHtml(g) + "</div>").join("") : "<div>" + esc(s.modele) + "</div>";
   ev.currentTarget.parentElement.appendChild(m);
 }
 document.addEventListener("click", (e) => {
@@ -13366,9 +13520,53 @@ function stkListes() {
   return { types, marques, modeles };
 }
 function stkControls() {
-  const L = stkListes(), lbl = (t) => '<div class="m" style="margin:8px 0 2px;font-weight:600">' + t + "</div>";
-  const catOpts = ['<option value="">Toutes les pièces</option>'].concat(STK_CATS.map((c) => '<option' + (c === STK_CAT ? " selected" : "") + ">" + esc(c) + "</option>"), ['<option value="__sans"' + (STK_CAT === "__sans" ? " selected" : "") + ">Sans type</option>"]).join("");
-  return '<div style="margin:8px 0">' + lbl("Filtrer par pièce") + `<select onchange="STK_CAT=this.value;render()">` + catOpts + "</select>" + lbl("Filtrer par type") + `<select onchange="STK_TYPE=this.value;STK_MQ='';STK_MO='';render()">` + optList(L.types, STK_TYPE, "Tous les types") + "</select>" + lbl("Filtrer par marque") + `<select onchange="STK_MQ=this.value;STK_MO='';render()">` + optList(L.marques, STK_MQ, "Toutes les marques") + "</select>" + lbl("Filtrer par modèle") + '<select onchange="STK_MO=this.value;render()">' + optList(L.modeles, STK_MO, "Tous les modèles") + "</select>" + lbl("Filtrer par stock") + '<select onchange="STK_ST=this.value;render()">' + selOpts([["", "Tous"], ["dispo", "En stock"], ["rupture", "Rupture"]], STK_ST) + '</select></div><div class="row" style="gap:6px;flex-wrap:wrap;margin:0 0 8px"><select onchange="STK_SORT=this.value;render()">' + selOpts([["nom", "Trier : nom"], ["type", "Trier : type"], ["recent", "Trier : plus récents"], ["ancien", "Trier : plus anciens"], ["qte", "Trier : quantité dispo"], ["res", "Trier : réservé"]], STK_SORT) + "</select></div>";
+  const L = stkListes();
+  const f = (oc, inner) => '<select onchange="' + oc + '" style="margin:0;width:100%;min-width:0">' + inner + "</select>";
+  const catOpts = ['<option value="">Toutes les pièces</option>'].concat(STK_CATS.map((c) => "<option" + (c === STK_CAT ? " selected" : "") + ">" + esc(c) + "</option>"), ['<option value="__sans"' + (STK_CAT === "__sans" ? " selected" : "") + ">Sans type</option>"]).join("");
+  return '<div class="stk-filt">' + f("STK_CAT=this.value;render()", catOpts) + f("STK_TYPE=this.value;STK_MQ='';STK_MO='';render()", optList(L.types, STK_TYPE, "Tous les types")) + f("STK_MQ=this.value;STK_MO='';render()", optList(L.marques, STK_MQ, "Toutes les marques")) + f("STK_MO=this.value;render()", optList(L.modeles, STK_MO, "Tous les modèles")) + f("STK_ST=this.value;render()", selOpts([["", "Tout le stock"], ["dispo", "En stock"], ["rupture", "Rupture"]], STK_ST)) + f("STK_SORT=this.value;render()", selOpts([["nom", "Trier : nom"], ["type", "Trier : type"], ["recent", "Trier : plus récents"], ["ancien", "Trier : plus anciens"], ["qte", "Trier : quantité dispo"], ["res", "Trier : réservé"]], STK_SORT)) + '<button class="btn ghost small" type="button" style="margin:0" onclick="stkResetFiltres()">Supprimer les filtres</button></div>';
+}
+function stkResetFiltres() {
+  STK_CAT = "";
+  STK_TYPE = "";
+  STK_MQ = "";
+  STK_MO = "";
+  STK_ST = "";
+  render();
+}
+/* Modèles : la marque une seule fois, puis ses modèles à la suite */
+function stkGroupes(s) {
+  const g = [];
+  stkPartsOf(s).forEach((p) => {
+    let x = g.find((y) => y.m === p.m);
+    if (!x) g.push(x = { m: p.m, mos: [] });
+    if (p.mo && x.mos.indexOf(p.mo) < 0) x.mos.push(p.mo);
+  });
+  return g;
+}
+function stkGroupeHtml(g) {
+  return (g.m ? "<b>" + esc(g.m) + "</b> " : "") + g.mos.map(esc).join(", ");
+}
+function stkModelesHtml(s) {
+  const g = stkGroupes(s);
+  return g.length ? g.map(stkGroupeHtml).join(" · ") : esc(s.modele);
+}
+/* Photos des pièces : vignette dans la liste, clic pour ouvrir la galerie */
+function stkThumbInner(sku) {
+  const ph = photosFor("piece", sku)[0];
+  return ph ? '<img src="' + esc(photoUrl(ph)) + '" alt="">' : ICON_IMG;
+}
+function stkThumb(sku) {
+  return '<button type="button" class="stk-th" id="sth-' + esc(sku) + '" title="Photos de la pièce" aria-label="Photos de la pièce" onclick="stkPhotos(\'' + esc(sku) + '\')">' + stkThumbInner(sku) + "</button>";
+}
+function stkPhotos(sku) {
+  const box = $("pe-" + sku);
+  const x = S.stock.find((y) => y.sku === sku);
+  if (!box || !x) return;
+  if (box.querySelector("[data-stk-ph]")) {
+    box.innerHTML = "";
+    return;
+  }
+  box.innerHTML = '<div class="card" data-stk-ph="1" style="margin:8px 0 12px"><div class="row" style="justify-content:space-between;align-items:center"><span class="t">Photos : ' + esc(x.nom) + '</span><button class="chip" onclick="stkPhotos(\'' + esc(x.sku) + '\')">Fermer</button></div>' + photosBloc("piece", x.sku) + photoAddHtml("piece", x.sku, 6) + "</div>";
 }
 function stkAddToggle() {
   STK_ADD = !STK_ADD;
@@ -13437,11 +13635,11 @@ function stkHtml(q) {
   stkLoadW();
   stkApplyW();
   const rz = (i) => '<span class="stk-rz" title="Glisser pour élargir" onpointerdown="stkResize(event,' + i + ')"></span>';
-  const head = '<div class="stk-row stk-head"><span class="m ab-cell" style="font-weight:600">Nom' + rz(0) + '</span><span class="m ab-cell" style="font-weight:600">Type' + rz(1) + '</span><span class="m ab-cell" style="font-weight:600">Modèle' + rz(2) + '</span><span class="m ab-cell stk-x" style="font-weight:600">Référence' + rz(3) + '</span><span class="m ab-cell stk-x" style="font-weight:600">Réservé' + rz(4) + '</span><span class="m ab-cell" style="font-weight:600">Prix' + rz(5) + '</span><div class="stk-act"><span class="m stk-qh" style="font-weight:600">Quantité</span></div></div>';
+  const head = '<div class="stk-row stk-head"><span class="m ab-cell" style="font-weight:600">Nom' + rz(0) + '</span><span class="m ab-cell" style="font-weight:600">Type' + rz(1) + '</span><span class="m ab-cell" style="font-weight:600">Modèle' + rz(2) + '</span><span class="m ab-cell stk-x" style="font-weight:600">SKU' + rz(3) + '</span><span class="m ab-cell stk-x" style="font-weight:600">Réservé' + rz(4) + '</span><span class="m ab-cell" style="font-weight:600">Prix' + rz(5) + '</span><div class="stk-act"><span class="m stk-qh" style="font-weight:600">Quantité</span></div></div>';
   const rows = list.map((s) => `<div id="s-${esc(s.sku)}">
     <div class="stk-row">
-      <b class="ab-cell">${esc(s.nom)}${s.categorie ? ' <span class="chip" style="font-size:12px;padding:2px 8px;font-weight:600">' + esc(s.categorie) + "</span>" : ""}${stkRepere(s)}</b><span class="ab-cell">${esc(s.type)}</span><span class="ab-cell stk-mod"><span class="stk-mod-t">${stkPartsOf(s).length ? stkPartsOf(s).map((p) => esc(p.mo)).join(" · ") : esc(s.modele)}</span><button type="button" class="stk-fl" style="display:none" title="Voir tous les modèles" aria-label="Voir tous les modèles" onclick="stkMenuModeles(event,'${esc(s.sku)}')">▾</button></span>
-      <span class="ab-cell code stk-x">${esc(s.sku)}</span><span class="ab-cell stk-x">Réservé : ${s.res}</span><span class="ab-cell">${s.prix != null && s.prix !== "" ? esc(eur(s.prix)) + (s.prix_date ? '<span class="m" style="display:block;font-size:12px">au ' + esc(fr(String(s.prix_date).slice(0, 10))) + "</span>" : "") : '<span class="m">—</span>'}</span>
+      <b class="ab-cell"><span class="stk-nm">${stkThumb(s.sku)}<span>${esc(s.nom)}${s.categorie ? ' <span class="chip" style="font-size:12px;padding:2px 8px;font-weight:600">' + esc(s.categorie) + "</span>" : ""}${stkRepere(s)}</span></span></b><span class="ab-cell">${esc(s.type)}</span><span class="ab-cell stk-mod"><span class="stk-mod-t">${stkModelesHtml(s)}</span><button type="button" class="stk-fl" style="display:none" title="Voir tous les modèles" aria-label="Voir tous les modèles" onclick="stkMenuModeles(event,'${esc(s.sku)}')">▾</button></span>
+      <span class="ab-cell code stk-x">${esc(s.sku)}</span><span class="ab-cell stk-x">${s.res}</span><span class="ab-cell">${s.prix != null && s.prix !== "" ? esc(eur(s.prix)) + (s.prix_date ? '<span class="m" style="display:block;font-size:12px">au ' + esc(fr(String(s.prix_date).slice(0, 10))) + "</span>" : "") : '<span class="m">—</span>'}</span>
       <div class="stk-act"><button class="chip" title="Retirer une pièce" onclick="adjStock('${esc(s.sku)}',-1)">−</button><button class="chip" title="Ajouter une pièce" onclick="adjStock('${esc(s.sku)}',1)">+</button>${s.qte > 0 ? '<span class="chip ok">' + s.qte + '</span>' : '<span class="chip late" title="Rupture" style="background:none;color:var(--bad);font-size:18px;font-weight:700;padding:0 8px">×</span>'}${s.lien ? '<a class="btn sq ghost" href="' + esc(s.lien) + '" target="_blank" rel="noopener" title="Ouvrir le lien pour commander" aria-label="Ouvrir le lien pour commander" style="color:inherit;text-decoration:none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18"/><path d="M12 3a14 14 0 0 0 0 18"/></svg></a>' : '<span class="stk-nolien" aria-hidden="true"></span>'}<button class="btn sq ghost" title="Modifier cette pièce" aria-label="Modifier cette pièce" onclick="editPiece('${esc(s.sku)}')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button><button class="btn sq ghost" title="Supprimer cette pièce" aria-label="Supprimer cette pièce" onclick="deleteStock('${esc(s.sku)}')"><span class="ic" style="transform:rotate(45deg)"></span></button></div>
     </div>
     <div id="pe-${esc(s.sku)}"></div></div>`).join("");
@@ -13462,6 +13660,8 @@ async function addStock() {
     err.textContent = msgErr(error);
     return;
   }
+  const ph = $("sPh");
+  if (ph && ph.files && ph.files.length) await addPhotos("piece", "PC-" + (max + 1), ph);
   MP.n = [];
   STK_ADD = false;
   await reload();
@@ -13564,6 +13764,7 @@ function cliView() {
   if (clDesk()) return clDeskView(me);
   const info = cliInfo(me);
   return head + (PARAM_OPEN ? `<div class="card"><div class="t">Paramètres</div><button class="btn ghost small" style="margin-top:8px" onclick="PROF_EDIT=true;PARAM_OPEN=false;render()">Modifier mes informations</button><button class="btn ghost small" style="margin-top:8px" onclick="logout()">Déconnexion</button></div>` : "") + `<h1>Bonjour ${esc(me.prenom)}</h1>
+  ${pretsClientHtml(me)}
   <h2 data-page="Mes informations">Mes informations</h2>${info}
   <h2 data-page="Mes appareils">Mes appareils</h2>${cliDevHtml(me)}
   <h2 data-page="Mes réparations">Mes réparations</h2>${cliRepHtml(me)}
@@ -13683,6 +13884,7 @@ function clDeskView(me) {
         <a href="#" class="cl-stat" onclick="return clOpen('avoirs')"><span>Mes avoirs</span><span class="cl-num">${eur(totalAvoirs)}</span></a>
         <section class="cl-accent"><div><div class="cl-muted2">Reste à régler</div><div class="cl-big">${eur(reste)}</div></div></section>
       </div>
+      ${pretsClientHtml(me)}
       <section class="cl-rep cl-rep-wide">
         <div class="cl-row"><h2 class="cl-h2">Mes réparations</h2><span class="cl-badge">${enCours.length}</span></div>
         ${enCours.length ? '<div class="cl-tiles">' + (CL_REP_MORE ? enCours : enCours.slice(0, 2)).map(tuile).join("") + "</div>" : '<p class="cl-muted">Aucune réparation en cours.</p>'}
