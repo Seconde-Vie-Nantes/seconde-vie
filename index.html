@@ -281,6 +281,11 @@ body.lg nav{left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom))
 body.lg nav::-webkit-scrollbar{display:none}
 body.lg nav button{flex:0 0 auto;min-width:76px;font-size:11px;border-radius:12px;padding:9px 4px;color:var(--mut)}
 body.lg nav button.on{background:#eef4f1;color:var(--brand)}
+.nav-outils{position:relative}
+.outils-back{position:fixed;inset:0;z-index:59;background:transparent}
+.outils-pop{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom));z-index:60;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.2);padding:6px;display:flex;flex-direction:column;gap:2px;min-width:220px;max-width:calc(100vw - 32px)}
+.outils-pop button{display:block;width:100%;text-align:left;border:0;background:none;padding:13px 14px;border-radius:10px;font-family:inherit;font-weight:600;font-size:15px;color:var(--ink);cursor:pointer}
+.outils-pop button.on,.outils-pop button:hover{background:#eef4f1;color:var(--brand)}
 body.lg .app{padding-bottom:110px}
 
 /* Ordinateur : navigation en colonne à gauche, contenu élargi */
@@ -463,6 +468,7 @@ body:not(.rep-nav).lg .app{margin-left:auto !important;margin-right:auto !import
 <body class="lg">
 <div class="app" id="app"><div class="boot" id="boot" role="status"><div class="boot-dot"></div><p>Chargement…</p></div></div>
 <nav id="nav" class="hide"></nav>
+<div id="outilsPop"></div>
 <div id="modal" class="modal hide"></div>
 <div id="fbWrap" class="fb-wrap"></div>
 <div id="notifWrap" class="notif-wrap"></div>
@@ -6237,7 +6243,7 @@ function pstOpts(p) {
 }
 const PUCES = [["Puce Switch V1", "Switch V1"], ["Puce Switch V2", "Switch V2"], ["Puce Switch Lite", "Switch Lite"], ["Puce Switch OLED", "Switch OLED"]];
 const GMAPS_KEY = "";
-const REP_NAV = [["accueil", "Accueil"], ["dashboard", "Tableau de bord"], ["depenses", "Dépenses"], ["agenda", "Agenda"], ["dossiers", "Réparations et ventes"], ["qualirepar", "Qualirépar"], ["clients", "Clients"], ["appareils", "Appareils"], ["frp", "FRP Bypass"], ["new", "Nouvelle prestation"], ["newvente", "Nouvelle vente"], ["ventes", "Ventes"], ["avis", "Suggestions & Bugs"], ["stock", "Stock"], ["catalogue", "Réparations & Mods"], ["dbadmin", "Bases de données"]];
+const REP_NAV = [["accueil", "Accueil"], ["dashboard", "Tableau de bord"], ["depenses", "Dépenses"], ["agenda", "Agenda"], ["dossiers", "Réparations et ventes"], ["qualirepar", "Qualirépar"], ["clients", "Clients"], ["appareils", "Appareils"], ["new", "Nouvelle prestation"], ["newvente", "Nouvelle vente"], ["ventes", "Ventes"], ["avis", "Suggestions & Bugs"], ["stock", "Stock"], ["catalogue", "Réparations & Mods"], ["dbadmin", "Bases de données"]];
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s != null ? s : "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const fullName = (c) => [c && c.prenom, c && c.nom].filter(Boolean).join(" ") || "Sans nom";
@@ -6352,6 +6358,10 @@ async function loadAll() {
     const fb = await SB.from("feedback").select("*").order("created_at", { ascending: false });
     if (fb.error) toast("Suggestions : " + msgErr(fb.error));
     else S.feedback = fb.data || [];
+  }
+  if (ROLE === "rep") {
+    const ml = await SB.from("mails_log").select("dossier_id,type,envoye_at");
+    S.mails = ml.error ? [] : ml.data || [];
   }
 }
 async function reload() {
@@ -6643,6 +6653,7 @@ function render() {
   }
   if (!ME) {
     nav.classList.add("hide");
+    $("outilsPop").innerHTML = "";
     $("fbWrap").innerHTML = "";
     $("notifWrap").innerHTML = "";
     closeNotifPanel();
@@ -6651,7 +6662,8 @@ function render() {
   }
   if (ROLE === "rep") {
     nav.classList.remove("hide");
-    nav.innerHTML = REP_NAV.map(([v, l]) => `<button class="${VIEW === v ? "on" : ""}" onclick="go('${v}')">${l}</button>`).join("") + '<a class="nav-ecran" href="reparations-en-cours.html" target="_blank" rel="noopener">Réparations en cours ↗</a><button class="nav-copy" title="Copie toutes les suggestions et bugs non archivés" onclick="copierRecapNonArchive()">Copier le récap</button><button class="nav-logout" onclick="logout()">Déconnexion</button>';
+    $("outilsPop").innerHTML = outilsPopHtml();
+    nav.innerHTML = REP_NAV.map(([v, l]) => `<button class="${VIEW === v ? "on" : ""}" onclick="go('${v}')">${l}</button>`).join("") + navOutils() + '<a class="nav-ecran" href="reparations-en-cours.html" target="_blank" rel="noopener">Réparations en cours ↗</a><button class="nav-copy" title="Copie toutes les suggestions et bugs non archivés" onclick="copierRecapNonArchive()">Copier le récap</button><button class="nav-logout" onclick="logout()">Déconnexion</button>';
     app.innerHTML = '<div class="row" style="align-items:center;margin:4px 0 8px"><img class="logo-h" src="' + LOGO_SRC + '" alt="Seconde Vie"><button class="btn small ghost hdr-logout" onclick="logout()">Déconnexion</button></div>' + (DOSSIER ? detailView() : REP[VIEW]());
     if (VIEW === "stock" && !DOSSIER) {
       mpDraw("n");
@@ -6675,6 +6687,7 @@ function render() {
     }
   } else {
     nav.classList.add("hide");
+    $("outilsPop").innerHTML = "";
     app.innerHTML = (DEMO ? '<div class="demo-bar"><span>Aperçu · données fictives, rien n’est enregistré</span><button class="btn small ghost" onclick="endDemo()">Quitter l’aperçu</button></div>' : "") + cliView();
   }
   renderFb();
@@ -6709,6 +6722,7 @@ async function syncReservations() {
   return changes.length;
 }
 async function go(v) {
+  OUTILS_OPEN = false;
   if (v === "new") PIECES_PREV.n = [];
   if (v === "out") return logout();
   VIEW = v;
@@ -7209,6 +7223,64 @@ function dashPageView() {
   return `<div style="margin:4px 0 10px"><button class="btn small ghost" onclick="go('dashboard')">← Tableau de bord</button></div><h1>` + pg.t + ' <span class="m" style="font-size:16px">· ' + pg.items.length + "</span></h1>" + body;
 }
 /* FRP Bypass : entrées enregistrées dans ce navigateur (localStorage) */
+/* Menu Outils (réparateur) : FRP Bypass + Liens utiles */
+var OUTILS_OPEN = false;
+function toggleOutils(ev) {
+  if (ev) ev.stopPropagation();
+  OUTILS_OPEN = !OUTILS_OPEN;
+  render();
+}
+function navOutils() {
+  const on = VIEW === "frp" || VIEW === "liens";
+  return '<button class="nav-outils' + (on ? " on" : "") + '" onclick="toggleOutils(event)">Outils \u25be</button>';
+}
+function outilsPopHtml() {
+  if (!OUTILS_OPEN) return "";
+  return '<div class="outils-back" onclick="toggleOutils(event)"></div><div class="outils-pop">' + '<button class="' + (VIEW === "frp" ? "on" : "") + '" onclick="go(\'frp\')">FRP Bypass</button>' + '<button class="' + (VIEW === "liens" ? "on" : "") + '" onclick="go(\'liens\')">Liens utiles</button>' + "</div>";
+}
+/* Liens utiles : liens externes enregistrés dans ce navigateur (localStorage) */
+function liensLire() {
+  try {
+    const v = JSON.parse(localStorage.getItem("sv_liens") || "[]");
+    return Array.isArray(v) ? v : [];
+  } catch (e) {
+    return [];
+  }
+}
+function liensEcrire(l) {
+  try {
+    localStorage.setItem("sv_liens", JSON.stringify(l));
+  } catch (e) {
+    toast("Impossible d\u2019enregistrer sur cet appareil.");
+  }
+}
+function liensAjouter() {
+  const err = $("lnErr");
+  err.textContent = "";
+  const titre = $("lnTitre").value.trim();
+  let url = $("lnUrl").value.trim();
+  if (!url) {
+    err.textContent = "Ajoute une adresse (lien).";
+    return;
+  }
+  if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+  const l = liensLire();
+  l.push({ id: "l" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), titre: titre || url, url, date: new Date().toISOString() });
+  liensEcrire(l);
+  $("lnTitre").value = "";
+  $("lnUrl").value = "";
+  render();
+}
+function liensSupprimer(id) {
+  if (!confirm("Supprimer ce lien ?")) return;
+  liensEcrire(liensLire().filter((x) => x.id !== id));
+  render();
+}
+function liensHtml() {
+  const liste = liensLire().slice().reverse();
+  const rows = liste.length ? liste.map((x) => '<div class="card"><div class="row" style="align-items:center;gap:8px"><div style="min-width:0;flex:1"><div class="t" style="overflow-wrap:anywhere">' + esc(x.titre) + '</div><a href="' + esc(x.url) + '" target="_blank" rel="noopener" class="m" style="word-break:break-all">' + esc(x.url) + "</a></div>" + '<a class="btn small" href="' + esc(x.url) + '" target="_blank" rel="noopener" style="flex:none">Ouvrir \u2197</a>' + '<button class="btn ghost sq" title="Supprimer" aria-label="Supprimer" style="color:var(--bad);border-color:var(--bad)" onclick="liensSupprimer(\'' + x.id + '\')">' + ICON_TRASH + "</button></div></div>").join("") : '<p class="m">Aucun lien pour le moment. Ajoute-en un ci-dessus.</p>';
+  return '<h1>Liens utiles</h1><div class="card"><h2 style="margin-top:0">Ajouter un lien</h2><label>Nom (facultatif)</label><input id="lnTitre" placeholder="Ex. Outil de d\u00e9blocage"><label>Adresse *</label><input id="lnUrl" placeholder="https://\u2026" inputmode="url"><div class="err" id="lnErr"></div><button class="btn" onclick="liensAjouter()" style="margin-top:10px">Ajouter</button></div>' + rows;
+}
 function frpLire() {
   try {
     const v = JSON.parse(localStorage.getItem("sv_frp") || "[]");
@@ -7833,6 +7905,7 @@ const REP = {
   depenses: () => depensesPage(),
   agenda: () => agVue(),
   frp: () => frpHtml(),
+  liens: () => liensHtml(),
   dashpage: () => dashPageView(),
   dossiers() {
     const aCommander = S.pieces.filter((p) => p.statut === "À commander"), enRoute = S.pieces.filter((p) => p.statut === "Commandé");
@@ -12722,6 +12795,36 @@ function qualireparHtml() {
     return '<div class="card"><div class="t">' + esc(d0.appareil) + " · " + esc(d0.panne || "") + "</div>" + (cli ? '<div class="m" style="font-size:12px">' + esc(cli) + "</div>" : "") + '<div class="m">' + esc(d0.statut || "") + " · appareil non lié</div>" + photosBloc("dossier", d0.id) + "</div>";
   }).join("") : '<p class="m">Aucune réparation.</p>');
 }
+function mailsCount(id, t) {
+  return (S.mails || []).filter((m) => m.dossier_id === id && String(m.type).split("-")[0] === t).length;
+}
+function mailsCard(d) {
+  const bouton = (t, lbl) => {
+    const c = mailsCount(d.id, t);
+    return '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><button class="btn ghost small" onclick="mailManuel(\'' + d.id + '\',\'' + t + '\',this)">' + lbl + '</button><span class="m">' + (c ? "envoyé " + c + (c > 1 ? " fois" : " fois") : "jamais envoyé") + "</span></div>";
+  };
+  return '<div class="card"><div class="t">Mails au client</div><p class="m">Renvoie un mail si le client ne l\'a pas reçu. En mode test, il arrive sur ta propre adresse.</p><div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">' + bouton("termine", "Réparation terminée") + bouton("avis", "Demander un avis") + '</div><div class="err" id="mailErr"></div></div>';
+}
+async function mailManuel(id, type, btn) {
+  if (btn) btn.disabled = true;
+  const err = $("mailErr");
+  if (err) err.textContent = "";
+  try {
+    const { data, error } = await SB.rpc("mail_manuel", { p_dossier: id, p_type: type });
+    if (error) {
+      if (err) err.textContent = msgErr(error);
+      toast(msgErr(error));
+    } else {
+      toast(typeof data === "string" ? data : "Mail envoyé");
+      const r = await SB.from("mails_log").select("dossier_id,type,envoye_at");
+      if (!r.error) S.mails = r.data || [];
+    }
+  } catch (e) {
+    toast(msgErr(e));
+  }
+  if (btn) btn.disabled = false;
+  render();
+}
 function detailView() {
   var _a;
   const d = S.dossiers.find((x) => x.id === DOSSIER);
@@ -12762,6 +12865,7 @@ function detailView() {
     <div class="two"><div><label>Reprise : appareil</label><select id="dRepA" onchange="fSave('reprise_appareil', this.value)">${repDossierOpts(d.reprise_appareil || "")}</select></div><div><label>Montant de la reprise (€)</label><input id="dRep" inputmode="decimal" value="${d.reprise_montant || ""}" placeholder="0" oninput="numOnly(this);updateReste()" onchange="fSave('reprise_montant', this.value)"></div></div>
     <div id="resteBox" style="text-align:center;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:19px;font-weight:400;letter-spacing:.03em;margin:12px 0"></div>
   </div>
+  ${ROLE === "rep" ? mailsCard(d) : ""}
   <h2>Photos</h2>
   ${photosBloc("dossier", d.id)}
   <h2>Pièces</h2>
