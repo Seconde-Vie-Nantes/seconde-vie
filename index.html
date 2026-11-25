@@ -6439,6 +6439,14 @@ async function loadAll() {
     const ml = await SB.from("mails_log").select("dossier_id,type,envoye_at");
     S.mails = ml.error ? [] : ml.data || [];
   }
+  if (ROLE === "rep") {
+    try {
+      await liensCharger();
+    } catch (e) {}
+    try {
+      await frpCharger();
+    } catch (e) {}
+  }
 }
 async function reload() {
   if (DEMO) return render();
