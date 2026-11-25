@@ -517,6 +517,10 @@ body:not(.rep-nav).lg .app{margin-left:auto !important;margin-right:auto !import
 .ag-barre .btn,.ag-statbar .btn,.ag-form .btn{width:auto;margin-top:0;padding:10px 16px}
 .sg-lbl{display:flex;align-items:center;gap:10px;margin:12px 0 0;font-size:14px;font-weight:500;cursor:pointer}
 .sg-case{width:18px;height:18px;min-width:18px;margin:0;padding:0;flex:0 0 18px;border-radius:4px;accent-color:var(--brand);cursor:pointer}
+.date-wrap{position:relative;display:inline-block;width:100%}
+.date-wrap input[type="date"]{width:100%;padding-right:28px;box-sizing:border-box}
+.date-x{position:absolute;right:2px;top:50%;transform:translateY(-50%);width:26px;height:26px;border:none;background:none;color:var(--mut);font-size:17px;line-height:1;cursor:pointer;border-radius:6px}
+.date-x:hover{background:var(--line);color:var(--bad)}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600&display=swap" rel="stylesheet"></head>
 <body class="lg">
@@ -7210,7 +7214,7 @@ function depensesPage() {
   const bloc = (label, ttc) => '<div class="card"><div class="m">' + label + '</div><div class="t" style="font-size:22px">' + eur(ttc) + ' TTC</div><div class="m">' + eur(htOf(ttc)) + " HT</div></div>";
   const rows = list.length ? list.map((x) => '<div class="card"><div class="row" style="align-items:center"><div><div class="t">' + esc(x.libelle) + '</div><div class="m">' + fr(x.date) + (x.categorie ? " · " + esc(x.categorie) : "") + '</div></div><div style="display:flex;align-items:center;gap:10px"><div style="text-align:right"><div class="t">' + eur(x.montant) + ' TTC</div><div class="m">' + eur(htOf(x.montant)) + ` HT</div></div><button class="chip late" onclick="deleteDepense('` + x.id + `')">Supprimer</button></div></div></div>`).join("") : '<p class="m">Aucune dépense enregistrée.</p>';
   const retour = VIEW === "dashpage" ? '<div style="margin:4px 0 10px"><button class="btn small ghost" onclick="go(\'dashboard\')">← Tableau de bord</button></div>' : "";
-  return retour + `<h1>Dépenses</h1><div class="two" style="margin-bottom:10px">` + bloc("Ce mois", sumT(moisList)) + bloc("Total", sumT(list)) + '</div><div class="card">' + depEntete() + (DEP_OPEN ? '<label>Date</label><input id="depDate" type="date" value="' + todayIso() + `"><div class="two"><div><label>Montant HT (€)</label><input id="depHT" inputmode="decimal" placeholder="0" oninput="depCalc('ht')"></div><div><label>Montant TTC (€) · TVA 20 %</label><input id="depTTC" inputmode="decimal" placeholder="0" oninput="depCalc('ttc')"></div></div><label>Libellé</label><input id="depLib" placeholder="Ex. Écran PS5 fournisseur"><label>Catégorie</label><select id="depCat">` + cats.map((c) => "<option>" + c + "</option>").join("") + '</select><div id="depErr" class="err"></div><button class="btn" onclick="addDepense()">Ajouter la dépense</button>' : "") + '</div><h2>Historique</h2>' + rows;
+  return retour + `<h1>Dépenses</h1><div class="two" style="margin-bottom:10px">` + bloc("Ce mois", sumT(moisList)) + bloc("Total", sumT(list)) + '</div><div class="card">' + depEntete() + (DEP_OPEN ? '<label>Date</label><div class="date-wrap"><input id="depDate" type="date" value="' + todayIso() + `"><button type="button" class="date-x" title="Effacer" onclick="dateClear('depDate')">×</button></div><div class="two"><div><label>Montant HT (€)</label><input id="depHT" inputmode="decimal" placeholder="0" oninput="depCalc('ht')"></div><div><label>Montant TTC (€) · TVA 20 %</label><input id="depTTC" inputmode="decimal" placeholder="0" oninput="depCalc('ttc')"></div></div><label>Libellé</label><input id="depLib" placeholder="Ex. Écran PS5 fournisseur"><label>Catégorie</label><select id="depCat">` + cats.map((c) => "<option>" + c + "</option>").join("") + '</select><div id="depErr" class="err"></div><button class="btn" onclick="addDepense()">Ajouter la dépense</button>' : "") + '</div><h2>Historique</h2>' + rows;
 }
 async function addDepense() {
   const err = $("depErr");
@@ -7335,7 +7339,7 @@ function repsEspaceHtml() {
   if (st.arch) sortOpts.push(["garantie", "Garantie restante"]);
   const toggle = (on, label, arch) => '<button class="btn small ' + (on ? "" : "ghost") + '" style="flex:1" onclick="repArch(' + arch + ')">' + label + "</button>";
   const vueBtn = st.arch ? `<button class="btn small ghost" style="flex:0 0 auto" onclick="repSet('vue', REP_STATE.vue === 'liste' ? 'cases' : 'liste')">` + (st.vue === "liste" ? "▦ Cases" : "☰ Liste détaillée") + "</button>" : "";
-  const filtres = '<div class="card" style="padding:12px"><div class="row" style="gap:8px;margin-bottom:10px">' + toggle(!st.arch, "En cours", false) + toggle(st.arch, "Archives", true) + vueBtn + '</div><div class="two">' + statutOpts + `<div><label>Paiement</label><select onchange="repSet('paie', this.value)">` + opt("", "Tous", st.paie) + opt("reste", "À régler", st.paie) + opt("regle", "Réglé", st.paie) + '</select></div><div class="two" style="grid-column:1/-1"><div><label>Du</label><input type="date" value="' + esc(st.from) + `" onchange="repSet('from', this.value)"></div><div><label>Au</label><input type="date" value="` + esc(st.to) + `" onchange="repSet('to', this.value)"></div></div></div><div class="row" style="gap:8px;align-items:flex-end;margin-top:6px"><div style="flex:1;min-width:0"><label>Trier par</label><select onchange="repSet('sort', this.value)">` + sortOpts.map((x) => opt(x[0], x[1], st.sort)).join("") + `</select></div><button class="btn small ghost" onclick="repSet('desc', !REP_STATE.desc)">` + (st.desc ? "↓ Récent d’abord" : "↑ Ancien d’abord") + "</button></div>" + (st.from || st.to || st.paie || st.statut ? `<div style="margin-top:8px"><button class="chip" onclick="REP_STATE.from='';REP_STATE.to='';REP_STATE.paie='';REP_STATE.statut='';render()">Effacer les filtres</button></div>` : "") + "</div>";
+  const filtres = '<div class="card" style="padding:12px"><div class="row" style="gap:8px;margin-bottom:10px">' + toggle(!st.arch, "En cours", false) + toggle(st.arch, "Archives", true) + vueBtn + '</div><div class="two">' + statutOpts + `<div><label>Paiement</label><select onchange="repSet('paie', this.value)">` + opt("", "Tous", st.paie) + opt("reste", "À régler", st.paie) + opt("regle", "Réglé", st.paie) + '</select></div><div class="two" style="grid-column:1/-1"><div><label>Du</label><div class="date-wrap"><input id="repFrom" type="date" value="' + esc(st.from) + `" onchange="repSet('from', this.value)"><button type="button" class="date-x" title="Effacer" onclick="dateClear('repFrom')">×</button></div></div><div><label>Au</label><div class="date-wrap"><input id="repTo" type="date" value="` + esc(st.to) + `" onchange="repSet('to', this.value)"><button type="button" class="date-x" title="Effacer" onclick="dateClear('repTo')">×</button></div></div></div></div><div class="row" style="gap:8px;align-items:flex-end;margin-top:6px"><div style="flex:1;min-width:0"><label>Trier par</label><select onchange="repSet('sort', this.value)">` + sortOpts.map((x) => opt(x[0], x[1], st.sort)).join("") + `</select></div><button class="btn small ghost" onclick="repSet('desc', !REP_STATE.desc)">` + (st.desc ? "↓ Récent d’abord" : "↑ Ancien d’abord") + "</button></div>" + (st.from || st.to || st.paie || st.statut ? `<div style="margin-top:8px"><button class="chip" onclick="REP_STATE.from='';REP_STATE.to='';REP_STATE.paie='';REP_STATE.statut='';render()">Effacer les filtres</button></div>` : "") + "</div>";
   const corps = !list.length ? '<p class="m">Aucun élément pour ces filtres.</p>' : st.arch && st.vue === "liste" ? repArchListe(list) : '<div class="card-grid">' + list.map((d) => st.arch ? repArchCard(d) : dossierCard(d)).join("") + "</div>";
   return filtres + corps;
 }
@@ -7971,7 +7975,7 @@ function agFormHtml() {
   return '<div class="card ag-form"><div class="t">' + (f.id ? "Modifier le rendez-vous" : "Nouveau rendez-vous de réparation") + "</div>" +
     '<label>Prestation liée (remplissage auto)</label><select id="agDos" onchange="agPrendreDossier()"><option value="">— Aucune (rendez-vous libre) —</option>' + opts + "</select>" +
     '<label>Titre *</label><input id="agTitre" value="' + esc(f.titre) + '">' +
-    '<label>Date *</label><input id="agDate" type="date" value="' + esc(f.date) + '">' +
+    '<label>Date *</label><div class="date-wrap"><input id="agDate" type="date" value="' + esc(f.date) + '"><button type="button" class="date-x" title="Effacer" onclick="dateClear(\'agDate\')">×</button></div>' +
     '<div class="two"><div><label>Début *</label><input id="agDeb" type="time" value="' + esc(f.debut) + '"></div><div><label>Fin *</label><input id="agFin" type="time" value="' + esc(f.fin) + '"></div></div>' +
     '<label>Lieu</label><input id="agLieu" value="' + esc(f.lieu) + '">' +
     '<label>Description</label><textarea id="agDesc" rows="4">' + esc(f.desc) + "</textarea>" +
@@ -8232,7 +8236,7 @@ const REP = {
       ${repLBouton("n")}
       <div class="two"><div><label>Remise</label><input id="nRm" inputmode="decimal" placeholder="0" oninput="nFinal()"></div><div><label>Unité</label><select id="nRu" onchange="nFinal()"><option value="eur">€</option><option value="pct">%</option></select></div></div>
       <div class="m" id="nFinal" style="margin:4px 0 8px">Prix final : à définir</div>
-      <label>Retour prévu</label><input id="nE" type="date"><label class="sg-lbl"><input type="checkbox" id="nSG" class="sg-case"${NEW_SANS_GAR ? " checked" : ""} onchange="nSgBascule()"> Pas de garantie</label>
+      <label>Retour prévu</label><div class="date-wrap"><input id="nE" type="date"><button type="button" class="date-x" title="Effacer" onclick="dateClear('nE')">×</button></div><label class="sg-lbl"><input type="checkbox" id="nSG" class="sg-case"${NEW_SANS_GAR ? " checked" : ""} onchange="nSgBascule()"> Pas de garantie</label>
       <label>Notes</label><textarea id="nNo" rows="2"></textarea>
       ${piecesChoixHtml("n")}
       <button class="btn" onclick="createD()">Créer le dossier</button>
@@ -8256,7 +8260,7 @@ const REP = {
       <label>Nom</label><input id="sN">
       <label>Type de pièce</label>${catSelHtml("sCat", "", "— Choisir un type —")}
       <label>Prix (€)</label><input id="sPx" inputmode="decimal" placeholder="0">
-      <label>Date du prix</label><input id="sDt" type="date">
+      <label>Date du prix</label><div class="date-wrap"><input id="sDt" type="date"><button type="button" class="date-x" title="Effacer" onclick="dateClear('sDt')">×</button></div>
       <label>Lien pour commander</label><input id="sLi" placeholder="https://…">
       <label>Quantité</label><input id="sQt" inputmode="numeric" value="0">
       <label>Modèles</label><div id="mp-n"></div>
@@ -8306,6 +8310,15 @@ function durNorm(v) {
   if (!t) return null;
   const m = t.match(/^(\d+(?:[.,]\d+)?)h?$/i);
   return m ? m[1].replace(",", ".") + "h" : t;
+}
+function dateClear(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (!el.value) { el.focus(); return; }
+  el.value = "";
+  el.dispatchEvent(new Event("input", { bubbles: true }));
+  el.dispatchEvent(new Event("change", { bubbles: true }));
+  el.focus();
 }
 function todayIso() {
   const t = /* @__PURE__ */ new Date();
@@ -9402,7 +9415,7 @@ function ventesFormHtml(ed) {
         <div id="vPseudoBox" style="display:${t === "leboncoin" ? "block" : "none"}"><label>Pseudo leboncoin *</label><input id="vPseudo" value="${esc(pseudoVal)}"></div>
         <div id="vEnvoiBox" style="display:${t === "leboncoin" ? "block" : "none"}"><label style="font-weight:400;display:flex;align-items:center;gap:6px;margin-top:6px"><input type="checkbox" id="vEnvoi" style="width:auto;margin:0" ${ed && ed.envoi ? "checked" : ""} onchange="vEnvoiChange(this.checked)"> Envoi (colis)</label>
           <div id="vEnvoiDet" style="display:${ed && ed.envoi ? "block" : "none"}"><label>Transporteur</label><select id="vTransp">${transpOpts}</select><label>Numéro de suivi (optionnel)</label><input id="vSuivi" value="${esc(ed && ed.suivi ? ed.suivi : "")}"><label>Statut de l’envoi</label><select id="vEnvStat">${envOpts}</select></div></div></div>
-      <div id="vRdvBox" style="display:${envoiOn ? "none" : "block"}"><div class="two"><div><label>Date du rendez-vous</label><input id="vDate" type="date" value="${ed ? esc(ed.date_rdv) : ""}"></div>
+      <div id="vRdvBox" style="display:${envoiOn ? "none" : "block"}"><div class="two"><div><label>Date du rendez-vous</label><div class="date-wrap"><input id="vDate" type="date" value="${ed ? esc(ed.date_rdv) : ""}"><button type="button" class="date-x" title="Effacer" onclick="dateClear('vDate')">×</button></div></div>
         <div><label>Heure (optionnel)</label><input id="vHeure" type="time" value="${ed && ed.heure_rdv ? esc(String(ed.heure_rdv).slice(0, 5)) : ""}"></div></div>
       <label>Lieu de la remise</label><input id="vLieu" placeholder="Ex. Gare de Nantes" value="${ed ? esc(ed.lieu || "") : ""}">
       ${GMAPS_KEY ? "" : '<button class="chip" type="button" onclick="mapsLieu()">Chercher sur Google Maps</button>'}
@@ -9897,6 +9910,17 @@ function moisOf(v) {
 function moisLabel(k) {
   return k ? (/* @__PURE__ */ new Date(k + "-01T00:00")).toLocaleDateString("fr-FR", { month: "long", year: "numeric" }) : "";
 }
+function moisRange(from, to) {
+  const out = [];
+  let y = +from.slice(0, 4), m = +from.slice(5, 7);
+  const ty = +to.slice(0, 4), tm = +to.slice(5, 7);
+  while (y < ty || (y === ty && m <= tm)) {
+    out.push(y + "-" + String(m).padStart(2, "0"));
+    m++;
+    if (m > 12) { m = 1; y++; }
+  }
+  return out;
+}
 function setVMois(k) {
   VMOIS = k;
   render();
@@ -9905,11 +9929,14 @@ function ventesBilanHtml() {
   const arch = (S.ventes || []).filter((v) => v.archivee);
   const cur = todayIso().slice(0, 7);
   const mois = VMOIS || cur;
-  const keys = [...new Set([cur, ...arch.map(moisOf)].filter(Boolean))].sort().reverse();
+  const moisVentes = arch.map(moisOf).filter(Boolean);
+  const premier = moisVentes.length ? [...moisVentes].sort()[0] : cur;
+  const debut = premier < cur ? premier : cur;
+  const keys = moisRange(debut, cur).sort().reverse();
   const doMois = arch.filter((v) => moisOf(v) === mois).sort((a, b) => String(b.date_effectue || b.date_rdv).localeCompare(String(a.date_effectue || a.date_rdv)));
   const total = doMois.reduce((t, v) => t + (+v.prix || 0), 0);
   const sansPrix = doMois.filter((v) => v.prix == null).length;
-  const sel = '<select onchange="setVMois(this.value)">' + keys.map((k) => '<option value="' + k + '"' + (k === mois ? " selected" : "") + ">" + esc(moisLabel(k)) + (k === cur ? " (en cours)" : "") + "</option>").join("") + "</select>";
+  const sel = '<select onchange="setVMois(this.value)">' + keys.map((k) => '<option value="' + k + '"' + (k === mois ? " selected" : "") + ">" + esc(moisLabel(k)) + " (" + arch.filter((v) => moisOf(v) === k).length + ")" + (k === cur ? " (en cours)" : "") + "</option>").join("") + "</select>";
   const cards = doMois.map((v) => `<div class="card" id="vb-${esc(v.id)}"><div class="t">${esc(venteTitre(v))}</div>
       <div class="m">${esc(v.client_affiche || venteClient(v))}</div>
       <div class="m">Effectué le ${fr(v.date_effectue || v.date_rdv)}${v.lieu ? " · " + esc(v.lieu) : ""}</div>${garVente(v)}
@@ -11107,7 +11134,7 @@ function cliVenteFormHtml(ed) {
       <div id="vReste" style="text-align:center;font-size:17px;margin:10px 0"></div>
       <label>Note</label><textarea id="vNote" rows="2">${ed && ed.notes ? esc(ed.notes) : ""}</textarea>
       ${plus("vRdv", "Ajouter un rendez-vous", showRdv)}
-      <div id="vRdvBox" style="display:${showRdv ? "block" : "none"}"><div class="two"><div><label>Date du rendez-vous *</label><input id="vDate" type="date" value="${ed ? esc(ed.date_rdv || "") : ""}"></div>
+      <div id="vRdvBox" style="display:${showRdv ? "block" : "none"}"><div class="two"><div><label>Date du rendez-vous *</label><div class="date-wrap"><input id="vDate" type="date" value="${ed ? esc(ed.date_rdv || "") : ""}"><button type="button" class="date-x" title="Effacer" onclick="dateClear('vDate')">×</button></div></div>
         <div><label>Heure (optionnel)</label><input id="vHeure" type="time" value="${ed && ed.heure_rdv ? esc(String(ed.heure_rdv).slice(0, 5)) : ""}"></div></div></div>
       ${plus("vLieu", "Lieu de la remise", showLieu)}
       <div id="vLieuBox" style="display:${showLieu ? "block" : "none"}"><label>Lieu de la remise</label><input id="vLieu" placeholder="Ex. Gare de Nantes" value="${ed ? esc(ed.lieu || "") : ""}">
@@ -11132,16 +11159,17 @@ function cliVenteFormHtml(ed) {
 function cliAchatsHtml(c) {
   if (ROLE !== "rep") return "";
   const ventes = (S.ventes || []).filter((v) => v.client_id === c.id).sort((a, b) => String(b.date_rdv || "").localeCompare(String(a.date_rdv || "")));
-  const entete = '<h2 style="font-size:15px;margin:14px 0 4px">Achats</h2>';
+  const sepOuvre = '<div style="border-top:1px solid var(--line);margin-top:14px;padding-top:14px">';
+  const entete = '<h2 style="font-size:15px;margin:0 0 4px">Achats</h2>';
   if (CLI_VENTE === c.id && VENTE_EDIT) {
     const ed = ventes.find((v) => v.id === VENTE_EDIT);
-    if (ed) return entete + '<div id="cliVenteForm">' + cliVenteFormHtml(ed) + "</div>";
+    if (ed) return sepOuvre + entete + '<div id="cliVenteForm">' + cliVenteFormHtml(ed) + "</div></div>";
   }
   const on = CLI_VENTE === c.id;
-  if (!ventes.length && !on) return '<div style="display:flex;align-items:center;gap:10px;margin-top:10px"><button class="btn ghost sq" title="Ajouter une vente" aria-label="Ajouter une vente" onclick="cliVenteToggle(\'' + c.id + '\')"><span class="ic"></span></button><span class="m">Ajouter une vente</span></div>';
   const titre = on ? "Fermer le formulaire" : "Ajouter une vente";
-  const bouton = '<div class="dr-empty" style="margin-top:10px"><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><button class="btn ghost sq" title="' + titre + '" aria-label="' + titre + '" onclick="cliVenteToggle(\'' + c.id + '\')" style="transition:background-color .6s ease;' + (on ? "background:var(--bad);color:#fff;border-color:var(--bad)" : "") + '"><span class="ic' + (on ? " minus" : "") + '"></span></button><div style="min-width:0"><div class="t" style="font-size:14px">' + (on ? "Nouvelle vente" : "Ajouter une vente") + '</div><div class="m">' + (on ? "Choisis les modèles puis enregistre la vente." : "Crée une vente pour ce client.") + "</div></div></div></div>";
-  return entete + ventes.map(venteCliCard).join("") + bouton + (on ? '<div id="cliVenteForm">' + cliVenteFormHtml(null) + "</div>" : "");
+  const bouton = '<div style="display:flex;align-items:center;gap:10px;margin-top:10px"><button class="btn ghost sq" title="' + titre + '" aria-label="' + titre + '" onclick="cliVenteToggle(\'' + c.id + '\')" style="transition:background-color .6s ease;' + (on ? "background:var(--bad);color:#fff;border-color:var(--bad)" : "") + '"><span class="ic' + (on ? " minus" : "") + '"></span></button><span class="m">' + titre + "</span></div>";
+  if (!ventes.length && !on) return sepOuvre + bouton + "</div>";
+  return sepOuvre + entete + ventes.map(venteCliCard).join("") + bouton + (on ? '<div id="cliVenteForm">' + cliVenteFormHtml(null) + "</div>" : "") + "</div>";
 }
 var CLI_PRET = null, CLI_PRET_CID = null;
 function pretsDe(c) {
@@ -11201,7 +11229,7 @@ function cliPretFormHtml(cid, p) {
       </div>
       <label>Appareil prêté *</label><select id="prA" onchange="pretCouleurs()">${pretBaseOpts(baseId)}</select>
       <label>Couleur</label><select id="prC">${pretCouleurOpts(baseId, p ? p.couleur : "")}</select>
-      <label>Date de récupération *</label><input id="prD" type="date" value="${p && p.date_retour ? esc(p.date_retour) : ""}">
+      <label>Date de récupération *</label><div class="date-wrap"><input id="prD" type="date" value="${p && p.date_retour ? esc(p.date_retour) : ""}"><button type="button" class="date-x" title="Effacer" onclick="dateClear('prD')">×</button></div>
       <button class="btn" type="button" onclick="cliPretSave('${esc(cid)}', ${p ? "'" + esc(p.id) + "'" : "null"})">${p ? "Enregistrer les modifications" : "Enregistrer le prêt"}</button>
       ${p ? `<button class="btn ghost" type="button" style="color:var(--bad);border-color:var(--bad);margin-top:8px" onclick="cliPretSupprimer('` + esc(p.id) + `')">Supprimer ce prêt</button>` : ""}
       <div class="err" id="pretErr"></div>
@@ -11210,14 +11238,15 @@ function cliPretFormHtml(cid, p) {
 function cliPretsHtml(c) {
   if (ROLE !== "rep") return "";
   const list = pretsDe(c);
-  const entete = '<h2 style="font-size:15px;margin:14px 0 4px">Appareils prêtés</h2>';
+  const sepOuvre = '<div style="border-top:1px solid var(--line);margin-top:14px;padding-top:14px">';
+  const entete = '<h2 style="font-size:15px;margin:0 0 4px">Appareils prêtés</h2>';
   if (CLI_PRET !== null && CLI_PRET_CID === c.id) {
     const p = CLI_PRET === "new" ? null : list.find((x) => x.id === CLI_PRET);
-    if (CLI_PRET === "new" || p) return entete + '<div id="cliPretForm">' + cliPretFormHtml(c.id, p) + "</div>";
+    if (CLI_PRET === "new" || p) return sepOuvre + entete + '<div id="cliPretForm">' + cliPretFormHtml(c.id, p) + "</div></div>";
   }
-  if (!list.length) return '<div style="display:flex;align-items:center;gap:10px;margin-top:10px"><button class="btn ghost sq" title="Ajouter un appareil prêté" aria-label="Ajouter un appareil prêté" onclick="cliPretNouveau(\'' + c.id + '\')"><span class="ic"></span></button><span class="m">Ajouter un appareil prêté</span></div>';
-  const ajout = '<div class="dr-empty" style="margin-top:10px"><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><button class="btn ghost sq" title="Ajouter un appareil prêté" aria-label="Ajouter un appareil prêté" onclick="cliPretNouveau(\'' + c.id + '\')" style="transition:background-color .6s ease"><span class="ic"></span></button><div style="min-width:0"><div class="t" style="font-size:14px">Ajouter un appareil prêté</div><div class="m">Note l’appareil prêté et la date de récupération.</div></div></div></div>';
-  return entete + list.map(pretCard).join("") + ajout;
+  const ajout = '<div style="display:flex;align-items:center;gap:10px;margin-top:10px"><button class="btn ghost sq" title="Ajouter un appareil prêté" aria-label="Ajouter un appareil prêté" onclick="cliPretNouveau(\'' + c.id + '\')" style="transition:background-color .6s ease"><span class="ic"></span></button><span class="m">Ajouter un appareil prêté</span></div>';
+  if (!list.length) return sepOuvre + ajout + "</div>";
+  return sepOuvre + entete + list.map(pretCard).join("") + ajout + "</div>";
 }
 function cliPretNouveau(cid) {
   CLI_PRET = "new";
@@ -12082,7 +12111,7 @@ function devRepsBloc(d) {
 }
 function devRepForm(d) {
   const k = d.id, L = (t) => '<div class="dr-l">' + t + "</div>";
-  return '<div class="dr-form"><div class="dr-head"><div class="dr-thumb">' + (modelePhoto(d) ? '<img src="' + modelePhoto(d) + '" alt="">' : ICON_IMG) + '</div><div style="min-width:0"><div class="dr-k">Nouvelle prestation</div><div class="t" style="overflow-wrap:anywhere">' + esc(devNom(d)) + (d.couleur ? " · " + esc(d.couleur) : "") + '</div></div></div><div class="dr-grid"><div class="dr-full">' + L("Réparation") + `<select id="drR" onchange="devRepPick('` + k + `')"><option value="">- choisir dans le catalogue -</option>` + nRepOpts(d) + '<option value="autre">Autre (saisie libre)…</option></select><input id="drW" placeholder="Nom de la réparation" style="display:none;margin-top:6px" oninput="devRepLive()"></div><div>' + L("Prix (€)") + '<input id="drP" inputmode="decimal" placeholder="0" oninput="devRepLive()"></div><div>' + L("Remise") + '<div style="display:flex;gap:6px"><input id="drRm" inputmode="decimal" placeholder="0" oninput="devRepLive()" style="flex:1;min-width:0"><select id="drRu" onchange="devRepLive()" style="width:auto"><option value="eur">€</option><option value="pct">%</option></select></div></div><div class="dr-full">' + repLBouton("d") + '</div><div>' + L("Durée") + '<input id="drDu" placeholder="ex. 2 h" oninput="devRepLive()"></div><div>' + L("Prêt pour le") + '<input id="drE" type="date" onchange="devRepLive()"></div><div class="dr-full">' + L("Notes") + '<textarea id="drNo" rows="2" placeholder="Facultatif"></textarea></div></div>' + piecesChoixHtml("d") + '<div id="drPrev" class="dr-prev">' + devRepPreviewHtml({ name: "", base: NaN, fin: NaN, rm: 0, pct: false, duree: "", echeance: "" }) + `</div><div id="drErr" class="err"></div><button class="btn" style="width:100%" onclick="devRepCreate('` + k + `')">Créer la réparation</button></div>`;
+  return '<div class="dr-form"><div class="dr-head"><div class="dr-thumb">' + (modelePhoto(d) ? '<img src="' + modelePhoto(d) + '" alt="">' : ICON_IMG) + '</div><div style="min-width:0"><div class="dr-k">Nouvelle prestation</div><div class="t" style="overflow-wrap:anywhere">' + esc(devNom(d)) + (d.couleur ? " · " + esc(d.couleur) : "") + '</div></div></div><div class="dr-grid"><div class="dr-full">' + L("Réparation") + `<select id="drR" onchange="devRepPick('` + k + `')"><option value="">- choisir dans le catalogue -</option>` + nRepOpts(d) + '<option value="autre">Autre (saisie libre)…</option></select><input id="drW" placeholder="Nom de la réparation" style="display:none;margin-top:6px" oninput="devRepLive()"></div><div>' + L("Prix (€)") + '<input id="drP" inputmode="decimal" placeholder="0" oninput="devRepLive()"></div><div>' + L("Remise") + '<div style="display:flex;gap:6px"><input id="drRm" inputmode="decimal" placeholder="0" oninput="devRepLive()" style="flex:1;min-width:0"><select id="drRu" onchange="devRepLive()" style="width:auto"><option value="eur">€</option><option value="pct">%</option></select></div></div><div class="dr-full">' + repLBouton("d") + '</div><div>' + L("Durée") + '<input id="drDu" placeholder="ex. 2 h" oninput="devRepLive()"></div><div>' + L("Prêt pour le") + '<div class="date-wrap"><input id="drE" type="date" onchange="devRepLive()"><button type="button" class="date-x" title="Effacer" onclick="dateClear(&apos;drE&apos;)">×</button></div></div><div class="dr-full">' + L("Notes") + '<textarea id="drNo" rows="2" placeholder="Facultatif"></textarea></div></div>' + piecesChoixHtml("d") + '<div id="drPrev" class="dr-prev">' + devRepPreviewHtml({ name: "", base: NaN, fin: NaN, rm: 0, pct: false, duree: "", echeance: "" }) + `</div><div id="drErr" class="err"></div><button class="btn" style="width:100%" onclick="devRepCreate('` + k + `')">Créer la réparation</button></div>`;
 }
 function devRepPick(k) {
   const v = $("drR").value, w = $("drW");
@@ -12479,7 +12508,7 @@ function editPiece(sku) {
   const x = S.stock.find((y) => y.sku === sku);
   MP.e = x.modeles && x.modeles.length ? x.modeles.slice() : x.modele ? [x.modele] : [];
   MP_PLUS.e = false;
-  $("pe-" + sku).innerHTML = '<div class="card" style="margin:8px 0 12px"><div class="row" style="justify-content:space-between;align-items:center"><span class="t">Modifier : ' + esc(x.nom) + '</span><button class="chip" onclick="$(\'pe-' + esc(x.sku) + '\').innerHTML=\'\'">Fermer</button></div><label>SKU</label><input id="ep-s" value="' + esc(x.sku) + '"><label>Nom</label><input id="ep-n" value="' + esc(x.nom) + `"><label>Type de pièce</label>${catSelHtml("ep-cat", x.categorie || "", "— Aucun —")}<label>Prix (€)</label><input id="ep-px" inputmode="decimal" value="${x.prix == null ? "" : x.prix}"><label>Date du prix</label><input id="ep-dt" type="date" value="${x.prix_date ? String(x.prix_date).slice(0, 10) : ""}"><label>Lien pour commander</label><input id="ep-li" value="${esc(x.lien || "")}" placeholder="https://…"><label>Modèles</label><div id="mp-e"></div><label>Photos de la pièce</label>${photosBloc("piece", x.sku)}<button class="btn" onclick="savePiece2('` + sku + `')">Enregistrer</button><div class="err" id="ep-err"></div></div>`;
+  $("pe-" + sku).innerHTML = '<div class="card" style="margin:8px 0 12px"><div class="row" style="justify-content:space-between;align-items:center"><span class="t">Modifier : ' + esc(x.nom) + '</span><button class="chip" onclick="$(\'pe-' + esc(x.sku) + '\').innerHTML=\'\'">Fermer</button></div><label>SKU</label><input id="ep-s" value="' + esc(x.sku) + '"><label>Nom</label><input id="ep-n" value="' + esc(x.nom) + `"><label>Type de pièce</label>${catSelHtml("ep-cat", x.categorie || "", "— Aucun —")}<label>Prix (€)</label><input id="ep-px" inputmode="decimal" value="${x.prix == null ? "" : x.prix}"><label>Date du prix</label><div class="date-wrap"><input id="ep-dt" type="date" value="${x.prix_date ? String(x.prix_date).slice(0, 10) : ""}"><button type="button" class="date-x" title="Effacer" onclick="dateClear('ep-dt')">×</button></div><label>Lien pour commander</label><input id="ep-li" value="${esc(x.lien || "")}" placeholder="https://…"><label>Modèles</label><div id="mp-e"></div><label>Photos de la pièce</label>${photosBloc("piece", x.sku)}<button class="btn" onclick="savePiece2('` + sku + `')">Enregistrer</button><div class="err" id="ep-err"></div></div>`;
   mpDraw("e");
   $("pe-" + sku).scrollIntoView({ block: "nearest", inline: "nearest" });
 }
@@ -13264,9 +13293,9 @@ function detailView() {
     <label id="lbl-duree">Durée de réparation *</label><input id="dDu" value="${esc(d.duree || "")}" placeholder="Ex. 2h" onchange="fSave('duree', this.value)">` : `<div class="m" style="font-size:15px;margin-bottom:6px">Prix : ${d.prix == null ? "à définir" : eur(d.prix)}</div>
     <div class="m" style="font-size:15px;margin-bottom:6px">Durée de réparation : ${esc(d.duree || "à définir")}</div>`}
     <div class="row" style="align-items:center;margin-top:6px"><span id="lbl-recup">Date de dépôt : <b>${d.date_recup ? fr(d.date_recup) : "à définir"}</b></span>${devis ? "" : '<button class="chip" id="rcPen" onclick="rcEdit()" title="Modifier">✏️</button>'}</div>
-    <div id="rcBox" style="display:${devis ? "block" : "none"}"><input id="dRecup" type="date" value="${d.date_recup || ""}" onchange="fSave('date_recup', this.value)"></div>
-    ${termine ? "" : `<label id="dEcLbl">${remis ? "Remis le *" : "L’appareil sera prêt pour le"}</label><input id="dEc" type="date" value="${d.echeance || ""}" onchange="fSave('echeance', this.value)">`}
-    ${termine ? `<label>Date de fin de réparation (le client a 30 jours pour venir le chercher)</label><input id="dTer" type="date" value="${d.date_termine || todayIso()}" onchange="fSave('date_termine', this.value)">${recupHtml(d)}` : ""}
+    <div id="rcBox" style="display:${devis ? "block" : "none"}"><div class="date-wrap"><input id="dRecup" type="date" value="${d.date_recup || ""}" onchange="fSave('date_recup', this.value)"><button type="button" class="date-x" title="Effacer" onclick="dateClear('dRecup')">×</button></div></div>
+    ${termine ? "" : `<label id="dEcLbl">${remis ? "Remis le *" : "L’appareil sera prêt pour le"}</label><div class="date-wrap"><input id="dEc" type="date" value="${d.echeance || ""}" onchange="fSave('echeance', this.value)"><button type="button" class="date-x" title="Effacer" onclick="dateClear('dEc')">×</button></div>`}
+    ${termine ? `<label>Date de fin de réparation (le client a 30 jours pour venir le chercher)</label><div class="date-wrap"><input id="dTer" type="date" value="${d.date_termine || todayIso()}" onchange="fSave('date_termine', this.value)"><button type="button" class="date-x" title="Effacer" onclick="dateClear('dTer')">×</button></div>${recupHtml(d)}` : ""}
     ${garantieHtml(d)}
     <div class="t" style="margin-top:10px">Paiement</div>
     ${acoNonReparti(d) > 0 ? '<div class="m" style="margin-top:6px">Acompte déjà enregistré, non réparti entre espèces et virement : ' + eur(acoNonReparti(d)) + "</div>" : ""}
