@@ -39,7 +39,8 @@ nav button{flex:1;border:0;background:none;padding:10px 2px;font-family:inherit;
 .embed-ov.hide{display:none}
 .embed-bar{flex:none;display:flex;align-items:center;gap:10px;padding:10px 14px;background:#1F2A24;color:#fff;font-family:Inter,system-ui,sans-serif}
 .embed-bar .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;font-size:14px}
-.embed-bar a,.embed-bar button{color:inherit;border-color:rgba(255,255,255,.35)}
+.embed-bar a,.embed-bar button{color:#fff;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.4);text-decoration:none;flex:none}
+.embed-bar a:hover,.embed-bar button:hover{background:rgba(255,255,255,.26)}
 .embed-ov iframe{flex:1;border:0;width:100%;background:#fff}
 .tst-frame{border:1px solid var(--line);border-radius:14px;overflow:hidden;height:80vh;min-height:480px}
 .tst-frame iframe{width:100%;height:100%;border:0;display:block;background:#fff}
@@ -6348,15 +6349,30 @@ function showModal(html) {
 function closeModal() {
   $("modal").classList.add("hide");
 }
+var EMBED_TIMER = null;
 function openEmbed(url, titre) {
   if (!/^https?:\/\//i.test(url || "")) {
     toast("Lien invalide");
     return;
   }
-  $("embedOv").innerHTML = '<div class="embed-bar"><button class="btn ghost small" onclick="closeEmbed()">← Fermer</button><span class="t">' + esc(titre || url) + '</span><a class="btn ghost small" href="' + esc(url) + '" target="_blank" rel="noopener">Ouvrir dans un onglet</a></div><iframe src="' + esc(url) + '" title="' + esc(titre || url) + '" referrerpolicy="no-referrer-when-downgrade" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"></iframe>';
+  const avert = '<div id="embedAvert" class="m" style="display:none;padding:10px 14px;background:#2a2a1f;color:#fff">Ce site refuse de s’afficher intégré dans un autre site (c’est une protection du site visité, pas un bug ici) — utilise « Ouvrir dans un onglet » ci-dessus.</div>';
+  $("embedOv").innerHTML = '<div class="embed-bar"><button class="btn ghost small" onclick="closeEmbed()">← Fermer</button><span class="t">' + esc(titre || url) + '</span><a class="btn ghost small" href="' + esc(url) + '" target="_blank" rel="noopener">Ouvrir dans un onglet</a></div>' + avert + '<iframe id="embedFrame" src="' + esc(url) + '" title="' + esc(titre || url) + '" referrerpolicy="no-referrer-when-downgrade" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"></iframe>';
   $("embedOv").classList.remove("hide");
+  clearTimeout(EMBED_TIMER);
+  EMBED_TIMER = setTimeout(() => {
+    const f = $("embedFrame");
+    let bloque = false;
+    try {
+      if (f && (!f.contentWindow || !f.contentDocument || !f.contentDocument.body || !f.contentDocument.body.firstChild)) bloque = true;
+    } catch (e) {
+      bloque = false;
+    }
+    const a = $("embedAvert");
+    if (a && bloque) a.style.display = "block";
+  }, 1800);
 }
 function closeEmbed() {
+  clearTimeout(EMBED_TIMER);
   $("embedOv").classList.add("hide");
   $("embedOv").innerHTML = "";
 }
