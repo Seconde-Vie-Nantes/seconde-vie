@@ -41,8 +41,11 @@ nav button{flex:1;border:0;background:none;padding:10px 2px;font-family:inherit;
 .embed-bar .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;font-size:14px}
 .embed-bar a,.embed-bar button{color:inherit;border-color:rgba(255,255,255,.35)}
 .embed-ov iframe{flex:1;border:0;width:100%;background:#fff}
-.tst-frame{border:1px solid var(--line);border-radius:14px;overflow:hidden;height:calc(100vh - 220px);min-height:420px}
+.tst-frame{border:1px solid var(--line);border-radius:14px;overflow:hidden;height:80vh;min-height:480px}
 .tst-frame iframe{width:100%;height:100%;border:0;display:block;background:#fff}
+/* Testeur de manette : la page colle aux bords de l'écran (plus de bande centrée façon mobile) */
+html.tm-on .app{padding-left:0 !important;padding-right:0 !important;max-width:none !important}
+html.tm-on .tst-frame{border-left:0;border-right:0;border-radius:0;height:85vh;min-height:520px}
 .modal .card{max-width:360px;width:100%;margin:0}
 .fb-wrap{position:fixed;left:14px;bottom:14px;z-index:15}
 .fb-wrap.edge{left:0}
@@ -6317,7 +6320,7 @@ function jours(n) {
 function pcs(id) {
   return S.pieces.filter((p) => p.dossier_id === id);
 }
-let S = { dossiers: [], pieces: [], clients: [], stock: [], inv: [], devices: [], catalogue: [], sav: [], feedback: [], avisClients: [], ventes: [], stockApp: [], depenses: [], appBase: [] };
+let S = { dossiers: [], pieces: [], clients: [], stock: [], inv: [], devices: [], catalogue: [], sav: [], feedback: [], avisClients: [], liensUtiles: [], frpEntries: [], ventes: [], stockApp: [], depenses: [], appBase: [] };
 let ME = null, ROLE = null, VIEW = "dossiers", DOSSIER = null, CM = "login", RECOVERY = RECOVERY_LINK;
 function toast(msg) {
   const t = document.createElement("div");
@@ -6783,6 +6786,7 @@ function render() {
   applySidebar();
   document.documentElement.classList.toggle("scroll-on", (VIEW === "clients" || VIEW === "stock") && !!ME);
   document.documentElement.classList.toggle("stk-on", VIEW === "stock" && !!ME);
+  document.documentElement.classList.toggle("tm-on", VIEW === "testeurManette" && !!ME);
   document.body.classList.toggle("rep-nav", ROLE === "rep" && !!ME);
   saveNav();
   if (RECOVERY) {
@@ -6899,6 +6903,8 @@ async function go(v) {
     if (av.error) toast("Avis : " + msgErr(av.error));
     else S.avisClients = av.data || [];
   }
+  if (v === "liens" && ROLE === "rep") await liensCharger();
+  if (v === "frp" && ROLE === "rep") await frpCharger();
   render();
 }
 function saveNav() {
@@ -7405,7 +7411,7 @@ function outilsInlineHtml() {
   return '<button class="nav-outils-item' + (VIEW === "frp" ? " on" : "") + '" onclick="go(\'frp\')">FRP Bypass</button>' + '<button class="nav-outils-item' + (VIEW === "liens" ? " on" : "") + '" onclick="go(\'liens\')">Liens utiles</button>' + '<button class="nav-outils-item' + (VIEW === "testeurManette" ? " on" : "") + '" onclick="go(\'testeurManette\')">Testeur de manette</button>';
 }
 /* Liens utiles : liens externes enregistrés dans ce navigateur (localStorage) */
-function liensLire() {
+function liensLireLocal() {
   try {
     const v = JSON.parse(localStorage.getItem("sv_liens") || "[]");
     return Array.isArray(v) ? v : [];
@@ -7413,14 +7419,24 @@ function liensLire() {
     return [];
   }
 }
-function liensEcrire(l) {
-  try {
-    localStorage.setItem("sv_liens", JSON.stringify(l));
-  } catch (e) {
-    toast("Impossible d\u2019enregistrer sur cet appareil.");
+async function liensCharger() {
+  const r = await SB.from("liens_utiles").select("*").order("created_at", { ascending: false });
+  if (r.error) {
+    toast("Liens utiles : " + msgErr(r.error));
+    return;
+  }
+  S.liensUtiles = r.data || [];
+  const locaux = liensLireLocal();
+  if (!S.liensUtiles.length && locaux.length) {
+    const ins = await SB.from("liens_utiles").insert(locaux.map((x) => ({ titre: x.titre, url: x.url }))).select("*");
+    if (!ins.error) {
+      S.liensUtiles = ins.data || [];
+      localStorage.removeItem("sv_liens");
+      toast(locaux.length + " lien(s) récupéré(s) depuis cet appareil");
+    }
   }
 }
-function liensAjouter() {
+async function liensAjouter() {
   const err = $("lnErr");
   err.textContent = "";
   const titre = $("lnTitre").value.trim();
@@ -7430,28 +7446,36 @@ function liensAjouter() {
     return;
   }
   if (!/^https?:\/\//i.test(url)) url = "https://" + url;
-  const l = liensLire();
-  l.push({ id: "l" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), titre: titre || url, url, date: new Date().toISOString() });
-  liensEcrire(l);
+  const ins = await SB.from("liens_utiles").insert({ titre: titre || url, url }).select("*");
+  if (ins.error) {
+    err.textContent = msgErr(ins.error);
+    return;
+  }
+  S.liensUtiles = (ins.data || []).concat(S.liensUtiles || []);
   $("lnTitre").value = "";
   $("lnUrl").value = "";
   render();
 }
-function liensSupprimer(id) {
+async function liensSupprimer(id) {
   if (!confirm("Supprimer ce lien ?")) return;
-  liensEcrire(liensLire().filter((x) => x.id !== id));
+  const { error } = await SB.from("liens_utiles").delete().eq("id", id);
+  if (error) {
+    toast(msgErr(error));
+    return;
+  }
+  S.liensUtiles = (S.liensUtiles || []).filter((x) => x.id !== id);
   render();
 }
 var TESTEUR_MANETTE_URL = "https://hardwaretester.com/gamepad";
 function testeurManetteHtml() {
-  return '<h1>Testeur de manette</h1><div class="m" style="margin-bottom:8px">Branche la manette en USB (ou Bluetooth), puis appuie sur ses boutons pour vérifier qu\'ils répondent tous.</div><div class="tst-frame"><iframe src="' + esc(TESTEUR_MANETTE_URL) + '" title="Testeur de manette" allow="gamepad" referrerpolicy="no-referrer-when-downgrade"></iframe></div>';
+  return '<div style="padding:0 16px"><h1>Testeur de manette</h1><div class="m" style="margin-bottom:8px">Branche la manette en USB (ou Bluetooth), puis appuie sur ses boutons pour vérifier qu\'ils répondent tous.</div></div><div class="tst-frame"><iframe src="' + esc(TESTEUR_MANETTE_URL) + '" title="Testeur de manette" allow="gamepad" referrerpolicy="no-referrer-when-downgrade"></iframe></div>';
 }
 function liensHtml() {
-  const liste = liensLire().slice().reverse();
+  const liste = S.liensUtiles || [];
   const rows = liste.length ? liste.map((x) => '<div class="card"><div class="row" style="align-items:center;gap:8px"><div style="min-width:0;flex:1"><div class="t" style="overflow-wrap:anywhere">' + esc(x.titre) + '</div><a href="' + esc(x.url) + '" target="_blank" rel="noopener" class="m" style="word-break:break-all">' + esc(x.url) + "</a></div>" + '<button class="btn sq ghost" title="Afficher dans le site" aria-label="Afficher dans le site" onclick="openEmbed(\'' + esc(x.url).replace(/'/g, "&#39;") + "','" + esc(x.titre || x.url).replace(/'/g, "&#39;") + '\')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/></svg></button>' + '<a class="btn sq ghost" href="' + esc(x.url) + '" target="_blank" rel="noopener" title="Ouvrir le lien" aria-label="Ouvrir le lien" style="color:inherit;text-decoration:none;flex:none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18"/><path d="M12 3a14 14 0 0 0 0 18"/></svg></a>' + '<button class="btn ghost sq" title="Supprimer" aria-label="Supprimer" style="color:var(--bad);border-color:var(--bad)" onclick="liensSupprimer(\'' + x.id + '\')">' + ICON_TRASH + "</button></div></div>").join("") : '<p class="m">Aucun lien pour le moment. Ajoute-en un ci-dessus.</p>';
   return '<h1>Liens utiles</h1><div class="card"><h2 style="margin-top:0">Ajouter un lien</h2><label>Nom (facultatif)</label><input id="lnTitre" placeholder="Ex. Outil de d\u00e9blocage"><label>Adresse *</label><input id="lnUrl" placeholder="https://\u2026" inputmode="url"><div class="err" id="lnErr"></div><button class="btn" onclick="liensAjouter()" style="margin-top:10px">Ajouter</button></div>' + rows;
 }
-function frpLire() {
+function frpLireLocal() {
   try {
     const v = JSON.parse(localStorage.getItem("sv_frp") || "[]");
     return Array.isArray(v) ? v : [];
@@ -7459,29 +7483,39 @@ function frpLire() {
     return [];
   }
 }
-function frpEcrire(liste) {
-  try {
-    localStorage.setItem("sv_frp", JSON.stringify(liste));
-  } catch (e) {
-    toast("Impossible d’enregistrer sur cet appareil.");
+async function frpCharger() {
+  const r = await SB.from("frp_entries").select("*").order("created_at", { ascending: false });
+  if (r.error) {
+    toast("FRP Bypass : " + msgErr(r.error));
+    return;
+  }
+  S.frpEntries = r.data || [];
+  const locaux = frpLireLocal();
+  if (!S.frpEntries.length && locaux.length) {
+    const ins = await SB.from("frp_entries").insert(locaux.map((x) => ({ appareil_base_id: x.base || null, appareil: x.appareil, contenu: x.contenu, version: x.version }))).select("*");
+    if (!ins.error) {
+      S.frpEntries = ins.data || [];
+      localStorage.removeItem("sv_frp");
+      toast(locaux.length + " entrée(s) FRP récupérée(s) depuis cet appareil");
+    }
   }
 }
 function frpHtml() {
   const bases = (S.appBase || []).slice().sort((a, b) => String((a.marque || "") + " " + (a.modele || "")).localeCompare(String((b.marque || "") + " " + (b.modele || "")), "fr"));
   const opts = bases.map((b) => '<option value="' + esc(b.id) + '">' + esc((b.marque ? b.marque + " " : "") + (b.modele || "")) + "</option>").join("");
-  const liste = frpLire().slice().reverse();
+  const liste = S.frpEntries || [];
   const rows = liste.length ? liste.map((x) => {
     const contenu = /^https?:\/\//i.test(x.contenu) ? '<a href="' + esc(x.contenu) + '" target="_blank" rel="noopener" style="word-break:break-all">' + esc(x.contenu) + "</a>" : '<div style="white-space:pre-wrap">' + esc(x.contenu) + "</div>";
     return '<div class="card"><div class="row" style="align-items:center"><div style="min-width:0;flex:1"><div class="t">' + esc(x.appareil) + "</div>" + (x.version ? '<div class="m">Version : ' + esc(x.version) + "</div>" : "") + '<div style="margin-top:6px">' + contenu + '</div></div><button class="chip late" onclick="frpSupprimer(\'' + x.id + '\')">Supprimer</button></div></div>';
-  }).join("") : '<p class="m">Aucune entrée pour l’instant.</p>';
+  }).join("") : '<p class="m">Aucune entrée pour l\u2019instant.</p>';
   return '<h1>FRP Bypass</h1><div class="card"><h2 style="margin-top:0">Nouvelle entrée</h2><label>Appareil existant *</label><select id="frpApp"><option value="">— Choisir un appareil —</option>' + opts + '</select><label>Lien ou texte *</label><textarea id="frpTexte" rows="3" placeholder="Colle un lien ou écris les étapes"></textarea><label>Version liée au lien</label><input id="frpVer" placeholder="Ex. Android 12, One UI 5"><div style="margin-top:10px"><button class="btn" onclick="frpAjouter()">Ajouter</button></div><div class="err" id="frpErr"></div></div><h2>Entrées</h2>' + rows;
 }
-function frpAjouter() {
+async function frpAjouter() {
   const err = $("frpErr");
   err.textContent = "";
   const base = $("frpApp").value, texte = $("frpTexte").value.trim(), ver = $("frpVer").value.trim();
   if (!base) {
-    err.textContent = "Choisis d’abord un appareil.";
+    err.textContent = "Choisis d\u2019abord un appareil.";
     return;
   }
   if (!texte) {
@@ -7489,14 +7523,23 @@ function frpAjouter() {
     return;
   }
   const b = (S.appBase || []).find((x) => x.id === base);
-  const liste = frpLire();
-  liste.push({ id: "f" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), base, appareil: b ? (b.marque ? b.marque + " " : "") + (b.modele || "") : "Appareil", contenu: texte, version: ver, date: new Date().toISOString() });
-  frpEcrire(liste);
+  const row = { appareil_base_id: base, appareil: b ? (b.marque ? b.marque + " " : "") + (b.modele || "") : "Appareil", contenu: texte, version: ver || null };
+  const ins = await SB.from("frp_entries").insert(row).select("*");
+  if (ins.error) {
+    err.textContent = msgErr(ins.error);
+    return;
+  }
+  S.frpEntries = (ins.data || []).concat(S.frpEntries || []);
   render();
 }
-function frpSupprimer(id) {
+async function frpSupprimer(id) {
   if (!confirm("Supprimer cette entrée ?")) return;
-  frpEcrire(frpLire().filter((x) => x.id !== id));
+  const { error } = await SB.from("frp_entries").delete().eq("id", id);
+  if (error) {
+    toast(msgErr(error));
+    return;
+  }
+  S.frpEntries = (S.frpEntries || []).filter((x) => x.id !== id);
   render();
 }
 /* ===== Agenda : Google Agenda (lecture et écriture ; synchro automatique chaque minute tant que l’onglet est ouvert) ===== */
