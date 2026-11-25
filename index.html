@@ -130,7 +130,7 @@ body.lg .dash-page > h2:first-of-type{margin-top:6px}
 .dba-t td.act{white-space:nowrap}
 .dba-t tr.dba-fr th{position:static;cursor:default;border-bottom:1px solid var(--line);padding:5px 6px;background:var(--surf)}
 .dba-t tr.dba-fr input{width:100%;min-width:90px;margin:0;padding:5px 7px;font-size:12px;font-weight:400;border-radius:8px}
-.stk-row{display:grid;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid rgba(128,128,128,.25);grid-template-columns:var(--stk-cols,minmax(120px,1.4fr) minmax(80px,1fr) minmax(120px,1.3fr) minmax(90px,.9fr) minmax(90px,.9fr) minmax(80px,.8fr) minmax(240px,300px));min-width:0}
+.stk-row{display:grid;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid rgba(128,128,128,.25);grid-template-columns:var(--stk-cols,280px 120px 260px 100px 90px 120px 300px);width:max-content;min-width:100%}
 .stk-head{border-bottom:2px solid var(--line)}
 /* Page Clients : barre de défilement toujours affichée */
 html.scroll-on{overflow-y:scroll}
@@ -197,8 +197,6 @@ body.lg .cli-head{padding:0 14px 4px}
 .stk-rz{position:absolute;top:0;bottom:0;right:0;width:10px;cursor:col-resize;touch-action:none;z-index:2}
 .stk-rz:hover,.stk-rz:active{background:linear-gradient(90deg,transparent 4px,var(--brand) 4px,var(--brand) 6px,transparent 6px)}
 .stk-wrap{max-width:100%;container-type:inline-size}
-/* Liste étroite : Référence et Réservé sont masquées, les autres colonnes gardent leur place */
-@media (min-width:601px){@container (max-width:760px){.stk-row{grid-template-columns:minmax(0,2fr) minmax(0,1.3fr) minmax(0,1.3fr) minmax(70px,.8fr) 150px !important}.stk-x{display:none !important}}}
 /* Page Stock : barres de défilement toujours affichées (verticale à droite, horizontale en bas) */
 html.stk-on{overflow-y:scroll;overflow-x:scroll}
 /* Les boutons de chaque pièce restent visibles quand on glisse horizontalement */
@@ -224,8 +222,11 @@ html.stk-on{overflow-y:scroll;overflow-x:scroll}
 .stk-fl{flex:none;border:0;background:none;cursor:pointer;padding:0 2px;font-size:14px;color:var(--mut);line-height:1}
 .stk-menu{position:absolute;top:calc(100% + 4px);left:0;z-index:30;background:var(--surf);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.2);padding:8px 12px;max-height:220px;overflow:auto;min-width:220px;white-space:nowrap;font-size:14px;font-weight:400;line-height:1.5}
 .stk-act{display:flex;gap:6px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
-/* Grand écran : les textes passent à la ligne au lieu d'être coupés */
-@media (min-width:601px){.stk-row>.ab-cell{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}}
+/* Une ligne reste une seule ligne (jamais de retour à la ligne) ; toute la liste se fait glisser à gauche / à droite */
+.stk-list{overflow-x:auto;max-width:100%;-webkit-overflow-scrolling:touch}
+.stk-row>.ab-cell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stk-nm>span:last-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (hover:hover){.stk-list{cursor:grab}}
 /* Téléphone : chaque pièce se fait glisser à gauche et à droite ; seul le nombre de pièces reste à l'écran */
 @media (max-width:600px){
   .stk-row.stk-head{padding:6px 0}
@@ -236,7 +237,7 @@ html.stk-on{overflow-y:scroll;overflow-x:scroll}
   .stk-mod-t{flex:1 1 0}
   .stk-mod .stk-menu{position:static;flex-basis:100%;min-width:0;max-height:none;white-space:normal;box-shadow:none;margin-top:4px;padding:6px 10px}
   .stk-row{display:grid;grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:max-content;gap:14px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:10px 0;min-width:0}
-  .stk-row>.ab-cell{white-space:normal;overflow:visible;overflow-wrap:anywhere;text-overflow:clip}
+  .stk-row>.ab-cell{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .stk-row>.stk-act{display:contents;position:static}
   .stk-row>.stk-act>*{flex:none}
   .stk-row>.stk-act>.chip.ok,.stk-row>.stk-act>.chip.late{position:sticky;left:0;z-index:2;background:var(--bg)}
@@ -245,7 +246,7 @@ html.stk-on{overflow-y:scroll;overflow-x:scroll}
   .stk-list{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%;scrollbar-width:none}
   .stk-list::-webkit-scrollbar{display:none}
   /* Colonnes identiques sur toutes les lignes : elles s'alignent entre elles */
-  .stk-row{overflow-x:visible;width:max-content;min-width:100%;grid-template-columns:184px 104px 150px 112px 112px 96px 28px 28px 36px 44px 44px 44px;grid-auto-flow:row;gap:0 10px;align-items:center}
+  .stk-row{overflow-x:visible;width:max-content;min-width:100%;grid-template-columns:220px 104px 150px 112px 112px 96px 28px 28px 36px 44px 44px 44px;grid-auto-flow:row;gap:0 10px;align-items:center}
   /* Tirette fixe au-dessus de la barre de navigation, toujours visible */
   .stk-tir{display:block;position:fixed;left:76px;right:12px;bottom:calc(env(safe-area-inset-bottom) + 74px);z-index:6;background:var(--surf);border:1px solid var(--line);border-radius:12px;padding:6px 14px;box-shadow:0 4px 14px rgba(0,0,0,.12)}
   .stk-tir input{width:100%;margin:0;padding:0;height:26px;border:0;background:none;accent-color:var(--brand)}
@@ -339,6 +340,18 @@ body .app:has(.lg-login),body.lg .app:has(.lg-login){max-width:none;margin:0;pad
 .lg-back{display:inline-block;font-size:14px;font-weight:600;color:#1F2A24;text-decoration:none;border:1px solid #DCD7CB;border-radius:999px;padding:9px 16px;background:#fff;white-space:nowrap}
 .lg-photo{display:block;position:relative;overflow:hidden;background:linear-gradient(180deg,#EEF3EC,#E3ECE4);min-height:calc(100vh - 84px)}
 .lg-photo > img{position:absolute;top:0;right:0;width:100%;min-width:640px;height:auto;display:block;max-width:none}
+.lg-avis{position:absolute;left:0;right:0;bottom:0;z-index:2;background:linear-gradient(0deg,rgba(20,30,24,.78),rgba(20,30,24,.55) 70%,transparent);padding:18px 24px 20px;color:#fff;font-family:Inter,system-ui,sans-serif}
+.lg-avis-stats{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;margin-bottom:10px;text-shadow:0 1px 3px rgba(0,0,0,.4)}
+.lg-avis-stats .lg-stars{color:#F5B301;letter-spacing:1px;font-size:15px}
+.lg-avis-track{overflow:hidden;white-space:nowrap;mask-image:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent)}
+.lg-avis-row{display:inline-flex;gap:16px;animation:lgAvisScroll 40s linear infinite}
+.lg-avis-row:hover{animation-play-state:paused}
+@keyframes lgAvisScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.lg-avis-card{display:inline-flex;flex-direction:column;gap:3px;background:rgba(255,255,255,.12);backdrop-filter:blur(2px);border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:10px 14px;min-width:220px;max-width:280px;white-space:normal;vertical-align:top}
+.lg-avis-card .lg-stars{color:#F5B301;font-size:13px;letter-spacing:1px}
+.lg-avis-card .lg-who{font-size:12px;font-weight:600;opacity:.9;margin-top:2px}
+.lg-avis-card .lg-txt{font-size:12.5px;line-height:1.4;opacity:.95;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
+@media (max-width:899px){ .lg-avis{display:none} }
 .lg-form{display:flex;flex-direction:column;justify-content:center;padding:48px 32px;box-sizing:border-box;background:#FAF8F3;min-width:0}
 .lg-login .card{background:none;border:0;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;padding:0;margin:0 auto;width:100%;max-width:400px}
 .lg-h1{display:block;font-family:Manrope,Inter,system-ui,sans-serif;font-weight:500;font-size:40px;line-height:1.1;letter-spacing:-.01em;margin:0 0 8px;color:#1F2A24}
@@ -6424,7 +6437,7 @@ function loginView() {
       <img class="lg-logo" src="${LOGO_SRC}" alt="Seconde Vie">
       <a class="lg-back" href="#" onclick="return false">← Retour à la boutique</a>
     </div>
-    <div class="lg-photo" aria-hidden="true"><img src="hero-connexion.jpg" alt=""></div>
+    <div class="lg-photo"><img src="hero-connexion.jpg" alt="" aria-hidden="true">${lgAvisHtml()}</div>
     <div class="lg-form">
       ${pick}
       <div class="card">
@@ -6589,11 +6602,23 @@ async function doLogin() {
   CM = "login";
   await boot();
 }
+let AVIS_PUB = [], AVIS_STATS = null;
+async function loadAvisPublics() {
+  try {
+    const [p, s] = await Promise.all([
+      SB.from("avis_publics").select("*").order("created_at", { ascending: false }).limit(20),
+      SB.from("avis_stats").select("*").maybeSingle()
+    ]);
+    AVIS_PUB = p.data || [];
+    AVIS_STATS = s.data || null;
+  } catch (e) {}
+}
 async function boot() {
   const { data } = await SB.auth.getSession();
   ME = data.session ? data.session.user : null;
   if (!ME) {
     ROLE = null;
+    loadAvisPublics().then(() => { if (!ME) render(); });
     return render();
   }
   const { data: r } = await SB.from("repairers").select("user_id").eq("user_id", ME.id).maybeSingle();
@@ -7321,7 +7346,7 @@ function liensSupprimer(id) {
 }
 function liensHtml() {
   const liste = liensLire().slice().reverse();
-  const rows = liste.length ? liste.map((x) => '<div class="card"><div class="row" style="align-items:center;gap:8px"><div style="min-width:0;flex:1"><div class="t" style="overflow-wrap:anywhere">' + esc(x.titre) + '</div><a href="' + esc(x.url) + '" target="_blank" rel="noopener" class="m" style="word-break:break-all">' + esc(x.url) + "</a></div>" + '<a class="btn small" href="' + esc(x.url) + '" target="_blank" rel="noopener" style="flex:none">Ouvrir \u2197</a>' + '<button class="btn ghost sq" title="Supprimer" aria-label="Supprimer" style="color:var(--bad);border-color:var(--bad)" onclick="liensSupprimer(\'' + x.id + '\')">' + ICON_TRASH + "</button></div></div>").join("") : '<p class="m">Aucun lien pour le moment. Ajoute-en un ci-dessus.</p>';
+  const rows = liste.length ? liste.map((x) => '<div class="card"><div class="row" style="align-items:center;gap:8px"><div style="min-width:0;flex:1"><div class="t" style="overflow-wrap:anywhere">' + esc(x.titre) + '</div><a href="' + esc(x.url) + '" target="_blank" rel="noopener" class="m" style="word-break:break-all">' + esc(x.url) + "</a></div>" + '<a class="btn sq ghost" href="' + esc(x.url) + '" target="_blank" rel="noopener" title="Ouvrir le lien" aria-label="Ouvrir le lien" style="color:inherit;text-decoration:none;flex:none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18"/><path d="M12 3a14 14 0 0 0 0 18"/></svg></a>' + '<button class="btn ghost sq" title="Supprimer" aria-label="Supprimer" style="color:var(--bad);border-color:var(--bad)" onclick="liensSupprimer(\'' + x.id + '\')">' + ICON_TRASH + "</button></div></div>").join("") : '<p class="m">Aucun lien pour le moment. Ajoute-en un ci-dessus.</p>';
   return '<h1>Liens utiles</h1><div class="card"><h2 style="margin-top:0">Ajouter un lien</h2><label>Nom (facultatif)</label><input id="lnTitre" placeholder="Ex. Outil de d\u00e9blocage"><label>Adresse *</label><input id="lnUrl" placeholder="https://\u2026" inputmode="url"><div class="err" id="lnErr"></div><button class="btn" onclick="liensAjouter()" style="margin-top:10px">Ajouter</button></div>' + rows;
 }
 function frpLire() {
@@ -9286,11 +9311,13 @@ function appControls() {
   const types = [...new Set((S.stockApp || []).map((x) => x.appareil).filter(Boolean))].sort().map((t) => [t, t]);
   return '<div class="row" style="gap:6px;flex-wrap:wrap;margin:0 0 8px"><select onchange="ASORT=this.value;render()">' + selOpts([["nom", "Trier : nom"], ["dispo", "Trier : quantité dispo"], ["res", "Trier : réservé"]], ASORT) + '</select><select onchange="ATYPE=this.value;render()">' + selOpts([["", "Tous les types"]].concat(types), ATYPE) + '</select><select onchange="AST=this.value;render()">' + selOpts([["", "Tous"], ["dispo", "En stock"], ["rupture", "Rupture"]], AST) + '</select><select onchange="AGRADE=this.value;render()">' + selOpts([["", "Tous les grades"], ["A", "Grade A"], ["B", "Grade B"], ["C", "Grade C"], ["HS", "Grade HS"]], AGRADE) + "</select></div>";
 }
+function coulSelOpts(list, cur) {
+  return '<option value="">- Aucune -</option>' + (list || []).map((c) => '<option value="' + esc(c) + '"' + (c === cur ? " selected" : "") + ">" + esc(c) + "</option>").join("");
+}
 function devEditHtml(x) {
   const list = couleursFor(x.appareil, x.modele);
   const coul = list ? String(x.nom).split(" · ")[3] || "" : "";
-  const dl = list ? coulDlHtml(list) : "";
-  return '<div class="card" style="border:2px solid var(--brand)"><div class="t">Modifier « ' + esc(x.nom) + ' »</div><label>Type / marque / modèle</label><div id="mp-a"></div><label>Modèle exact (si absent de la liste)</label><input id="aExact" placeholder="Ex. PS5 Slim Blanc" oninput="aExactChange(this.value)"><div id="aCouleurBox" style="display:' + (list ? "block" : "none") + '"><label>Couleur</label><input id="aCouleur" list="aCouleurDl" value="' + esc(coul) + '" placeholder="Ex. Bleu" autocomplete="off"><datalist id="aCouleurDl">' + dl + '</datalist></div><label>Quantité disponible (hors réservés)</label><input id="aQt" inputmode="numeric" value="' + x.qte + '"><label>Grade</label><select id="aGrade">' + ["", "A", "B", "C", "HS"].map((g) => '<option value="' + g + '"' + ((x.grade || "") === g ? " selected" : "") + ">" + (g || "- Aucun -") + "</option>").join("") + '</select><p class="m">Réservé : ' + (x.res || 0) + `</p><div class="row" style="gap:6px"><button class="btn" onclick="saveAppareil()">Enregistrer</button><button class="btn ghost" onclick="cancelAppEdit()">Annuler</button></div><div class="err" id="aErr"></div><div style="margin-top:12px"><button class="chip late" onclick="deleteAppStock('` + x.id + `')">Supprimer cet appareil</button></div></div>`;
+  return '<div class="card" style="border:2px solid var(--brand)"><div class="t">Modifier « ' + esc(x.nom) + ' »</div><label>Type / marque / modèle</label><div id="mp-a"></div><label>Modèle exact (si absent de la liste)</label><input id="aExact" placeholder="Ex. PS5 Slim Blanc" oninput="aExactChange(this.value)"><div id="aCouleurBox" style="display:' + (list ? "block" : "none") + '"><label>Couleur</label><select id="aCouleur">' + coulSelOpts(list, coul) + '</select></div><label>Quantité disponible (hors réservés)</label><input id="aQt" inputmode="numeric" value="' + x.qte + '"><label>Grade</label><select id="aGrade">' + ["", "A", "B", "C", "HS"].map((g) => '<option value="' + g + '"' + ((x.grade || "") === g ? " selected" : "") + ">" + (g || "- Aucun -") + "</option>").join("") + '</select><p class="m">Réservé : ' + (x.res || 0) + `</p><div class="row" style="gap:6px"><button class="btn" onclick="saveAppareil()">Enregistrer</button><button class="btn ghost" onclick="cancelAppEdit()">Annuler</button></div><div class="err" id="aErr"></div><div style="margin-top:12px"><button class="chip late" onclick="deleteAppStock('` + x.id + `')">Supprimer cet appareil</button></div></div>`;
 }
 function editAppareil(id) {
   const x = (S.stockApp || []).find((y) => y.id === id);
@@ -11137,8 +11164,7 @@ function aCouleurRefresh(app, mod) {
   if (!box) return;
   const list = couleursFor(app, mod);
   box.style.display = list ? "block" : "none";
-  $("aCouleurDl").innerHTML = list ? coulDlHtml(list) : "";
-  $("aCouleur").value = "";
+  $("aCouleur").innerHTML = coulSelOpts(list, "");
 }
 function marquesApp(app) {
   return abMarquesFor(app);
@@ -12209,7 +12235,7 @@ function editPiece(sku) {
   const x = S.stock.find((y) => y.sku === sku);
   MP.e = x.modeles && x.modeles.length ? x.modeles.slice() : x.modele ? [x.modele] : [];
   MP_PLUS.e = false;
-  $("pe-" + sku).innerHTML = '<div class="card" style="margin:8px 0 12px"><div class="row" style="justify-content:space-between;align-items:center"><span class="t">Modifier : ' + esc(x.nom) + '</span><button class="chip" onclick="$(\'pe-' + esc(x.sku) + '\').innerHTML=\'\'">Fermer</button></div><label>SKU</label><input id="ep-s" value="' + esc(x.sku) + '"><label>Nom</label><input id="ep-n" value="' + esc(x.nom) + `"><label>Type de pièce</label>${catSelHtml("ep-cat", x.categorie || "", "— Aucun —")}<label>Prix (€)</label><input id="ep-px" inputmode="decimal" value="${x.prix == null ? "" : x.prix}"><label>Date du prix</label><input id="ep-dt" type="date" value="${x.prix_date ? String(x.prix_date).slice(0, 10) : ""}"><label>Lien pour commander</label><input id="ep-li" value="${esc(x.lien || "")}" placeholder="https://…"><label>Modèles</label><div id="mp-e"></div><label>Photos de la pièce</label>${photosBloc("piece", x.sku)}${photoAddHtml("piece", x.sku, 6)}<button class="btn" onclick="savePiece2('` + sku + `')">Enregistrer</button><div class="err" id="ep-err"></div></div>`;
+  $("pe-" + sku).innerHTML = '<div class="card" style="margin:8px 0 12px"><div class="row" style="justify-content:space-between;align-items:center"><span class="t">Modifier : ' + esc(x.nom) + '</span><button class="chip" onclick="$(\'pe-' + esc(x.sku) + '\').innerHTML=\'\'">Fermer</button></div><label>SKU</label><input id="ep-s" value="' + esc(x.sku) + '"><label>Nom</label><input id="ep-n" value="' + esc(x.nom) + `"><label>Type de pièce</label>${catSelHtml("ep-cat", x.categorie || "", "— Aucun —")}<label>Prix (€)</label><input id="ep-px" inputmode="decimal" value="${x.prix == null ? "" : x.prix}"><label>Date du prix</label><input id="ep-dt" type="date" value="${x.prix_date ? String(x.prix_date).slice(0, 10) : ""}"><label>Lien pour commander</label><input id="ep-li" value="${esc(x.lien || "")}" placeholder="https://…"><label>Modèles</label><div id="mp-e"></div><label>Photos de la pièce</label>${photosBloc("piece", x.sku)}<button class="btn" onclick="savePiece2('` + sku + `')">Enregistrer</button><div class="err" id="ep-err"></div></div>`;
   mpDraw("e");
   $("pe-" + sku).scrollIntoView({ block: "nearest", inline: "nearest" });
 }
@@ -13483,6 +13509,34 @@ document.addEventListener("click", (e) => {
   if (m && !e.target.closest("#stkMenu") && !e.target.closest(".stk-fl")) m.remove();
 });
 window.addEventListener("resize", () => stkMesureModeles());
+/* Souris : on attrape la liste du stock et on la glisse à gauche / à droite */
+(function () {
+  var d = null;
+  document.addEventListener("pointerdown", function (e) {
+    if (e.pointerType !== "mouse" || e.button !== 0) return;
+    var l = e.target.closest && e.target.closest(".stk-list");
+    if (!l || e.target.closest("button, a, input, select, textarea, label, .stk-rz, .stk-menu")) return;
+    d = { l: l, x: e.clientX, s: l.scrollLeft, m: false };
+  });
+  document.addEventListener("pointermove", function (e) {
+    if (!d) return;
+    var dx = e.clientX - d.x;
+    if (!d.m && Math.abs(dx) > 4) {
+      d.m = true;
+      d.l.style.cursor = "grabbing";
+      d.l.style.userSelect = "none";
+    }
+    if (d.m) d.l.scrollLeft = d.s - dx;
+  });
+  function fin() {
+    if (!d) return;
+    d.l.style.cursor = "";
+    d.l.style.userSelect = "";
+    d = null;
+  }
+  document.addEventListener("pointerup", fin);
+  document.addEventListener("pointercancel", fin);
+})();
 function stkAge(s) {
   if (s.created_at) return Date.parse(s.created_at) || 0;
   return parseInt(String(s.sku).replace(/\D/g, ""), 10) || 0;
@@ -13566,7 +13620,7 @@ function stkPhotos(sku) {
     box.innerHTML = "";
     return;
   }
-  box.innerHTML = '<div class="card" data-stk-ph="1" style="margin:8px 0 12px"><div class="row" style="justify-content:space-between;align-items:center"><span class="t">Photos : ' + esc(x.nom) + '</span><button class="chip" onclick="stkPhotos(\'' + esc(x.sku) + '\')">Fermer</button></div>' + photosBloc("piece", x.sku) + photoAddHtml("piece", x.sku, 6) + "</div>";
+  box.innerHTML = '<div class="card" data-stk-ph="1" style="margin:8px 0 12px"><div class="row" style="justify-content:space-between;align-items:center"><span class="t">Photos : ' + esc(x.nom) + '</span><button class="chip" onclick="stkPhotos(\'' + esc(x.sku) + '\')">Fermer</button></div>' + photosBloc("piece", x.sku) + "</div>";
 }
 function stkAddToggle() {
   STK_ADD = !STK_ADD;
@@ -13587,7 +13641,7 @@ function stkLoadW() {
 }
 function stkApplyW() {
   const MINS = [120, 80, 120, 120, 130, 80];
-  if (STK_W) document.documentElement.style.setProperty("--stk-cols", STK_W.map((w, i) => "minmax(" + MINS[i] + "px," + Math.max(1, Math.round(w)) + "fr)").join(" ") + " minmax(240px,300px)");
+  if (STK_W) document.documentElement.style.setProperty("--stk-cols", STK_W.map((w, i) => Math.max(MINS[i] || 60, Math.round(w)) + "px").join(" ") + " 300px");
   else document.documentElement.style.removeProperty("--stk-cols");
 }
 function stkResize(e, i) {
