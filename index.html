@@ -6266,7 +6266,7 @@ function pstOpts(p) {
 }
 const PUCES = [["Puce Switch V1", "Switch V1"], ["Puce Switch V2", "Switch V2"], ["Puce Switch Lite", "Switch Lite"], ["Puce Switch OLED", "Switch OLED"]];
 const GMAPS_KEY = "";
-const REP_NAV = [["accueil", "Accueil"], ["dashboard", "Tableau de bord"], ["depenses", "Dépenses"], ["agenda", "Agenda"], ["dossiers", "Réparations et ventes"], ["qualirepar", "Qualirépar"], ["clients", "Clients"], ["appareils", "Appareils"], ["new", "Nouvelle prestation"], ["newvente", "Nouvelle vente"], ["ventes", "Ventes"], ["avis", "Suggestions & Bugs"], ["stock", "Stock"], ["catalogue", "Réparations & Mods"], ["dbadmin", "Bases de données"]];
+const REP_NAV = [["accueil", "Accueil"], ["dashboard", "Tableau de bord"], ["depenses", "Dépenses"], ["agenda", "Agenda"], ["dossiers", "Réparations et ventes"], ["qualirepar", "Qualirépar"], ["clients", "Clients"], ["appareils", "Appareils"], ["new", "Nouvelle prestation"], ["newvente", "Nouvelle vente"], ["ventes", "Ventes"], ["avisClients", "Avis clients"], ["avis", "Suggestions & Bugs"], ["stock", "Stock"], ["catalogue", "Réparations & Mods"], ["dbadmin", "Bases de données"]];
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s != null ? s : "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const telLink = (t) => {
@@ -6289,7 +6289,7 @@ function jours(n) {
 function pcs(id) {
   return S.pieces.filter((p) => p.dossier_id === id);
 }
-let S = { dossiers: [], pieces: [], clients: [], stock: [], inv: [], devices: [], catalogue: [], sav: [], feedback: [], ventes: [], stockApp: [], depenses: [], appBase: [] };
+let S = { dossiers: [], pieces: [], clients: [], stock: [], inv: [], devices: [], catalogue: [], sav: [], feedback: [], avisClients: [], ventes: [], stockApp: [], depenses: [], appBase: [] };
 let ME = null, ROLE = null, VIEW = "dossiers", DOSSIER = null, CM = "login", RECOVERY = RECOVERY_LINK;
 function toast(msg) {
   const t = document.createElement("div");
@@ -6414,6 +6414,21 @@ function pwdVerif() {
   }
   m.textContent = a === b ? "Les mots de passe correspondent ✓" : "Les mots de passe ne correspondent pas encore";
   m.style.color = a === b ? "var(--ok)" : "var(--bad)";
+}
+function lgStars(n) {
+  const v = Math.round(+n || 0);
+  return '<span class="lg-stars">' + "★★★★★".slice(0, v) + "☆☆☆☆☆".slice(0, 5 - v) + "</span>";
+}
+function lgAvisHtml() {
+  if (!AVIS_PUB.length) return "";
+  const card = (a) => `<div class="lg-avis-card">${lgStars(a.note)}<div class="lg-who">${esc([a.prenom, a.initiale].filter(Boolean).join(" "))}${a.appareil ? " · " + esc(public_mail_modele(a.appareil)) : ""}</div>${a.commentaire ? '<div class="lg-txt">' + esc(a.commentaire) + "</div>" : ""}</div>`;
+  const cards = AVIS_PUB.map(card).join("");
+  const stats = AVIS_STATS && AVIS_STATS.n ? `<div class="lg-avis-stats">${lgStars(AVIS_STATS.moyenne)}<span>${AVIS_STATS.moyenne}/5 · ${AVIS_STATS.n} avis client${AVIS_STATS.n > 1 ? "s" : ""}</span></div>` : "";
+  return `<div class="lg-avis">${stats}<div class="lg-avis-track"><div class="lg-avis-row">${cards}${cards}</div></div></div>`;
+}
+function public_mail_modele(appareil) {
+  const parts = String(appareil || "").split(" · ");
+  return parts.length >= 3 ? parts.slice(0, -1).join(" · ") : appareil;
 }
 function loginView() {
   if (CM === "forgot") return forgotView();
@@ -6800,6 +6815,11 @@ async function go(v) {
     const fb = await SB.from("feedback").select("*").order("created_at", { ascending: false });
     if (fb.error) toast("Suggestions : " + msgErr(fb.error));
     else S.feedback = fb.data || [];
+  }
+  if (v === "avisClients" && ROLE === "rep") {
+    const av = await SB.from("avis").select("*, clients(prenom,nom), dossiers(appareil)").order("created_at", { ascending: false });
+    if (av.error) toast("Avis : " + msgErr(av.error));
+    else S.avisClients = av.data || [];
   }
   render();
 }
@@ -8017,6 +8037,34 @@ const REP = {
       <button class="btn small" onclick="copyRecap()">Copier</button></div>` : "";
     return `<h1>Suggestions &amp; Bugs</h1><div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-bottom:8px"><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="chip" onclick="toggleRecap()">${AVIS_RECAP ? "Fermer le récap" : "Récap"}</button><button class="chip" onclick="copyRecapNow()">Copier le récap</button>${actAdmin.length ? '<button class="chip" onclick="archiveAll()">Tout archiver</button>' : ""}</div><span style="font-weight:600;white-space:nowrap">${act.length} suggestion${act.length > 1 ? "s" : ""}</span></div>` + recap + (act.map(card).join("") || '<p class="m">Aucune suggestion pour le moment.</p>') + (arch.length ? `<button class="btn ghost small" style="margin-top:8px" onclick="toggleArch()">${AVIS_ARCH ? "Masquer les archives" : "Afficher les archives (" + arch.length + ")"}</button>` + (AVIS_ARCH ? arch.map(card).join("") : "") : "");
   },
+  avisClients() {
+    const all = [...S.avisClients || []];
+    const visibles = all.filter((x) => !x.masque), masques = all.filter((x) => x.masque);
+    const n = all.filter((x) => x.note != null).length;
+    const moy = n ? (all.reduce((t, x) => t + (+x.note || 0), 0) / n).toFixed(1) : null;
+    const card = (x) => {
+      const nomCli = [x.clients && x.clients.prenom, x.clients && x.clients.nom].filter(Boolean).join(" ") || "Client";
+      const appareil = x.dossiers && x.dossiers.appareil ? public_mail_modele(x.dossiers.appareil) : "";
+      return `<div class="card">
+      <div class="row" style="justify-content:space-between;align-items:flex-start;gap:8px">
+        <div><div class="t" style="font-size:15px">${esc(nomCli)}</div>
+        <div class="m">${appareil ? esc(appareil) + " · " : ""}${fr(String(x.created_at).slice(0, 10))}</div></div>
+        ${lgStars(x.note)}
+      </div>
+      ${x.commentaire ? '<div class="m" style="margin-top:8px;white-space:pre-wrap;color:var(--ink)">' + esc(x.commentaire) + "</div>" : '<div class="m" style="margin-top:8px;font-style:italic">Sans commentaire</div>'}
+      ${x.masque ? '<div style="margin-top:6px"><span class="chip late">Masqué</span></div>' : ""}
+      ${!x.affichage_ok ? '<div style="margin-top:6px"><span class="chip">Client : pas d&rsquo;accord pour affichage public</span></div>' : ""}
+      <div class="row" style="margin-top:8px;flex-wrap:wrap;gap:6px">
+        ${x.masque ? `<button class="chip" onclick="avisCliMasquer('${x.id}',false)">Afficher à nouveau</button>` : `<button class="chip" onclick="avisCliMasquer('${x.id}',true)">Masquer</button>`}
+        <button class="chip late" onclick="avisCliDel('${x.id}')">Supprimer</button>
+      </div>
+    </div>`;
+    };
+    const stats = moy ? `<div class="card" style="margin-bottom:10px">${lgStars(moy)} <span style="font-weight:600">${moy}/5</span> <span class="m">· ${n} avis note${n > 1 ? "s" : ""}</span></div>` : "";
+    return `<h1>Avis clients</h1>` + stats +
+      (visibles.length ? visibles.map(card).join("") : '<p class="m">Aucun avis pour le moment.</p>') +
+      (masques.length ? `<button class="btn ghost small" style="margin-top:8px" onclick="toggleAvisCliMasques()">${AVIS_CLI_MASQ ? "Masquer les avis masqués" : "Afficher les avis masqués (" + masques.length + ")"}</button>` + (AVIS_CLI_MASQ ? masques.map(card).join("") : "") : "");
+  },
   appareils() {
     return appareilsHtml();
   },
@@ -8912,6 +8960,36 @@ async function avisDel(id) {
   }
   toast("Suggestion supprimée");
   await reload();
+}
+var AVIS_CLI_MASQ = false;
+function toggleAvisCliMasques() {
+  AVIS_CLI_MASQ = !AVIS_CLI_MASQ;
+  render();
+}
+async function avisCliReload() {
+  const av = await SB.from("avis").select("*, clients(prenom,nom), dossiers(appareil)").order("created_at", { ascending: false });
+  if (av.error) toast("Avis : " + msgErr(av.error));
+  else S.avisClients = av.data || [];
+}
+async function avisCliMasquer(id, masque) {
+  const { error } = await SB.from("avis").update({ masque }).eq("id", id);
+  if (error) {
+    toast(msgErr(error));
+    return;
+  }
+  await avisCliReload();
+  render();
+}
+async function avisCliDel(id) {
+  if (!confirm("Supprimer cet avis ? Cette action est définitive.")) return;
+  const { error } = await SB.from("avis").delete().eq("id", id);
+  if (error) {
+    toast(msgErr(error));
+    return;
+  }
+  toast("Avis supprimé");
+  await avisCliReload();
+  render();
 }
 async function savDel(id) {
   if (!confirm("Supprimer cette demande SAV ?")) return;
