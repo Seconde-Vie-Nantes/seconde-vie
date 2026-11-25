@@ -8309,9 +8309,9 @@ const REP = {
     </div>
     ${CLI_TRASH ? "" : '<div class="row" style="gap:6px;flex-wrap:wrap;margin:8px 0">' + cliFiltresHtml() + "</div>"}
     <div class="row" style="gap:6px;flex-wrap:wrap;margin:0 0 8px">
-      <div style="display:flex">
-        <button class="btn ghost sq" title="Exporter tous les clients vers Google Contacts (.vcf)" aria-label="Exporter tous les clients vers Google Contacts (.vcf)" style="border-radius:10px 0 0 10px;border-right:0" onclick="cliExporterTout()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 10V2"/><path d="M15 5l4-4 4 4"/></svg></button>
-        <button class="btn ghost sq" title="${CLI_TRASH ? "Voir les clients actifs" : "Corbeille des clients supprimés"}" aria-label="${CLI_TRASH ? "Voir les clients actifs" : "Corbeille des clients supprimés"}" style="border-radius:0 10px 10px 0;${CLI_TRASH ? "background:var(--bad);color:#fff;border-color:var(--bad)" : ""}" onclick="CLI_TRASH=!CLI_TRASH;render()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><g transform="translate(10,-1) scale(0.62)"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/><path d="M10 11v6M14 11v6"/></g></svg></button>
+      <div style="display:flex;gap:8px">
+        <button class="btn ghost sq" title="Exporter tous les clients vers Google Contacts (.vcf)" aria-label="Exporter tous les clients vers Google Contacts (.vcf)" onclick="cliExporterTout()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 10V2"/><path d="M15 5l4-4 4 4"/></svg></button>
+        <button class="btn ghost sq" title="${CLI_TRASH ? "Voir les clients actifs" : "Corbeille des clients supprimés"}" aria-label="${CLI_TRASH ? "Voir les clients actifs" : "Corbeille des clients supprimés"}" style="${CLI_TRASH ? "background:var(--bad);color:#fff;border-color:var(--bad)" : ""}" onclick="cliToggleTrash()"><svg width="26" height="16" viewBox="0 0 40 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><g transform="translate(22,-1) scale(0.75)"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/><path d="M10 11v6M14 11v6"/></g></svg></button>
       </div>
     </div>
     <div id="cliL">${cliHtml("")}</div>`;
@@ -10167,6 +10167,11 @@ function cliPasFiltre(c) {
 function cliFiltresHtml() {
   const sel = (k, all, opts) => `<select data-fk="${k}" onchange="cliSet('${k}',this.value)">${selOpts([["", all]].concat(opts), CLI_F[k])}</select>`;
   return '<button class="btn ghost sq" type="button" title="Supprimer les filtres" aria-label="Supprimer les filtres" onclick="cliResetFiltres()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16l-6 8v6l-4 2v-8z"/><path d="M4 20L20 4"/></svg></button>' + sel("compte", "Tous les comptes", [["ok", "Compte créé"], ["no", "Sans compte"]]) + sel("infos", "Toutes les infos", [["ok", "Infos vérifiées"], ["ko", "Infos à vérifier"]]) + sel("app", "Tous les appareils", [["ok", "Avec appareil"], ["no", "Sans appareil"]]) + sel("rep", "Toutes les réparations", [["ok", "Réparation en cours (non remise)"]]) + `<select onchange="cliSet('sort',this.value)">${selOpts([["nom", "Trier : nom"], ["creation_recent", "Trier : création, récents d’abord"], ["creation_ancien", "Trier : création, anciens d’abord"]], CLI_SORT)}</select>`;
+}
+function cliToggleTrash() {
+  CLI_TRASH = !CLI_TRASH;
+  CLI_NOANIM = true;
+  render();
 }
 function cliResetFiltres() {
   CLI_F.compte = "";
