@@ -8212,7 +8212,12 @@ const REP = {
       <div class="err" id="cErr"></div>
     </div>
     <div class="row" style="gap:6px;flex-wrap:wrap;margin:8px 0">${cliFiltresHtml()}</div>
-    <button class="btn ghost small" style="margin:8px 0 14px" onclick="CLI_TRASH=!CLI_TRASH;render()">${CLI_TRASH ? "Voir les clients actifs" : "Corbeille (" + S.clients.filter((c) => c.deleted_at).length + ")"}</button><div id="cliL">${cliHtml("")}</div>`;
+    <div class="row" style="gap:6px;flex-wrap:wrap;margin:0 0 8px">
+      <button class="btn ghost small" onclick="CLI_TRASH=!CLI_TRASH;render()">${CLI_TRASH ? "Voir les clients actifs" : "Corbeille (" + S.clients.filter((c) => c.deleted_at).length + ")"}</button>
+      <button class="btn ghost small" onclick="cliExporterTout()">Exporter tous les clients (contacts, .vcf)</button>
+    </div>
+    <p class="m" style="margin:0 0 10px">Fichier à importer dans <a href="https://contacts.google.com" target="_blank" rel="noopener">contacts.google.com</a> (menu Importer). En cas de ré-import après mise à jour, utilise ensuite « Corriger et gérer → Fusionner les doublons » dans Google Contacts pour éviter les doublons.</p>
+    <div id="cliL">${cliHtml("")}</div>`;
   },
   new() {
     if (NEW_TAB === "idees") return `<h1>Nouvelle prestation</h1>` + newTabs() + ideasHtml();
@@ -12236,7 +12241,7 @@ function editCli(id) {
   }
   const c = S.clients.find((x) => x.id === id);
   box.dataset.cid = id;
-  box.innerHTML = '<div class="card" style="margin:8px 0 0"><div class="two"><div><label>Prénom *</label><input id="eP" value="' + esc(c.prenom) + '"></div><div><label>Nom *</label><input id="eN" value="' + esc(c.nom) + '"></div></div><label>Téléphone *</label><input id="eT" value="' + esc(c.tel) + '"><label>Email de connexion</label><input id="eM" value="' + esc(c.mail) + '" disabled><label>Email de contact (facultatif)</label><input id="eMc" value="' + esc(c.mail_contact || "") + '"><label>Adresse</label><input id="eA" value="' + esc(c.adr) + '"><div class="two"><div><label>Code postal</label><input id="eCp" maxlength="5" value="' + esc(c.cp) + '"></div><div><label>Ville</label><input id="eV" value="' + esc(c.ville) + '"></div></div><label>Notes</label><textarea id="eNo" rows="2">' + esc(c.notes || "") + `</textarea><button class="btn" onclick="saveCli('` + id + `')">Enregistrer les modifications</button><div class="err" id="eErr"></div></div>`;
+  box.innerHTML = '<div class="card" style="margin:8px 0 0"><div class="two"><div><label>Prénom *</label><input id="eP" value="' + esc(c.prenom) + '"></div><div><label>Nom *</label><input id="eN" value="' + esc(c.nom) + '"></div></div><label>Téléphone *</label><input id="eT" value="' + esc(c.tel) + '"><label>Email de connexion</label><input id="eM" value="' + esc(c.mail) + '" disabled><label>Email de contact (facultatif)</label><input id="eMc" value="' + esc(c.mail_contact || "") + '"><label>Adresse</label><input id="eA" value="' + esc(c.adr) + '"><div class="two"><div><label>Code postal</label><input id="eCp" maxlength="5" value="' + esc(c.cp) + '"></div><div><label>Ville</label><input id="eV" value="' + esc(c.ville) + '"></div></div><label>Notes</label><textarea id="eNo" rows="2">' + esc(c.notes || "") + `</textarea><div class="row" style="gap:8px;margin-top:8px"><button class="btn" onclick="saveCli('` + id + `')">Enregistrer les modifications</button><button class="btn ghost" onclick="cliExporterUn('` + id + `')">Exporter en contact (.vcf)</button></div><div class="err" id="eErr"></div></div>`;
 }
 async function saveCli(id) {
   const v = (x) => $(x).value.trim(), err = $("eErr");
@@ -12266,6 +12271,52 @@ async function saveCli(id) {
   }
   toast("Client modifié");
   await reload();
+}
+/* Export clients -> fiches contact (.vcf), à importer dans Google Contacts. */
+function vcfEsc(s) {
+  return String(s == null ? "" : s).replace(/\\/g, "\\\\").replace(/\n/g, "\\n").replace(/,/g, "\\,").replace(/;/g, "\\;");
+}
+function cliVcard(c) {
+  const prenom = vcfEsc(c.prenom), nom = vcfEsc(c.nom);
+  const notesParts = [];
+  if (c.mail_contact) notesParts.push("Email de contact : " + c.mail_contact);
+  if (c.notes) notesParts.push(c.notes);
+  const lignes = [
+    "BEGIN:VCARD",
+    "VERSION:3.0",
+    "N:" + nom + ";" + prenom + ";;;",
+    "FN:" + vcfEsc((c.prenom || "") + " " + (c.nom || "")).trim(),
+  ];
+  if (c.tel) lignes.push("TEL;TYPE=CELL:" + vcfEsc(c.tel));
+  if (c.mail) lignes.push("EMAIL:" + vcfEsc(c.mail));
+  if (c.adr || c.ville || c.cp) lignes.push("ADR;TYPE=HOME:;;" + vcfEsc(c.adr) + ";" + vcfEsc(c.ville) + ";;" + vcfEsc(c.cp) + ";France");
+  if (notesParts.length) lignes.push("NOTE:" + vcfEsc(notesParts.join(" — ")));
+  lignes.push("END:VCARD");
+  return lignes.join("\r\n");
+}
+function vcfTelecharger(nomFichier, contenu) {
+  const blob = new Blob([contenu], { type: "text/vcard;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = nomFichier;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+function cliExporterUn(id) {
+  const c = S.clients.find((x) => x.id === id);
+  if (!c) return;
+  vcfTelecharger((fullName(c) || "client").replace(/[^\w\- ]/g, "") + ".vcf", cliVcard(c));
+}
+function cliExporterTout() {
+  const liste = S.clients.filter((c) => !c.deleted_at);
+  if (!liste.length) {
+    toast("Aucun client à exporter");
+    return;
+  }
+  vcfTelecharger("clients-seconde-vie.vcf", liste.map(cliVcard).join("\r\n"));
 }
 async function softDelCli(id) {
   if (!confirm("Mettre ce client dans la corbeille ? Tu pourras le restaurer.")) return;
