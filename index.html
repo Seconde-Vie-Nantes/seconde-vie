@@ -318,7 +318,9 @@ body.lg nav button.nav-outils-item{padding-left:26px;font-size:13px}
 body.lg .app{padding-bottom:110px}
 
 /* Ordinateur : navigation en colonne à gauche, contenu élargi */
+.nav-sep{display:none}
 @media (min-width:900px){
+  body.lg .nav-sep{display:block;height:64px;flex:none}
   body.lg nav{top:0;bottom:0;left:0;right:auto;width:232px;flex-direction:column;justify-content:flex-start;padding:22px 14px;border:0;border-right:1px solid #e3e9e5;border-radius:0;background:#fff;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain}
   body.lg nav button{flex:none;min-width:0;text-align:left;padding:10px 12px;font-size:14px;border-radius:8px;margin-bottom:2px;color:var(--mut)}
   body.lg nav button.on{background:#eef4f1;color:var(--brand);box-shadow:none}
@@ -6838,7 +6840,8 @@ function render() {
   if (ROLE === "rep") {
     nav.classList.remove("hide");
     const __navTop = nav.scrollTop, __navLeft = nav.scrollLeft;
-    nav.innerHTML = REP_NAV.map(([v, l]) => `<button class="${VIEW === v ? "on" : ""}" onclick="go('${v}')">${l}</button>`).join("") + navOutils() + outilsInlineHtml() + '<a class="nav-ecran" href="reparations-en-cours.html" target="_blank" rel="noopener">Réparations en cours ↗</a><button class="nav-copy" title="Copie toutes les suggestions et bugs non archivés" onclick="copierRecapNonArchive()">Copier le récap</button><button class="nav-logout" onclick="logout()">Déconnexion</button>';
+    const navBtn = ([v, l]) => `<button class="${VIEW === v ? "on" : ""}" onclick="go('${v}')">${l}</button>`;
+    nav.innerHTML = REP_NAV.filter(([v]) => v !== "ventes").map(navBtn).join("") + '<div class="nav-sep" aria-hidden="true"></div>' + REP_NAV.filter(([v]) => v === "ventes").map(navBtn).join("") + navOutils() + outilsInlineHtml() + '<a class="nav-ecran" href="reparations-en-cours.html" target="_blank" rel="noopener">Réparations en cours ↗</a><button class="nav-copy" title="Copie toutes les suggestions et bugs non archivés" onclick="copierRecapNonArchive()">Copier le récap</button><button class="nav-logout" onclick="logout()">Déconnexion</button>';
     nav.scrollTop = __navTop;
     nav.scrollLeft = __navLeft;
     /* L'en-tête (logo) est gardé tel quel d'une page à l'autre : on ne remplace que le contenu en dessous, sinon le haut de la page saute à chaque clic */
