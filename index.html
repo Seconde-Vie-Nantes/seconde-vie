@@ -119,6 +119,7 @@ body.lg .dash-page > h2:first-of-type{margin-top:6px}
 .vcol{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;cursor:pointer;min-width:0}
 .vbar{width:100%;max-width:40px;background:var(--brand);border-radius:6px 6px 2px 2px}
 .vval{font-size:12px;font-weight:700;margin-bottom:4px;white-space:nowrap}
+.vval.alert{color:var(--bad)}
 .vlbl{font-size:12px;color:var(--mut);margin-top:6px;text-transform:capitalize}
 .vcol:hover .vbar{opacity:.7}
 @media (min-width:900px){ .dash-charts{grid-template-columns:repeat(2,minmax(0,1fr))} }
@@ -7163,9 +7164,11 @@ function dashboardView() {
   const topSold = Object.entries(soldCount).sort((a, b) => b[1] - a[1]).slice(0, 5);
   const sMax = Math.max(1, ...topSold.map((x) => x[1]));
   const soldHtml = topSold.map(([name, n]) => barRow(name, n, n / sMax * 100, () => dashGo("ventes", { mois: cur }))).join("");
-  months.forEach((m) => m.sum = caDetail(m.key).net);
+  months.forEach((m) => { const cdm = caDetail(m.key); m.sum = cdm.rep + cdm.ven; m.benef = cdm.net; });
   const mMax = Math.max(1, ...months.map((m) => m.sum));
+  const bMax = Math.max(1, ...months.map((m) => Math.abs(m.benef)));
   const moisHtml = months.map((m) => '<div class="vcol" onclick="dashRun(' + dashReg(() => dashGo("ventes", { mois: m.key })) + ')"><div class="vval">' + eur(m.sum) + '</div><div class="vbar" style="height:' + Math.max(2, Math.round(m.sum / mMax * 130)) + 'px"></div><div class="vlbl">' + esc(m.lbl) + "</div></div>").join("");
+  const benefMoisHtml = months.map((m) => '<div class="vcol" onclick="dashRun(' + dashReg(() => dashGo("ventes", { mois: m.key })) + ')"><div class="vval' + (m.benef < 0 ? " alert" : "") + '">' + eur(m.benef) + '</div><div class="vbar" style="height:' + Math.max(2, Math.round(Math.abs(m.benef) / bMax * 130)) + "px" + (m.benef < 0 ? ";background:var(--bad)" : "") + '"></div><div class="vlbl">' + esc(m.lbl) + "</div></div>").join("");
   const countApp = {};
   S.dossiers.forEach((d) => {
     if (d.appareil) countApp[d.appareil] = (countApp[d.appareil] || 0) + 1;
@@ -7174,8 +7177,10 @@ function dashboardView() {
   const tMax = Math.max(1, ...top.map((x) => x[1]));
   const appHtml = top.map(([name, n]) => barRow(name, n, n / tMax * 100, () => dashGo("dossiers", { tab: "rep", app: name }))).join("");
   const cd = caDetail(cur);
-  const caCarte = '<div class="card chart-card" id="caMoisCard"><div class="chart-title">C.A. du mois</div><div class="dash-val' + (cd.net < 0 ? " alert" : "") + '" style="font-size:34px">' + eur(cd.net) + '</div><div class="m" style="margin-top:8px">Réparations et mods ' + eur(cd.rep) + " · Ventes " + eur(cd.ven) + " · Dépenses − " + eur(cd.dep) + "</div></div>";
-  const charts = '<div class="dash-charts">' + caCarte + '<div class="card chart-card"><div class="chart-title">Réparations en cours</div>' + statutHtml + '</div><div class="card chart-card"><div class="chart-title">C.A. · 6 mois</div><div class="vbars">' + moisHtml + '</div></div><div class="card chart-card"><div class="chart-title">Appareils les plus réparés</div>' + appHtml + '</div><div class="card chart-card"><div class="chart-title">Appareils les plus vendus</div>' + soldHtml + "</div></div>";
+  const caGross = cd.rep + cd.ven;
+  const caCarte = '<div class="card chart-card" id="caMoisCard"><div class="chart-title">C.A. du mois</div><div class="dash-val" style="font-size:34px">' + eur(caGross) + '</div><div class="m" style="margin-top:8px">Réparations et mods ' + eur(cd.rep) + " · Ventes " + eur(cd.ven) + "</div></div>";
+  const benefCarte = '<div class="card chart-card" id="benefMoisCard"><div class="chart-title">Bénéf. du mois</div><div class="dash-val' + (cd.net < 0 ? " alert" : "") + '" style="font-size:34px">' + eur(cd.net) + '</div><div class="m" style="margin-top:8px">C.A. ' + eur(caGross) + " · Dépenses − " + eur(cd.dep) + '</div><div class="vbars" style="margin-top:10px">' + benefMoisHtml + "</div></div>";
+  const charts = '<div class="dash-charts">' + caCarte + benefCarte + '<div class="card chart-card"><div class="chart-title">Réparations en cours</div>' + statutHtml + '</div><div class="card chart-card"><div class="chart-title">Appareils les plus réparés</div>' + appHtml + '</div><div class="card chart-card"><div class="chart-title">C.A. · 6 mois</div><div class="vbars">' + moisHtml + '</div></div><div class="card chart-card"><div class="chart-title">Appareils les plus vendus</div>' + soldHtml + "</div></div>";
   const next = act.filter((d) => d.echeance).sort((x, y) => x.echeance < y.echeance ? -1 : x.echeance > y.echeance ? 1 : 0).slice(0, 6);
   const rows = next.map((d) => `<div class="card" style="cursor:pointer" onclick="openD('` + d.id + `')"><div class="row" style="align-items:center"><div><div class="t">` + esc(d.appareil || "Réparation") + '</div><div class="m">' + esc(d.clients ? fullName(d.clients) : "") + '</div></div><span class="chip' + (d.echeance < today ? " late" : "") + '">' + fr(d.echeance) + "</span></div></div>").join("");
   const section = (titre, cartes) => "<h2>" + titre + '</h2><div class="dash-grid">' + cartes + "</div>";
