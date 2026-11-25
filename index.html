@@ -35,6 +35,14 @@ label{display:block;font-size:13px;font-weight:600;margin:8px 0 3px}
 nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;box-sizing:border-box;padding-bottom:env(safe-area-inset-bottom);background:var(--surf);border-top:1px solid var(--line);box-shadow:0 100px 0 0 var(--surf);display:flex;z-index:5}
 nav button{flex:1;border:0;background:none;padding:10px 2px;font-family:inherit;font-weight:600;font-size:12px;color:var(--mut);cursor:pointer}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}
+.embed-ov{position:fixed;inset:0;background:#15201a;z-index:25;display:flex;flex-direction:column}
+.embed-ov.hide{display:none}
+.embed-bar{flex:none;display:flex;align-items:center;gap:10px;padding:10px 14px;background:#1F2A24;color:#fff;font-family:Inter,system-ui,sans-serif}
+.embed-bar .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;font-size:14px}
+.embed-bar a,.embed-bar button{color:inherit;border-color:rgba(255,255,255,.35)}
+.embed-ov iframe{flex:1;border:0;width:100%;background:#fff}
+.tst-frame{border:1px solid var(--line);border-radius:14px;overflow:hidden;height:calc(100vh - 220px);min-height:420px}
+.tst-frame iframe{width:100%;height:100%;border:0;display:block;background:#fff}
 .modal .card{max-width:360px;width:100%;margin:0}
 .fb-wrap{position:fixed;left:14px;bottom:14px;z-index:15}
 .fb-wrap.edge{left:0}
@@ -512,6 +520,7 @@ body:not(.rep-nav).lg .app{margin-left:auto !important;margin-right:auto !import
 <div class="app" id="app"><div class="boot" id="boot" role="status"><div class="boot-dot"></div><p>Chargement…</p></div></div>
 <nav id="nav" class="hide"></nav>
 <div id="modal" class="modal hide"></div>
+<div id="embedOv" class="embed-ov hide"></div>
 <div id="fbWrap" class="fb-wrap"></div>
 <div id="notifWrap" class="notif-wrap"></div>
 <button id="sbToggle" class="sb-toggle" title="Afficher ou masquer la navigation (Ctrl+B)" aria-label="Afficher ou masquer la navigation" onclick="toggleSidebar()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><line x1="9" y1="4" x2="9" y2="20"/></svg></button>
@@ -6331,6 +6340,18 @@ function showModal(html) {
 function closeModal() {
   $("modal").classList.add("hide");
 }
+function openEmbed(url, titre) {
+  if (!/^https?:\/\//i.test(url || "")) {
+    toast("Lien invalide");
+    return;
+  }
+  $("embedOv").innerHTML = '<div class="embed-bar"><button class="btn ghost small" onclick="closeEmbed()">← Fermer</button><span class="t">' + esc(titre || url) + '</span><a class="btn ghost small" href="' + esc(url) + '" target="_blank" rel="noopener">Ouvrir dans un onglet</a></div><iframe src="' + esc(url) + '" title="' + esc(titre || url) + '" referrerpolicy="no-referrer-when-downgrade" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"></iframe>';
+  $("embedOv").classList.remove("hide");
+}
+function closeEmbed() {
+  $("embedOv").classList.add("hide");
+  $("embedOv").innerHTML = "";
+}
 function showDup(name) {
   showModal(`<div class="t" style="font-size:18px">Compte déjà existant</div>
   <p class="m">Un compte existe déjà avec ce téléphone ou cet email${name ? " (" + esc(name) + ")" : ""}.</p>
@@ -7365,7 +7386,7 @@ function toggleOutils(ev) {
   }
   /* On ne touche qu'à la barre : la page principale n'est pas redessinée */
   nav.querySelectorAll(".nav-outils-item").forEach(function (e) { e.remove(); });
-  var on = VIEW === "frp" || VIEW === "liens";
+  var on = VIEW === "frp" || VIEW === "liens" || VIEW === "testeurManette";
   btn.className = "nav-outils";
   btn.textContent = "Outils " + (OUTILS_OPEN ? "\u25b4" : "\u25be");
   if (OUTILS_OPEN) {
@@ -7376,12 +7397,12 @@ function toggleOutils(ev) {
   }
 }
 function navOutils() {
-  const on = VIEW === "frp" || VIEW === "liens";
+  const on = VIEW === "frp" || VIEW === "liens" || VIEW === "testeurManette";
   return '<button class="nav-outils" onclick="toggleOutils(event)">Outils ' + (OUTILS_OPEN ? "\u25b4" : "\u25be") + "</button>";
 }
 function outilsInlineHtml() {
   if (!OUTILS_OPEN) return "";
-  return '<button class="nav-outils-item' + (VIEW === "frp" ? " on" : "") + '" onclick="go(\'frp\')">FRP Bypass</button>' + '<button class="nav-outils-item' + (VIEW === "liens" ? " on" : "") + '" onclick="go(\'liens\')">Liens utiles</button>';
+  return '<button class="nav-outils-item' + (VIEW === "frp" ? " on" : "") + '" onclick="go(\'frp\')">FRP Bypass</button>' + '<button class="nav-outils-item' + (VIEW === "liens" ? " on" : "") + '" onclick="go(\'liens\')">Liens utiles</button>' + '<button class="nav-outils-item' + (VIEW === "testeurManette" ? " on" : "") + '" onclick="go(\'testeurManette\')">Testeur de manette</button>';
 }
 /* Liens utiles : liens externes enregistrés dans ce navigateur (localStorage) */
 function liensLire() {
@@ -7421,9 +7442,13 @@ function liensSupprimer(id) {
   liensEcrire(liensLire().filter((x) => x.id !== id));
   render();
 }
+var TESTEUR_MANETTE_URL = "https://hardwaretester.com/gamepad";
+function testeurManetteHtml() {
+  return '<h1>Testeur de manette</h1><div class="m" style="margin-bottom:8px">Branche la manette en USB (ou Bluetooth), puis appuie sur ses boutons pour vérifier qu\'ils répondent tous.</div><div class="tst-frame"><iframe src="' + esc(TESTEUR_MANETTE_URL) + '" title="Testeur de manette" allow="gamepad" referrerpolicy="no-referrer-when-downgrade"></iframe></div>';
+}
 function liensHtml() {
   const liste = liensLire().slice().reverse();
-  const rows = liste.length ? liste.map((x) => '<div class="card"><div class="row" style="align-items:center;gap:8px"><div style="min-width:0;flex:1"><div class="t" style="overflow-wrap:anywhere">' + esc(x.titre) + '</div><a href="' + esc(x.url) + '" target="_blank" rel="noopener" class="m" style="word-break:break-all">' + esc(x.url) + "</a></div>" + '<a class="btn sq ghost" href="' + esc(x.url) + '" target="_blank" rel="noopener" title="Ouvrir le lien" aria-label="Ouvrir le lien" style="color:inherit;text-decoration:none;flex:none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18"/><path d="M12 3a14 14 0 0 0 0 18"/></svg></a>' + '<button class="btn ghost sq" title="Supprimer" aria-label="Supprimer" style="color:var(--bad);border-color:var(--bad)" onclick="liensSupprimer(\'' + x.id + '\')">' + ICON_TRASH + "</button></div></div>").join("") : '<p class="m">Aucun lien pour le moment. Ajoute-en un ci-dessus.</p>';
+  const rows = liste.length ? liste.map((x) => '<div class="card"><div class="row" style="align-items:center;gap:8px"><div style="min-width:0;flex:1"><div class="t" style="overflow-wrap:anywhere">' + esc(x.titre) + '</div><a href="' + esc(x.url) + '" target="_blank" rel="noopener" class="m" style="word-break:break-all">' + esc(x.url) + "</a></div>" + '<button class="btn sq ghost" title="Afficher dans le site" aria-label="Afficher dans le site" onclick="openEmbed(\'' + esc(x.url).replace(/'/g, "&#39;") + "','" + esc(x.titre || x.url).replace(/'/g, "&#39;") + '\')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/></svg></button>' + '<a class="btn sq ghost" href="' + esc(x.url) + '" target="_blank" rel="noopener" title="Ouvrir le lien" aria-label="Ouvrir le lien" style="color:inherit;text-decoration:none;flex:none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18"/><path d="M12 3a14 14 0 0 0 0 18"/></svg></a>' + '<button class="btn ghost sq" title="Supprimer" aria-label="Supprimer" style="color:var(--bad);border-color:var(--bad)" onclick="liensSupprimer(\'' + x.id + '\')">' + ICON_TRASH + "</button></div></div>").join("") : '<p class="m">Aucun lien pour le moment. Ajoute-en un ci-dessus.</p>';
   return '<h1>Liens utiles</h1><div class="card"><h2 style="margin-top:0">Ajouter un lien</h2><label>Nom (facultatif)</label><input id="lnTitre" placeholder="Ex. Outil de d\u00e9blocage"><label>Adresse *</label><input id="lnUrl" placeholder="https://\u2026" inputmode="url"><div class="err" id="lnErr"></div><button class="btn" onclick="liensAjouter()" style="margin-top:10px">Ajouter</button></div>' + rows;
 }
 function frpLire() {
@@ -8051,6 +8076,7 @@ const REP = {
   agenda: () => agVue(),
   frp: () => frpHtml(),
   liens: () => liensHtml(),
+  testeurManette: () => testeurManetteHtml(),
   dashpage: () => dashPageView(),
   dossiers() {
     const aCommander = S.pieces.filter((p) => p.statut === "À commander"), enRoute = S.pieces.filter((p) => p.statut === "Commandé");
