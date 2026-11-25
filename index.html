@@ -7507,9 +7507,50 @@ var TESTEUR_MANETTE_URL = "https://hardwaretester.com/gamepad";
 function testeurManetteHtml() {
   return '<div style="padding:0 16px"><h1>Testeur de manette</h1><div class="m" style="margin-bottom:8px">Branche la manette en USB (ou Bluetooth), puis appuie sur ses boutons pour vérifier qu\'ils répondent tous.</div></div><div class="tst-frame"><iframe src="' + esc(TESTEUR_MANETTE_URL) + '" title="Testeur de manette" allow="gamepad" referrerpolicy="no-referrer-when-downgrade"></iframe></div>';
 }
+var LIENS_SHOW = {};
+var LIENS_EDIT = null;
+function liensToggleAff(id) {
+  LIENS_SHOW[id] = !LIENS_SHOW[id];
+  render();
+}
+function liensCopier(url) {
+  const fini = () => toast("Lien copi\u00e9");
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(fini).catch(() => toast("Impossible de copier"));
+  else toast("Impossible de copier");
+}
+function liensEditToggle(id) {
+  LIENS_EDIT = LIENS_EDIT === id ? null : id;
+  render();
+}
+async function liensEnregistrer(id) {
+  const err = $("le-err-" + id);
+  const titre = $("le-titre-" + id).value.trim();
+  let url = $("le-url-" + id).value.trim();
+  if (!url) {
+    if (err) err.textContent = "Ajoute une adresse (lien).";
+    return;
+  }
+  if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+  const up = await SB.from("liens_utiles").update({ titre: titre || url, url }).eq("id", id).select("*");
+  if (up.error) {
+    if (err) err.textContent = msgErr(up.error);
+    return;
+  }
+  const n = (up.data || [])[0];
+  if (n) S.liensUtiles = (S.liensUtiles || []).map((x) => x.id === id ? n : x);
+  LIENS_EDIT = null;
+  render();
+}
 function liensHtml() {
   const liste = S.liensUtiles || [];
-  const rows = liste.length ? liste.map((x) => '<div class="card"><div class="row" style="align-items:center;gap:8px"><div style="min-width:0;flex:1"><div class="t" style="overflow-wrap:anywhere">' + esc(x.titre) + '</div><a href="' + esc(x.url) + '" target="_blank" rel="noopener" class="m" style="word-break:break-all">' + esc(x.url) + "</a></div>" + '<a class="btn sq ghost" href="' + esc(x.url) + '" target="_blank" rel="noopener" title="Ouvrir le lien" aria-label="Ouvrir le lien" style="color:inherit;text-decoration:none;flex:none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18"/><path d="M12 3a14 14 0 0 0 0 18"/></svg></a>' + '<button class="btn ghost sq" title="Supprimer" aria-label="Supprimer" style="color:var(--bad);border-color:var(--bad)" onclick="liensSupprimer(\'' + x.id + '\')">' + ICON_TRASH + "</button></div></div>").join("") : '<p class="m">Aucun lien pour le moment. Ajoute-en un ci-dessus.</p>';
+  const rows = liste.length ? liste.map((x) => {
+    if (LIENS_EDIT === x.id) {
+      return '<div class="card"><label>Nom</label><input id="le-titre-' + x.id + '" value="' + esc(x.titre) + '"><label>Adresse *</label><input id="le-url-' + x.id + '" value="' + esc(x.url) + '" inputmode="url"><div class="err" id="le-err-' + x.id + '"></div><div class="row" style="gap:8px;margin-top:8px"><button class="btn small" onclick="liensEnregistrer(\'' + x.id + '\')">Enregistrer</button><button class="btn ghost small" onclick="liensEditToggle(\'' + x.id + '\')">Annuler</button></div></div>';
+    }
+    const showUrl = !!LIENS_SHOW[x.id];
+    const affiche = showUrl ? '<span class="m" style="word-break:break-all;cursor:pointer" onclick="liensToggleAff(\'' + x.id + '\')">' + esc(x.url) + '</span><button class="btn ghost sq" title="Copier le lien" aria-label="Copier le lien" style="width:26px;height:26px;min-width:26px;padding:0;flex:none" onclick="liensCopier(\'' + esc(x.url).replace(/'/g, "&#39;") + '\')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>' : '<div class="t" style="overflow-wrap:anywhere;cursor:pointer" onclick="liensToggleAff(\'' + x.id + '\')">' + esc(x.titre) + "</div>";
+    return '<div class="card"><div class="row" style="align-items:center;gap:8px"><div style="min-width:0;flex:1;display:flex;align-items:center;gap:6px">' + affiche + '</div><button class="btn ghost sq" title="Modifier" aria-label="Modifier" onclick="liensEditToggle(\'' + x.id + '\')">' + ICON_EDIT + '</button><a class="btn sq ghost" href="' + esc(x.url) + '" target="_blank" rel="noopener" title="Ouvrir le lien" aria-label="Ouvrir le lien" style="color:inherit;text-decoration:none;flex:none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18"/><path d="M12 3a14 14 0 0 0 0 18"/></svg></a><button class="btn ghost sq" title="Supprimer" aria-label="Supprimer" style="color:var(--bad);border-color:var(--bad)" onclick="liensSupprimer(\'' + x.id + '\')">' + ICON_TRASH + "</button></div></div>";
+  }).join("") : '<p class="m">Aucun lien pour le moment. Ajoute-en un ci-dessus.</p>';
   const titreBtn = LIENS_OPEN ? "Fermer le formulaire" : "Ajouter un lien";
   const bouton = '<div style="display:flex;align-items:center;gap:10px;margin:10px 0"><button class="btn ghost sq" title="' + titreBtn + '" aria-label="' + titreBtn + '" onclick="liensToggleForm()" style="transition:background-color .6s ease;' + (LIENS_OPEN ? "background:var(--bad);color:#fff;border-color:var(--bad)" : "") + '"><span class="ic' + (LIENS_OPEN ? " minus" : "") + '"></span></button><span class="m">' + titreBtn + "</span></div>";
   const form = LIENS_OPEN ? '<div class="card"><label>Nom (facultatif)</label><input id="lnTitre" placeholder="Ex. Outil de d\u00e9blocage"><label>Adresse *</label><input id="lnUrl" placeholder="https://\u2026" inputmode="url"><div class="err" id="lnErr"></div><button class="btn" onclick="liensAjouter()" style="margin-top:10px">Ajouter</button></div>' : "";
