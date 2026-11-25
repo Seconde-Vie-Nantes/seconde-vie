@@ -8256,7 +8256,6 @@ const REP = {
       <button class="btn ghost small" onclick="CLI_TRASH=!CLI_TRASH;render()">${CLI_TRASH ? "Voir les clients actifs" : "Corbeille (" + S.clients.filter((c) => c.deleted_at).length + ")"}</button>
       <button class="btn ghost sq" title="Exporter tous les clients vers Google Contacts (.vcf)" aria-label="Exporter tous les clients vers Google Contacts (.vcf)" onclick="cliExporterTout()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 9V3"/><path d="M16 6l3-3 3 3"/></svg></button>
     </div>
-    <p class="m" style="margin:0 0 10px">Fichier à importer dans <a href="https://contacts.google.com" target="_blank" rel="noopener">contacts.google.com</a> (menu Importer). En cas de ré-import après mise à jour, utilise ensuite « Corriger et gérer → Fusionner les doublons » dans Google Contacts pour éviter les doublons.</p>
     <div id="cliL">${cliHtml("")}</div>`;
   },
   new() {
