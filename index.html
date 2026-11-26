@@ -6870,7 +6870,7 @@ function render() {
     nav.scrollLeft = __navLeft;
     /* L'en-tête (logo) est gardé tel quel d'une page à l'autre : on ne remplace que le contenu en dessous, sinon le haut de la page saute à chaque clic */
     const repAccountPanel = REP_PARAM_OPEN ? '<div class="card" style="margin:0 0 10px"><button class="btn ghost small" onclick="logout()">Déconnexion</button></div>' : "";
-    setRepApp('<div class="row" data-hdr="1" style="align-items:center;justify-content:space-between;margin:4px 0 8px"><img class="logo-h" src="' + LOGO_SRC + '" alt="Seconde Vie"><div class="hdr-logout"><button class="btn ghost sq" title="Actualiser la page" aria-label="Actualiser la page" onclick="location.reload()">' + ICON_REFRESH + '</button><button class="btn ghost sq" title="Compte" aria-label="Compte" onclick="toggleRepParam()" style="width:auto;padding:0 10px;display:flex;align-items:center">' + ICON_PERSON + ICON_CHEVRON + "</button></div></div>", repAccountPanel + (DOSSIER ? detailView() : REP[VIEW]()));
+    setRepApp('<div class="row" data-hdr="1" style="align-items:center;justify-content:space-between;margin:4px 0 8px"><img class="logo-h" src="' + LOGO_SRC + '" alt="Seconde Vie"><div class="hdr-logout"><button class="btn ghost sq" title="Actualiser la page" aria-label="Actualiser la page" onclick="location.reload()">' + ICON_REFRESH + '</button><button class="btn ghost sq" title="Compte" aria-label="Compte" onclick="toggleRepParam()">' + ICON_PERSON + "</button></div></div>", repAccountPanel + (DOSSIER ? detailView() : REP[VIEW]()));
     if (VIEW === "stock" && !DOSSIER) {
       mpDraw("n");
       mpDraw("a");
