@@ -7247,8 +7247,9 @@ const TVA = 0.2;
 function htOf(ttc) {
   return Math.round((+ttc || 0) / (1 + TVA) * 100) / 100;
 }
-function depCalc(from) {
-  const h = $("depHT"), t = $("depTTC");
+function depCalc(from, prefix) {
+  const p = prefix || "dep";
+  const h = $(p + "HT"), t = $(p + "TTC");
   const v = parseFloat(String(from === "ht" ? h.value : t.value).replace(",", "."));
   if (from === "ht") t.value = isNaN(v) ? "" : String(Math.round(v * (1 + TVA) * 100) / 100);
   else h.value = isNaN(v) ? "" : String(htOf(v));
@@ -7349,7 +7350,7 @@ async function depPdfConfirmer() {
   let ok = 0, ko = 0;
   for (const it of r.items) {
     const montant = Math.round(it.total * (1 + TVA) * 100) / 100;
-    const libelle = it.nom + " (SKU " + it.sku + ") — " + it.qte + " x " + eur(it.pu) + "/u HT" + (r.numero ? " · facture " + r.numero : "");
+    const libelle = (it.qte > 1 ? it.qte + " x " : "") + it.nom + " (SKU " + it.sku + ")" + (r.numero ? " · facture " + r.numero : "");
     const { error } = await SB.from("depenses").insert({ date: r.date || todayIso(), libelle, montant, categorie: "Pièces" });
     if (error) ko++; else ok++;
   }
@@ -7364,6 +7365,38 @@ function depToggle() {
   DEP_OPEN = !DEP_OPEN;
   render();
 }
+var DEP_EDIT = null;
+function depEditToggle(id) {
+  DEP_EDIT = DEP_EDIT === id ? null : id;
+  DEP_OPEN = false;
+  render();
+}
+async function updateDepense(id) {
+  const err = $("edErr");
+  err.textContent = "";
+  const date = $("edDate").value, lib = $("edLib").value.trim();
+  const ttc = parseFloat(String($("edTTC").value).replace(",", "."));
+  if (!date) {
+    err.textContent = "Choisis une date.";
+    return;
+  }
+  if (!lib) {
+    err.textContent = "Écris un libellé.";
+    return;
+  }
+  if (isNaN(ttc) || ttc < 0) {
+    err.textContent = "Montant invalide : saisis le montant HT ou TTC.";
+    return;
+  }
+  const { error } = await SB.from("depenses").update({ date, libelle: lib, montant: Math.round(ttc * 100) / 100, categorie: $("edCat").value }).eq("id", id);
+  if (error) {
+    err.textContent = msgErr(error);
+    return;
+  }
+  DEP_EDIT = null;
+  flash("Dépense modifiée");
+  await reload();
+}
 function depEntete() {
   return '<h2 style="margin:0;' + (DEP_OPEN ? "margin-bottom:10px;" : "") + '"><button type="button" class="dep-tog" aria-expanded="' + (DEP_OPEN ? "true" : "false") + '" onclick="depToggle()" style="background:none;border:0;padding:0;color:inherit;font:inherit;text-align:left;cursor:pointer;width:100%;display:flex;justify-content:space-between;align-items:center;gap:8px">Nouvelle dépense <span aria-hidden="true" style="color:var(--mut)">' + (DEP_OPEN ? "▴" : "▾") + "</span></button></h2>";
 }
@@ -7374,7 +7407,9 @@ function depensesPage() {
   const sumT = (arr) => arr.reduce((t, x) => t + (+x.montant || 0), 0);
   const moisList = list.filter((x) => String(x.date).slice(0, 7) === cur);
   const bloc = (label, ttc) => '<div class="card"><div class="m">' + label + '</div><div class="t" style="font-size:22px">' + eur(ttc) + ' TTC</div><div class="m">' + eur(htOf(ttc)) + " HT</div></div>";
-  const rows = list.length ? list.map((x) => '<div class="card"><div class="row" style="align-items:center"><div><div class="t">' + esc(x.libelle) + '</div><div class="m">' + fr(x.date) + (x.categorie ? " · " + esc(x.categorie) : "") + '</div></div><div style="display:flex;align-items:center;gap:10px"><div style="text-align:right"><div class="t">' + eur(x.montant) + ' TTC</div><div class="m">' + eur(htOf(x.montant)) + ` HT</div></div><button class="chip late" onclick="deleteDepense('` + x.id + `')">Supprimer</button></div></div></div>`).join("") : '<p class="m">Aucune dépense enregistrée.</p>';
+  const rowEdit = (x) => '<div class="card"><label>Date</label><div class="date-wrap"><input id="edDate" type="date" value="' + esc(x.date || todayIso()) + `"><button type="button" class="date-x" title="Effacer" onclick="dateClear('edDate')">×</button></div><div class="two"><div><label>Montant HT (€)</label><input id="edHT" inputmode="decimal" placeholder="0" value="` + htOf(x.montant) + `" oninput="depCalc('ht','ed')"></div><div><label>Montant TTC (€) · TVA 20 %</label><input id="edTTC" inputmode="decimal" placeholder="0" value="` + (+x.montant || 0) + `" oninput="depCalc('ttc','ed')"></div></div><label>Libellé</label><input id="edLib" value="` + esc(x.libelle) + `"><label>Catégorie</label><select id="edCat">` + cats.map((c) => "<option" + (c === x.categorie ? " selected" : "") + ">" + c + "</option>").join("") + '</select><div id="edErr" class="err"></div><div style="display:flex;gap:8px"><button class="btn" onclick="updateDepense(\'' + x.id + "')\">Enregistrer</button><button class=\"btn ghost\" onclick=\"DEP_EDIT=null;render()\">Annuler</button></div></div>";
+  const rowView = (x) => '<div class="card"><div class="row" style="align-items:center"><div><div class="t">' + esc(x.libelle) + '</div><div class="m">' + fr(x.date) + (x.categorie ? " · " + esc(x.categorie) : "") + '</div></div><div style="display:flex;align-items:center;gap:10px"><div style="text-align:right"><div class="t">' + eur(x.montant) + ' TTC</div><div class="m">' + eur(htOf(x.montant)) + ` HT</div></div><button class="chip" onclick="depEditToggle('` + x.id + `')">Modifier</button><button class="chip late" onclick="deleteDepense('` + x.id + `')">Supprimer</button></div></div></div>`;
+  const rows = list.length ? list.map((x) => DEP_EDIT === x.id ? rowEdit(x) : rowView(x)).join("") : '<p class="m">Aucune dépense enregistrée.</p>';
   const retour = VIEW === "dashpage" ? '<div style="margin:4px 0 10px"><button class="btn small ghost" onclick="go(\'dashboard\')">← Tableau de bord</button></div>' : "";
   const pdfBtn = '<label class="btn ghost small" title="Importer une facture (.pdf)" style="cursor:pointer;position:relative;display:inline-flex;margin-top:10px">' + (DEP_PDF_BUSY ? "Lecture…" : "Importer une facture (.pdf)") + (DEP_PDF_BUSY ? "" : '<input type="file" accept="application/pdf" onchange="depImportPdf(this)" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none">') + "</label>";
   return retour + `<h1>Dépenses</h1><div class="two" style="margin-bottom:10px">` + bloc("Ce mois", sumT(moisList)) + bloc("Total", sumT(list)) + '</div>' + (DEP_PDF_PREVIEW ? depPdfPreviewHtml() : "") + '<div class="card">' + depEntete() + (DEP_OPEN ? '<label>Date</label><div class="date-wrap"><input id="depDate" type="date" value="' + todayIso() + `"><button type="button" class="date-x" title="Effacer" onclick="dateClear('depDate')">×</button></div><div class="two"><div><label>Montant HT (€)</label><input id="depHT" inputmode="decimal" placeholder="0" oninput="depCalc('ht')"></div><div><label>Montant TTC (€) · TVA 20 %</label><input id="depTTC" inputmode="decimal" placeholder="0" oninput="depCalc('ttc')"></div></div><label>Libellé</label><input id="depLib" placeholder="Ex. Écran PS5 fournisseur"><label>Catégorie</label><select id="depCat">` + cats.map((c) => "<option>" + c + "</option>").join("") + '</select><div id="depErr" class="err"></div><button class="btn" onclick="addDepense()">Ajouter la dépense</button>' : "") + pdfBtn + '</div><h2>Historique</h2>' + rows;
