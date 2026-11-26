@@ -552,8 +552,8 @@ body:not(.rep-nav).lg .app{margin-left:auto !important;margin-right:auto !import
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600&display=swap" rel="stylesheet"></head>
 <body class="lg">
-<script src="liquid-glass.js"></script>
 <div class="app" id="app"><div class="boot" id="boot" role="status"><div class="boot-dot"></div><p>Chargement…</p></div></div>
+<script src="liquid-glass.js" defer></script>
 <nav id="nav" class="hide"></nav>
 <div id="modal" class="modal hide"></div>
 <div id="embedOv" class="embed-ov hide"></div>
@@ -6410,85 +6410,84 @@ function showDup(name) {
   <button class="btn ghost" onclick="closeModal()">Fermer</button>`);
 }
 async function loadAll() {
-  const q = [
-    SB.from("dossiers").select("*, clients(prenom,nom)").order("created_at", { ascending: false }),
-    SB.from("pieces_dossier").select("*")
-  ];
-  if (ROLE === "rep") q.push(SB.from("clients").select("*").order("nom"), SB.from("stock").select("*").order("sku"), SB.from("invitations").select("*"));
-  else q.push(SB.from("clients").select("*"));
-  const r = await Promise.all(q);
-  const bad = r.find((x) => x.error);
+  /* Toutes les requêtes indépendantes partent en parallèle dès le départ (au lieu d'une longue
+     chaîne séquentielle) pour réduire le temps d'écran de chargement au démarrage. */
+  const repOnly = ROLE === "rep";
+  const tasks = {
+    dossiers: SB.from("dossiers").select("*, clients(prenom,nom)").order("created_at", { ascending: false }),
+    pieces: SB.from("pieces_dossier").select("*"),
+    clients: repOnly ? SB.from("clients").select("*").order("nom") : SB.from("clients").select("*"),
+    devices: SB.from("devices").select("*"),
+    appBase: SB.from("appareils_base").select("*"),
+    ventes: SB.from("ventes").select("*"),
+    prets: SB.from("prets").select("*"),
+    sav: SB.from("sav").select("*").order("created_at", { ascending: false }),
+    avoirs: SB.from("avoirs").select("*").order("date", { ascending: false })
+  };
+  if (repOnly) {
+    tasks.stock = SB.from("stock").select("*").order("sku");
+    tasks.inv = SB.from("invitations").select("*");
+    tasks.catalogue = SB.from("catalogue").select("*");
+    tasks.stockApp = SB.from("stock_appareils").select("*").order("nom");
+    tasks.depenses = SB.from("depenses").select("*").order("date", { ascending: false });
+    tasks.idees = SB.from("idees").select("*").order("created_at", { ascending: false });
+    tasks.feedback = SB.from("feedback").select("*").order("created_at", { ascending: false });
+    tasks.mails = SB.from("mails_log").select("dossier_id,type,envoye_at");
+  }
+  const pPhotos = reloadPhotos();
+  const pLiens = repOnly ? liensCharger().catch(() => {}) : null;
+  const pFrp = repOnly ? frpCharger().catch(() => {}) : null;
+  const keys = Object.keys(tasks);
+  const values = await Promise.all(keys.map((k) => tasks[k]));
+  const out = {};
+  keys.forEach((k, i) => { out[k] = values[i]; });
+
+  const bad = [out.dossiers, out.pieces, out.clients].find((x) => x.error);
   if (bad) throw bad.error;
-  S.dossiers = r[0].data;
-  S.pieces = r[1].data;
-  S.clients = r[2].data;
-  if (ROLE === "rep") {
-    S.stock = r[3].data;
-    S.inv = r[4].data;
+  S.dossiers = out.dossiers.data;
+  S.pieces = out.pieces.data;
+  S.clients = out.clients.data;
+  if (repOnly) {
+    S.stock = out.stock.data;
+    S.inv = out.inv.data;
   }
-  const dv = await SB.from("devices").select("*");
-  if (dv.error) throw dv.error;
-  S.devices = dv.data;
-  if (ROLE === "rep") {
-    const cg = await SB.from("catalogue").select("*");
-    S.catalogue = cg.data || [];
-    if (cg.error) toast("Catalogue : " + msgErr(cg.error));
+  if (out.devices.error) throw out.devices.error;
+  S.devices = out.devices.data;
+  if (repOnly) {
+    S.catalogue = out.catalogue.data || [];
+    if (out.catalogue.error) toast("Catalogue : " + msgErr(out.catalogue.error));
   }
-  const vt = await SB.from("ventes").select("*");
-  if (vt.error) {
+  if (out.ventes.error) {
     S.ventes = [];
-    if (ROLE === "rep") toast("Ventes : " + msgErr(vt.error));
-  } else S.ventes = vt.data || [];
-  {
-    const pr = await SB.from("prets").select("*");
-    S.prets = pr.error ? [] : pr.data || [];
-    if (pr.error && ROLE === "rep") toast("Prêts : " + msgErr(pr.error));
-  }
-  {
-    const ab = await SB.from("appareils_base").select("*");
-    S.appBaseErr = !!ab.error && ROLE === "rep";
-    S.appBase = ab.error ? [] : ab.data || [];
-  }
+    if (repOnly) toast("Ventes : " + msgErr(out.ventes.error));
+  } else S.ventes = out.ventes.data || [];
+  S.prets = out.prets.error ? [] : out.prets.data || [];
+  if (out.prets.error && repOnly) toast("Prêts : " + msgErr(out.prets.error));
+  S.appBaseErr = !!out.appBase.error && repOnly;
+  S.appBase = out.appBase.error ? [] : out.appBase.data || [];
   enrichirAppareils();
-  if (ROLE === "rep") {
-    const sa = await SB.from("stock_appareils").select("*").order("nom");
-    if (sa.error) toast("Appareils à vendre : " + msgErr(sa.error));
-    else S.stockApp = sa.data || [];
+  if (repOnly) {
+    if (out.stockApp.error) toast("Appareils à vendre : " + msgErr(out.stockApp.error));
+    else S.stockApp = out.stockApp.data || [];
   }
-  const sv = await SB.from("sav").select("*").order("created_at", { ascending: false });
-  if (sv.error) toast("SAV : " + msgErr(sv.error));
-  else S.sav = sv.data || [];
-  const av = await SB.from("avoirs").select("*").order("date", { ascending: false });
-  S.avoirs = av.error ? [] : av.data || [];
-  await reloadPhotos();
-  if (ROLE === "rep") {
-    const dp = await SB.from("depenses").select("*").order("date", { ascending: false });
-    if (dp.error) {
+  if (out.sav.error) toast("SAV : " + msgErr(out.sav.error));
+  else S.sav = out.sav.data || [];
+  S.avoirs = out.avoirs.error ? [] : out.avoirs.data || [];
+  if (repOnly) {
+    if (out.depenses.error) {
       S.depenses = [];
-      toast("Dépenses : " + msgErr(dp.error));
-    } else S.depenses = dp.data || [];
+      toast("Dépenses : " + msgErr(out.depenses.error));
+    } else S.depenses = out.depenses.data || [];
+    if (out.idees.error) toast("Idées : " + msgErr(out.idees.error));
+    else S.idees = out.idees.data || [];
+    if (out.feedback.error) toast("Suggestions : " + msgErr(out.feedback.error));
+    else S.feedback = out.feedback.data || [];
+    S.mails = out.mails.error ? [] : out.mails.data || [];
   }
-  if (ROLE === "rep") {
-    const idr = await SB.from("idees").select("*").order("created_at", { ascending: false });
-    if (idr.error) toast("Idées : " + msgErr(idr.error));
-    else S.idees = idr.data || [];
-  }
-  if (ROLE === "rep") {
-    const fb = await SB.from("feedback").select("*").order("created_at", { ascending: false });
-    if (fb.error) toast("Suggestions : " + msgErr(fb.error));
-    else S.feedback = fb.data || [];
-  }
-  if (ROLE === "rep") {
-    const ml = await SB.from("mails_log").select("dossier_id,type,envoye_at");
-    S.mails = ml.error ? [] : ml.data || [];
-  }
-  if (ROLE === "rep") {
-    try {
-      await liensCharger();
-    } catch (e) {}
-    try {
-      await frpCharger();
-    } catch (e) {}
+  await pPhotos;
+  if (repOnly) {
+    await pLiens;
+    await pFrp;
   }
 }
 async function reload() {
