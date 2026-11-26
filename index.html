@@ -286,15 +286,10 @@ body.lg .cl-mhead{position:sticky;top:0;z-index:6;background:#f4f6f5;margin-left
 body.lg{background:#f4f6f5;color:#17261f;min-height:100vh}
 body.lg h1{font-size:24px;font-weight:700;letter-spacing:-.02em;margin:6px 0 16px}
 body.lg h2{font-size:15px;font-weight:600;margin:18px 0 8px}
-body.lg .card{position:relative;background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.6);border-radius:20px;padding:14px 16px;margin-bottom:10px;box-shadow:0 8px 32px rgba(23,38,31,.10),inset 0 1px 0 rgba(255,255,255,.5);-webkit-backdrop-filter:blur(24px) saturate(180%);backdrop-filter:blur(24px) saturate(180%);transition:box-shadow .2s cubic-bezier(.25,.1,.25,1),transform .2s cubic-bezier(.25,.1,.25,1);overflow:hidden}
-body.lg .card::before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(135deg,rgba(255,255,255,.35) 0%,rgba(255,255,255,0) 45%);border-radius:inherit}
+body.lg .card{position:relative;background:#fff;border:1px solid #e3e9e5;border-radius:20px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 2px rgba(23,38,31,.04),0 6px 22px rgba(23,38,31,.06);transition:box-shadow .2s cubic-bezier(.25,.1,.25,1),transform .2s cubic-bezier(.25,.1,.25,1);overflow:hidden}
 body.lg .card[onclick]{cursor:pointer}
-body.lg .card[onclick]:hover{box-shadow:0 10px 36px rgba(23,38,31,.14),inset 0 1px 0 rgba(255,255,255,.6)}
+body.lg .card[onclick]:hover{box-shadow:0 4px 18px rgba(23,38,31,.10)}
 body.lg .card[onclick]:active{transform:scale(.985)}
-@media (prefers-reduced-transparency: reduce){
-  body.lg .card{background:#fff;border:1px solid #e3e9e5;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:0 1px 2px rgba(23,38,31,.04),0 6px 22px rgba(23,38,31,.06)}
-  body.lg .card::before{display:none}
-}
 @media (prefers-reduced-motion: reduce){ body.lg .card{transition:none} body.lg .card[onclick]:active{transform:none} }
 body.lg input,body.lg select,body.lg textarea{background:rgba(255,255,255,.9);border:1px solid #d9e1dc;border-radius:10px;padding:9px 12px;font-size:14px;box-shadow:none}
 body.lg input:focus,body.lg select:focus,body.lg textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(31,77,63,.12)}
