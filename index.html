@@ -14134,6 +14134,7 @@ function stkImportCsv(input) {
         return;
       }
       STK_CSV_PREVIEW = rows;
+      STK_CSV_LINK = {};
       render();
     } catch (e) {
       toast("Fichier CSV invalide : " + (e && e.message ? e.message : e));
@@ -14174,32 +14175,107 @@ function parseCommandeCsv(text) {
   }
   return out;
 }
+var STK_CSV_LINK = {};
+function stkCsvLinkFor(i, r) {
+  if (!STK_CSV_LINK[i]) {
+    const auto = S.stock.find((s) => String(s.sku).toLowerCase() === r.sku.toLowerCase());
+    STK_CSV_LINK[i] = auto ? { sku: auto.sku } : { sku: null };
+  }
+  return STK_CSV_LINK[i];
+}
+function stkCsvRelierOuvrir(i) {
+  STK_CSV_LINK[i] = Object.assign({}, STK_CSV_LINK[i], { searching: true, isNew: false });
+  render();
+}
+function stkCsvRelierFermer(i) {
+  if (STK_CSV_LINK[i]) STK_CSV_LINK[i].searching = false;
+  render();
+}
+function stkCsvRelierChoisir(i, val) {
+  const m = /\(SKU (.+)\)\s*$/.exec(val || "");
+  if (!m) return;
+  const s = S.stock.find((x) => x.sku === m[1]);
+  if (!s) return;
+  STK_CSV_LINK[i] = { sku: s.sku, searching: false };
+  render();
+}
+function stkCsvCreer(i) {
+  STK_CSV_LINK[i] = { sku: null, isNew: true };
+  MP["csvn" + i] = [];
+  render();
+  mpDraw("csvn" + i);
+}
+function stkCsvAnnulerLien(i, r) {
+  delete STK_CSV_LINK[i];
+  render();
+}
+function stkCsvModelesOuvrir(i) {
+  const link = STK_CSV_LINK[i];
+  if (!link || !link.sku) return;
+  const piece = S.stock.find((s) => s.sku === link.sku);
+  link.editModeles = !link.editModeles;
+  if (link.editModeles) MP["csve" + i] = piece && piece.modeles && piece.modeles.length ? piece.modeles.slice() : piece && piece.modele ? [piece.modele] : [];
+  render();
+  if (link.editModeles) mpDraw("csve" + i);
+}
+function stkCsvRowHtml(r, i) {
+  const link = stkCsvLinkFor(i, r);
+  const piece = link.sku ? S.stock.find((s) => s.sku === link.sku) : null;
+  const head = '<div class="t" style="font-size:14px">' + esc(r.nom || r.sku) + '</div><div class="m">SKU fournisseur ' + esc(r.sku) + " · qté " + r.qte + (r.pu ? " · " + eur(r.pu) + "/u" : "") + "</div>";
+  let body;
+  if (link.isNew) {
+    body = '<div class="m" style="margin-top:6px;color:var(--brand)">Nouvelle pièce</div><label>SKU</label><input id="csvSku' + i + '" value="' + esc(r.sku) + '"><label>Nom</label><input id="csvNom' + i + '" value="' + esc(r.nom || "") + '"><label>Modèles</label><div id="mp-csvn' + i + '"></div><button class="chip" style="margin-top:6px" onclick="stkCsvAnnulerLien(' + i + ')">Annuler</button>';
+  } else if (piece) {
+    const nq = (+piece.qte || 0) + r.qte;
+    body = '<div class="m" style="margin-top:6px">→ relié à ' + esc(piece.nom) + " (SKU " + esc(piece.sku) + ") · stock " + (+piece.qte || 0) + " → " + nq + '</div><div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap"><button class="chip" onclick="stkCsvRelierOuvrir(' + i + ')">Relier à une autre pièce</button><button class="chip" onclick="stkCsvModelesOuvrir(' + i + ')">Modèles</button></div>' + (link.editModeles ? '<div style="margin-top:6px"><label>Modèles de « ' + esc(piece.nom) + ' »</label><div id="mp-csve' + i + '"></div></div>' : "");
+  } else {
+    body = '<div class="m" style="margin-top:6px;color:var(--bad)">Aucune pièce correspondante trouvée dans le stock.</div><div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap"><button class="chip" onclick="stkCsvRelierOuvrir(' + i + ')">Relier à une pièce existante</button><button class="chip" onclick="stkCsvCreer(' + i + ')">Créer une pièce</button></div>';
+  }
+  if (link.searching) {
+    body += '<div style="margin-top:6px"><label>Rechercher une pièce</label><input list="csvDl' + i + '" placeholder="Nom ou SKU…" oninput="stkCsvRelierChoisir(' + i + ',this.value)"><datalist id="csvDl' + i + '">' + (S.stock || []).map((s) => '<option value="' + esc(s.nom + " (SKU " + s.sku + ")") + '">').join("") + '</datalist><button class="chip" style="margin-top:4px" onclick="stkCsvRelierFermer(' + i + ')">Annuler</button></div>';
+  }
+  return '<div class="card" style="margin:8px 0">' + head + body + "</div>";
+}
 function stkCsvPreviewHtml() {
   const rows = STK_CSV_PREVIEW || [];
-  const trouve = (r) => S.stock.find((s) => String(s.sku).toLowerCase() === r.sku.toLowerCase());
-  const matched = rows.filter((r) => trouve(r));
-  const unmatched = rows.filter((r) => !trouve(r));
-  const li = (r) => {
-    const s = trouve(r);
-    const nq = (+s.qte || 0) + r.qte;
-    return '<div class="row" style="align-items:center;gap:8px;padding:4px 0"><div style="flex:1;min-width:0"><div class="t" style="font-size:14px">' + esc(s.nom) + '</div><div class="m">SKU ' + esc(r.sku) + " · stock " + (+s.qte || 0) + " → " + nq + " (+" + r.qte + ")</div></div></div>";
-  };
-  const liKo = (r) => '<div class="m">' + esc(r.sku) + " — " + esc(r.nom || "(sans nom)") + " · qté " + r.qte + "</div>";
-  return '<div class="card" style="margin-top:10px;border:2px solid var(--brand)"><div class="t">Import de commande : ' + rows.length + " ligne(s) lue(s)</div>" + (matched.length ? '<div class="m" style="margin:8px 0 2px">À mettre à jour dans le stock (' + matched.length + ")</div>" + matched.map(li).join("") : "") + (unmatched.length ? '<div class="m" style="margin:10px 0 2px;color:var(--bad)">SKU introuvables dans le stock, non modifiés (' + unmatched.length + ")</div>" + unmatched.map(liKo).join("") : "") + '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" onclick="stkCsvConfirmer()"' + (matched.length ? "" : " disabled") + ">Mettre à jour le stock (" + matched.length + ")</button><button class=\"btn ghost\" onclick=\"STK_CSV_PREVIEW=null;render()\">Annuler</button></div></div>";
+  return '<div class="card" style="margin-top:10px;border:2px solid var(--brand)"><div class="t">Import de commande : ' + rows.length + " ligne(s) lue(s)</div>" + rows.map((r, i) => stkCsvRowHtml(r, i)).join("") + '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" onclick="stkCsvConfirmer()">Valider l’import</button><button class="btn ghost" onclick="STK_CSV_PREVIEW=null;STK_CSV_LINK={};render()">Annuler</button></div></div>';
 }
 async function stkCsvConfirmer() {
-  const rows = (STK_CSV_PREVIEW || []).filter((r) => S.stock.some((s) => String(s.sku).toLowerCase() === r.sku.toLowerCase()));
+  const rows = STK_CSV_PREVIEW || [];
   let ok = 0, ko = 0;
-  for (const r of rows) {
-    const s = S.stock.find((x) => String(x.sku).toLowerCase() === r.sku.toLowerCase());
-    const nq = (+s.qte || 0) + r.qte;
-    const { error } = await SB.from("stock").update({ qte: nq }).eq("sku", s.sku);
-    if (error) { ko++; continue; }
-    s.qte = nq;
-    ok++;
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i];
+    const link = stkCsvLinkFor(i, r);
+    if (link.isNew) {
+      const skuEl = $("csvSku" + i), nomEl = $("csvNom" + i);
+      const sku = ((skuEl ? skuEl.value : r.sku) || "").trim().toUpperCase();
+      const nom = ((nomEl ? nomEl.value : r.nom) || "").trim();
+      const modeles = MP["csvn" + i] || [];
+      if (!sku || !nom || !modeles.length || S.stock.some((s) => s.sku === sku)) { ko++; continue; }
+      const { error } = await SB.from("stock").insert({ sku, nom, type: typeOf(modeles), modeles, modele: modeles.join(", ") || null, qte: r.qte, res: 0, prix: r.pu || null });
+      if (error) { ko++; continue; }
+      ok++;
+    } else if (link.sku) {
+      const piece = S.stock.find((s) => s.sku === link.sku);
+      if (!piece) { ko++; continue; }
+      const nq = (+piece.qte || 0) + r.qte;
+      const patch = { qte: nq };
+      if (link.editModeles) {
+        const modeles = MP["csve" + i] || [];
+        if (modeles.length) { patch.modeles = modeles; patch.type = typeOf(modeles); patch.modele = modeles.join(", ") || null; }
+      }
+      const { error } = await SB.from("stock").update(patch).eq("sku", piece.sku);
+      if (error) { ko++; continue; }
+      Object.assign(piece, patch);
+      ok++;
+    } else {
+      ko++;
+    }
   }
   STK_CSV_PREVIEW = null;
-  flash(ok + " pièce(s) mise(s) à jour" + (ko ? ", " + ko + " erreur(s)" : ""));
+  STK_CSV_LINK = {};
+  await loadAll();
+  flash(ok + " pièce(s) mise(s) à jour/créée(s)" + (ko ? ", " + ko + " ligne(s) ignorée(s)" : ""));
   render();
 }
 var ASORT = "nom", ATYPE = "", AST = "", AGRADE = "";
