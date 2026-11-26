@@ -309,9 +309,10 @@ body.lg .ok{background:#def3e5;color:var(--ok)}
 body.lg .warn{background:#fff1d6;color:var(--warn)}
 body.lg .modal{background:rgba(23,38,31,.32);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
 body.lg .modal .card{background:#fff;backdrop-filter:none;-webkit-backdrop-filter:none}
-body.lg .fb-panel{background:rgba(255,255,255,.32);border:1px solid rgba(255,255,255,.6);border-radius:16px;box-shadow:0 12px 32px rgba(23,38,31,.16),inset 0 1px 0 rgba(255,255,255,.5);-webkit-backdrop-filter:blur(10px) saturate(180%);backdrop-filter:blur(10px) saturate(180%)}
-body.lg .fb-head{border-bottom:1px solid rgba(255,255,255,.5);border-radius:16px 16px 0 0;background:linear-gradient(135deg,rgba(255,255,255,.3) 0%,rgba(255,255,255,0) 60%)}
-@media (prefers-reduced-transparency: reduce){ body.lg .fb-panel{background:#fff;border:1px solid #e3e9e5;-webkit-backdrop-filter:none;backdrop-filter:none} body.lg .fb-head{background:none} }
+body.lg .fb-panel{position:fixed;isolation:isolate;cursor:grab;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.6);border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.15),inset 0 1px 1px rgba(255,255,255,.4);-webkit-backdrop-filter:blur(4px) saturate(1.3);backdrop-filter:blur(4px) saturate(1.3) url(#glass-distortion-fb)}
+body.lg .fb-panel::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;border-radius:inherit;background:linear-gradient(135deg,rgba(255,255,255,.35) 0%,rgba(255,255,255,0) 45%)}
+body.lg .fb-head{position:relative;cursor:move;border-bottom:1px solid rgba(255,255,255,.4)}
+@media (prefers-reduced-transparency: reduce){ body.lg .fb-panel{background:linear-gradient(180deg,rgba(255,255,255,.38),rgba(255,255,255,.16));border:1px solid #e3e9e5;-webkit-backdrop-filter:none;backdrop-filter:none} body.lg .fb-panel::before{display:none} }
 body.lg .toast,body.lg .flash{background:#17261f;border-radius:10px;-webkit-backdrop-filter:none;backdrop-filter:none}
 /* Navigation : barre flottante claire sur téléphone */
 body.lg nav{left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));top:auto;width:auto;max-width:none;transform:none;padding:4px;border:1px solid #e3e9e5;border-radius:16px;background:rgba(255,255,255,.94);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);box-shadow:0 8px 24px rgba(23,38,31,.10);overflow-x:auto;scrollbar-width:none}
@@ -545,6 +546,7 @@ body:not(.rep-nav).lg .app{margin-left:auto !important;margin-right:auto !import
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600&display=swap" rel="stylesheet"></head>
 <body class="lg">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="glass-distortion-fb" x="0%" y="0%" width="100%" height="100%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency="0.008 0.008" numOctaves="2" seed="92" result="noise"/><feGaussianBlur in="noise" stdDeviation="2" result="blurred"/><feDisplacementMap in="SourceGraphic" in2="blurred" scale="70" xChannelSelector="R" yChannelSelector="G"/></filter></svg>
 <div class="app" id="app"><div class="boot" id="boot" role="status"><div class="boot-dot"></div><p>Chargement…</p></div></div>
 <nav id="nav" class="hide"></nav>
 <div id="modal" class="modal hide"></div>
