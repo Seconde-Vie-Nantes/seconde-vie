@@ -7253,6 +7253,111 @@ function depCalc(from) {
   if (from === "ht") t.value = isNaN(v) ? "" : String(Math.round(v * (1 + TVA) * 100) / 100);
   else h.value = isNaN(v) ? "" : String(htOf(v));
 }
+/* Import automatique d'une facture fournisseur (.pdf) : extrait les lignes (SKU, produit, quantité,
+   prix unitaire HT, total HT) et prépare une dépense par ligne, montant à l'unité bien noté. */
+var DEP_PDF_PREVIEW = null, DEP_PDF_BUSY = false;
+var PDFJS_READY = null;
+function loadPdfJs() {
+  if (PDFJS_READY) return PDFJS_READY;
+  PDFJS_READY = new Promise((resolve, reject) => {
+    if (window.pdfjsLib) return resolve(window.pdfjsLib);
+    const s = document.createElement("script");
+    s.src = "pdf.min.js";
+    s.onload = () => {
+      try {
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = "pdf.worker.min.js";
+        resolve(window.pdfjsLib);
+      } catch (e) {
+        reject(e);
+      }
+    };
+    s.onerror = () => reject(new Error("Impossible de charger le lecteur PDF."));
+    document.head.appendChild(s);
+  });
+  return PDFJS_READY;
+}
+function depImportPdf(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  input.value = "";
+  DEP_PDF_BUSY = true;
+  render();
+  depParsePdfFile(file).then((r) => {
+    DEP_PDF_BUSY = false;
+    if (!r.items.length) {
+      toast("Aucune ligne de produit reconnue dans ce PDF.");
+      render();
+      return;
+    }
+    DEP_PDF_PREVIEW = r;
+    render();
+  }).catch((e) => {
+    DEP_PDF_BUSY = false;
+    toast("Lecture de la facture impossible : " + (e && e.message ? e.message : e));
+    render();
+  });
+}
+async function depParsePdfFile(file) {
+  const pdfjsLib = await loadPdfJs();
+  const buf = await file.arrayBuffer();
+  const doc = await pdfjsLib.getDocument({ data: buf }).promise;
+  const lines = [];
+  for (let p = 1; p <= doc.numPages; p++) {
+    const page = await doc.getPage(p);
+    const tc = await page.getTextContent();
+    const groups = [];
+    tc.items.forEach((it) => {
+      const y = Math.round(it.transform[5]);
+      let g = groups.find((g2) => Math.abs(g2.y - y) <= 2);
+      if (!g) { g = { y, parts: [] }; groups.push(g); }
+      g.parts.push({ x: it.transform[4], s: it.str });
+    });
+    groups.sort((a, b) => b.y - a.y).forEach((g) => {
+      lines.push(g.parts.sort((a, b) => a.x - b.x).map((p2) => p2.s).join(" ").replace(/\s+/g, " ").trim());
+    });
+  }
+  const full = lines.join("\n");
+  let date = null;
+  const dm = full.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  if (dm) date = dm[3] + "-" + dm[2] + "-" + dm[1];
+  const nm = full.match(/Facture\s*#\s*(\S+)/);
+  const numero = nm ? nm[1] : "";
+  const items = [];
+  const re = /^(\S+)\s+(.+?)\s+(\d+)\s+([\d.,]+)\s*€\s*\d+%\s*([\d.,]+)\s*€\s*$/;
+  lines.forEach((l) => {
+    const m = l.match(re);
+    if (!m) return;
+    if (/^sku$/i.test(m[1])) return;
+    if (!/[0-9-]/.test(m[1])) return;
+    const sku = m[1], nom = m[2].trim();
+    const qte = parseInt(m[3], 10) || 0;
+    const pu = parseFloat(m[4].replace(/\./g, "").replace(",", ".")) || parseFloat(m[4].replace(",", "."));
+    const total = parseFloat(m[5].replace(/\./g, "").replace(",", ".")) || parseFloat(m[5].replace(",", "."));
+    if (qte > 0 && total > 0) items.push({ sku, nom, qte, pu, total });
+  });
+  return { numero, date, items };
+}
+function depPdfPreviewHtml() {
+  const r = DEP_PDF_PREVIEW;
+  const li = (it) => '<div class="row" style="align-items:center;gap:8px;padding:4px 0"><div style="flex:1;min-width:0"><div class="t" style="font-size:14px">' + esc(it.nom) + '</div><div class="m">SKU ' + esc(it.sku) + " · " + it.qte + " × " + eur(it.pu) + "/u HT · total " + eur(it.total) + " HT (" + eur(Math.round(it.total * (1 + TVA) * 100) / 100) + " TTC)</div></div></div>";
+  const totalTtc = r.items.reduce((t, it) => t + it.total * (1 + TVA), 0);
+  return '<div class="card" style="margin-top:10px;border:2px solid var(--brand)"><div class="t">Facture' + (r.numero ? " " + esc(r.numero) : "") + (r.date ? " du " + fr(r.date) : "") + " : " + r.items.length + " ligne(s)</div>" + r.items.map(li).join("") + '<div class="m" style="margin-top:8px">Total : ' + eur(Math.round(totalTtc * 100) / 100) + ' TTC</div><div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" onclick="depPdfConfirmer()">Créer ' + r.items.length + ' dépense(s)</button><button class="btn ghost" onclick="DEP_PDF_PREVIEW=null;render()">Annuler</button></div></div>';
+}
+async function depPdfConfirmer() {
+  const r = DEP_PDF_PREVIEW;
+  if (!r) return;
+  let ok = 0, ko = 0;
+  for (const it of r.items) {
+    const montant = Math.round(it.total * (1 + TVA) * 100) / 100;
+    const libelle = it.nom + " (SKU " + it.sku + ") — " + it.qte + " x " + eur(it.pu) + "/u HT" + (r.numero ? " · facture " + r.numero : "");
+    const { error } = await SB.from("depenses").insert({ date: r.date || todayIso(), libelle, montant, categorie: "Pièces" });
+    if (error) ko++; else ok++;
+  }
+  DEP_PDF_PREVIEW = null;
+  await loadAll();
+  flash(ok + " dépense(s) créée(s)" + (ko ? ", " + ko + " erreur(s)" : ""));
+  render();
+}
 /* Formulaire « Nouvelle dépense » : menu déroulant, fermé par défaut */
 var DEP_OPEN = false;
 function depToggle() {
@@ -7271,7 +7376,8 @@ function depensesPage() {
   const bloc = (label, ttc) => '<div class="card"><div class="m">' + label + '</div><div class="t" style="font-size:22px">' + eur(ttc) + ' TTC</div><div class="m">' + eur(htOf(ttc)) + " HT</div></div>";
   const rows = list.length ? list.map((x) => '<div class="card"><div class="row" style="align-items:center"><div><div class="t">' + esc(x.libelle) + '</div><div class="m">' + fr(x.date) + (x.categorie ? " · " + esc(x.categorie) : "") + '</div></div><div style="display:flex;align-items:center;gap:10px"><div style="text-align:right"><div class="t">' + eur(x.montant) + ' TTC</div><div class="m">' + eur(htOf(x.montant)) + ` HT</div></div><button class="chip late" onclick="deleteDepense('` + x.id + `')">Supprimer</button></div></div></div>`).join("") : '<p class="m">Aucune dépense enregistrée.</p>';
   const retour = VIEW === "dashpage" ? '<div style="margin:4px 0 10px"><button class="btn small ghost" onclick="go(\'dashboard\')">← Tableau de bord</button></div>' : "";
-  return retour + `<h1>Dépenses</h1><div class="two" style="margin-bottom:10px">` + bloc("Ce mois", sumT(moisList)) + bloc("Total", sumT(list)) + '</div><div class="card">' + depEntete() + (DEP_OPEN ? '<label>Date</label><div class="date-wrap"><input id="depDate" type="date" value="' + todayIso() + `"><button type="button" class="date-x" title="Effacer" onclick="dateClear('depDate')">×</button></div><div class="two"><div><label>Montant HT (€)</label><input id="depHT" inputmode="decimal" placeholder="0" oninput="depCalc('ht')"></div><div><label>Montant TTC (€) · TVA 20 %</label><input id="depTTC" inputmode="decimal" placeholder="0" oninput="depCalc('ttc')"></div></div><label>Libellé</label><input id="depLib" placeholder="Ex. Écran PS5 fournisseur"><label>Catégorie</label><select id="depCat">` + cats.map((c) => "<option>" + c + "</option>").join("") + '</select><div id="depErr" class="err"></div><button class="btn" onclick="addDepense()">Ajouter la dépense</button>' : "") + '</div><h2>Historique</h2>' + rows;
+  const pdfBtn = '<label class="btn ghost small" title="Importer une facture (.pdf)" style="cursor:pointer;position:relative;display:inline-flex;margin-top:10px">' + (DEP_PDF_BUSY ? "Lecture…" : "Importer une facture (.pdf)") + (DEP_PDF_BUSY ? "" : '<input type="file" accept="application/pdf" onchange="depImportPdf(this)" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none">') + "</label>";
+  return retour + `<h1>Dépenses</h1><div class="two" style="margin-bottom:10px">` + bloc("Ce mois", sumT(moisList)) + bloc("Total", sumT(list)) + '</div>' + (DEP_PDF_PREVIEW ? depPdfPreviewHtml() : "") + '<div class="card">' + depEntete() + (DEP_OPEN ? '<label>Date</label><div class="date-wrap"><input id="depDate" type="date" value="' + todayIso() + `"><button type="button" class="date-x" title="Effacer" onclick="dateClear('depDate')">×</button></div><div class="two"><div><label>Montant HT (€)</label><input id="depHT" inputmode="decimal" placeholder="0" oninput="depCalc('ht')"></div><div><label>Montant TTC (€) · TVA 20 %</label><input id="depTTC" inputmode="decimal" placeholder="0" oninput="depCalc('ttc')"></div></div><label>Libellé</label><input id="depLib" placeholder="Ex. Écran PS5 fournisseur"><label>Catégorie</label><select id="depCat">` + cats.map((c) => "<option>" + c + "</option>").join("") + '</select><div id="depErr" class="err"></div><button class="btn" onclick="addDepense()">Ajouter la dépense</button>' : "") + pdfBtn + '</div><h2>Historique</h2>' + rows;
 }
 async function addDepense() {
   const err = $("depErr");
@@ -8364,8 +8470,10 @@ const REP = {
     const piecesTab = `
     <div class="row" style="gap:8px;align-items:center;flex-wrap:nowrap;margin-top:4px">
       <button class="btn sq" id="stkAddB" title="${STK_ADD ? "Fermer le formulaire" : "Ajouter une pièce"}" aria-label="${STK_ADD ? "Fermer le formulaire" : "Ajouter une pièce"}" onclick="stkAddToggle()"><span class="ic${STK_ADD ? " minus" : ""}"></span></button>
+      <label class="btn ghost sq" title="Importer une commande (.csv)" aria-label="Importer une commande (.csv)" style="cursor:pointer;position:relative">${ICON_UPLOAD}<input type="file" accept=".csv,text/csv" onchange="stkImportCsv(this)" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"></label>
       <input id="sQ" placeholder="Rechercher (SKU, pièce, type ou modèle)" value="${esc(STK_Q)}" oninput="STK_Q=this.value;$('stkL').innerHTML=stkHtml(STK_Q)" style="flex:1;min-width:0;margin:0">
     </div>
+    ${STK_CSV_PREVIEW ? stkCsvPreviewHtml() : ""}
     <div id="stkAdd" class="card${STK_ADD ? "" : " hide"}">
       <label>Nom</label><input id="sN">
       <label>Type de pièce</label>${catSelHtml("sCat", "", "— Choisir un type —")}
@@ -13946,6 +14054,87 @@ function catSelHtml(id, cur, ph) {
   return '<select id="' + id + '"><option value="">' + ph + '</option>' + STK_CATS.map((c) => '<option' + (c === cur ? ' selected' : '') + '>' + esc(c) + '</option>').join("") + '</select>';
 }
 var STK_Q = "", STK_SORT = "recent", STK_TYPE = "", STK_ST = "", STK_MQ = "", STK_MO = "", STK_ADD = false;
+var STK_CSV_PREVIEW = null;
+function stkImportCsv(input) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const rows = parseCommandeCsv(String(reader.result));
+      if (!rows.length) {
+        toast("Aucune ligne exploitable dans ce fichier.");
+        return;
+      }
+      STK_CSV_PREVIEW = rows;
+      render();
+    } catch (e) {
+      toast("Fichier CSV invalide : " + (e && e.message ? e.message : e));
+    }
+  };
+  reader.onerror = () => toast("Impossible de lire le fichier.");
+  reader.readAsText(file, "utf-8");
+  input.value = "";
+}
+function parseCommandeCsv(text) {
+  const lines = text.split(/\r\n|\n|\r/).map((l) => l.trim()).filter(Boolean);
+  if (!lines.length) return [];
+  const sep = lines[0].indexOf(";") > -1 ? ";" : ",";
+  const splitRow = (l) => {
+    const out = [];
+    let cur = "", inQ = false;
+    for (let i = 0; i < l.length; i++) {
+      const c = l[i];
+      if (c === '"') { inQ = !inQ; continue; }
+      if (c === sep && !inQ) { out.push(cur); cur = ""; continue; }
+      cur += c;
+    }
+    out.push(cur);
+    return out.map((s) => s.trim());
+  };
+  let start = 0;
+  const first = splitRow(lines[0]);
+  if (/^sku$/i.test(first[0] || "")) start = 1;
+  const out = [];
+  for (let i = start; i < lines.length; i++) {
+    const c = splitRow(lines[i]);
+    const sku = (c[0] || "").trim();
+    if (!sku) continue;
+    const nom = (c[1] || "").trim();
+    const qte = parseInt(String(c[2] || "0").replace(",", "."), 10) || 0;
+    const pu = parseFloat(String(c[3] || "0").replace(",", ".")) || 0;
+    if (qte > 0) out.push({ sku, nom, qte, pu });
+  }
+  return out;
+}
+function stkCsvPreviewHtml() {
+  const rows = STK_CSV_PREVIEW || [];
+  const trouve = (r) => S.stock.find((s) => String(s.sku).toLowerCase() === r.sku.toLowerCase());
+  const matched = rows.filter((r) => trouve(r));
+  const unmatched = rows.filter((r) => !trouve(r));
+  const li = (r) => {
+    const s = trouve(r);
+    const nq = (+s.qte || 0) + r.qte;
+    return '<div class="row" style="align-items:center;gap:8px;padding:4px 0"><div style="flex:1;min-width:0"><div class="t" style="font-size:14px">' + esc(s.nom) + '</div><div class="m">SKU ' + esc(r.sku) + " · stock " + (+s.qte || 0) + " → " + nq + " (+" + r.qte + ")</div></div></div>";
+  };
+  const liKo = (r) => '<div class="m">' + esc(r.sku) + " — " + esc(r.nom || "(sans nom)") + " · qté " + r.qte + "</div>";
+  return '<div class="card" style="margin-top:10px;border:2px solid var(--brand)"><div class="t">Import de commande : ' + rows.length + " ligne(s) lue(s)</div>" + (matched.length ? '<div class="m" style="margin:8px 0 2px">À mettre à jour dans le stock (' + matched.length + ")</div>" + matched.map(li).join("") : "") + (unmatched.length ? '<div class="m" style="margin:10px 0 2px;color:var(--bad)">SKU introuvables dans le stock, non modifiés (' + unmatched.length + ")</div>" + unmatched.map(liKo).join("") : "") + '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" onclick="stkCsvConfirmer()"' + (matched.length ? "" : " disabled") + ">Mettre à jour le stock (" + matched.length + ")</button><button class=\"btn ghost\" onclick=\"STK_CSV_PREVIEW=null;render()\">Annuler</button></div></div>";
+}
+async function stkCsvConfirmer() {
+  const rows = (STK_CSV_PREVIEW || []).filter((r) => S.stock.some((s) => String(s.sku).toLowerCase() === r.sku.toLowerCase()));
+  let ok = 0, ko = 0;
+  for (const r of rows) {
+    const s = S.stock.find((x) => String(x.sku).toLowerCase() === r.sku.toLowerCase());
+    const nq = (+s.qte || 0) + r.qte;
+    const { error } = await SB.from("stock").update({ qte: nq }).eq("sku", s.sku);
+    if (error) { ko++; continue; }
+    s.qte = nq;
+    ok++;
+  }
+  STK_CSV_PREVIEW = null;
+  flash(ok + " pièce(s) mise(s) à jour" + (ko ? ", " + ko + " erreur(s)" : ""));
+  render();
+}
 var ASORT = "nom", ATYPE = "", AST = "", AGRADE = "";
 function selOpts(pairs, cur) {
   return pairs.map((p) => '<option value="' + esc(p[0]) + '"' + (String(p[0]) === String(cur) ? " selected" : "") + ">" + esc(p[1]) + "</option>").join("");
