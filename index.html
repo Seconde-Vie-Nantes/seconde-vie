@@ -7440,7 +7440,7 @@ function dashPageView() {
   return `<div style="margin:4px 0 10px"><button class="btn small ghost" onclick="go('dashboard')">← Tableau de bord</button></div><h1>` + pg.t + ' <span class="m" style="font-size:16px">· ' + pg.items.length + "</span></h1>" + body;
 }
 /* FRP Bypass : entrées enregistrées dans ce navigateur (localStorage) */
-/* Menu Outils (réparateur) : FRP Bypass + Liens utiles */
+/* Menu Outils (réparateur) : FRP Bypass + Liens externes */
 var OUTILS_OPEN = false;
 function toggleOutils(ev) {
   if (ev) ev.stopPropagation();
@@ -7469,9 +7469,9 @@ function navOutils() {
 }
 function outilsInlineHtml() {
   if (!OUTILS_OPEN) return "";
-  return '<button class="nav-outils-item' + (VIEW === "frp" ? " on" : "") + '" onclick="go(\'frp\')">FRP Bypass</button>' + '<button class="nav-outils-item' + (VIEW === "liens" ? " on" : "") + '" onclick="go(\'liens\')">Liens utiles</button>' + '<button class="nav-outils-item' + (VIEW === "testeurManette" ? " on" : "") + '" onclick="go(\'testeurManette\')">Testeur de manette</button>';
+  return '<button class="nav-outils-item' + (VIEW === "frp" ? " on" : "") + '" onclick="go(\'frp\')">FRP Bypass</button>' + '<button class="nav-outils-item' + (VIEW === "liens" ? " on" : "") + '" onclick="go(\'liens\')">Liens externes</button>' + '<button class="nav-outils-item' + (VIEW === "testeurManette" ? " on" : "") + '" onclick="go(\'testeurManette\')">Testeur de manette</button>';
 }
-/* Liens utiles : liens externes enregistrés dans ce navigateur (localStorage) */
+/* Liens externes : liens externes enregistrés dans ce navigateur (localStorage) */
 function liensLireLocal() {
   try {
     const v = JSON.parse(localStorage.getItem("sv_liens") || "[]");
@@ -7483,7 +7483,7 @@ function liensLireLocal() {
 async function liensCharger() {
   const r = await SB.from("liens_utiles").select("*").order("created_at", { ascending: false });
   if (r.error) {
-    toast("Liens utiles : " + msgErr(r.error));
+    toast("Liens externes : " + msgErr(r.error));
     return;
   }
   S.liensUtiles = r.data || [];
@@ -7577,12 +7577,12 @@ function liensHtml() {
     }
     const showUrl = !!LIENS_SHOW[x.id];
     const affiche = showUrl ? '<span class="m" style="word-break:break-all;cursor:pointer;font-size:16px" onclick="liensToggleAff(\'' + x.id + '\')">' + esc(x.url) + '</span><button class="btn ghost sq" title="Copier le lien" aria-label="Copier le lien" style="width:26px;height:26px;min-width:26px;padding:0;flex:none" onclick="liensCopier(\'' + esc(x.url).replace(/'/g, "&#39;") + '\')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>' : '<div class="t" style="overflow-wrap:anywhere;cursor:pointer;font-size:17px" onclick="liensToggleAff(\'' + x.id + '\')">' + esc(x.titre) + "</div>";
-    return '<div class="card"><div class="row" style="align-items:center;gap:8px"><div style="min-width:0;flex:1;display:flex;align-items:center;gap:6px">' + affiche + '</div><button class="btn ghost sq" title="Modifier" aria-label="Modifier" onclick="liensEditToggle(\'' + x.id + '\')">' + ICON_EDIT + '</button><a class="btn sq ghost" href="' + esc(x.url) + '" target="_blank" rel="noopener" title="Ouvrir le lien" aria-label="Ouvrir le lien" style="color:inherit;text-decoration:none;flex:none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18"/><path d="M12 3a14 14 0 0 0 0 18"/></svg></a><button class="btn ghost sq" title="Supprimer" aria-label="Supprimer" style="color:var(--bad);border-color:var(--bad)" onclick="liensSupprimer(\'' + x.id + '\')">' + ICON_TRASH + "</button></div></div>";
+    return '<div class="card"><div class="row" style="align-items:center;gap:8px"><div style="min-width:0;flex:1;display:flex;align-items:center;gap:6px">' + affiche + '</div><button class="btn ghost sq" title="Modifier" aria-label="Modifier" style="flex:none" onclick="liensEditToggle(\'' + x.id + '\')">' + ICON_EDIT + '</button><a class="btn sq ghost" href="' + esc(x.url) + '" target="_blank" rel="noopener" title="Ouvrir le lien" aria-label="Ouvrir le lien" style="color:inherit;text-decoration:none;flex:none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18"/><path d="M12 3a14 14 0 0 0 0 18"/></svg></a><button class="btn ghost sq" title="Supprimer" aria-label="Supprimer" style="color:var(--bad);border-color:var(--bad);flex:none" onclick="liensSupprimer(\'' + x.id + '\')">' + ICON_TRASH + "</button></div></div>";
   }).join("") : '<p class="m">Aucun lien pour le moment. Ajoute-en un ci-dessus.</p>';
   const titreBtn = LIENS_OPEN ? "Fermer le formulaire" : "Ajouter un lien";
-  const bouton = '<div style="display:flex;align-items:center;gap:10px;margin:10px 0"><button class="btn ghost sq" title="' + titreBtn + '" aria-label="' + titreBtn + '" onclick="liensToggleForm()" style="transition:background-color .6s ease;' + (LIENS_OPEN ? "background:var(--bad);color:#fff;border-color:var(--bad)" : "") + '"><span class="ic' + (LIENS_OPEN ? " minus" : "") + '"></span></button></div>';
+  const bouton = '<div style="display:flex;align-items:center;gap:10px;margin:10px 0"><button class="btn ghost sq" title="' + titreBtn + '" aria-label="' + titreBtn + '" onclick="liensToggleForm()" style="transition:background-color .6s ease;' + (LIENS_OPEN ? "background:var(--bad);color:#fff;border-color:var(--bad)" : "") + '"><span class="ic' + (LIENS_OPEN ? " minus" : "") + '"></span></button><h1 style="margin:0">Liens externes</h1></div>';
   const form = LIENS_OPEN ? '<div class="card"><label>Nom (facultatif)</label><input id="lnTitre" placeholder="Ex. Outil de d\u00e9blocage"><label>Adresse *</label><input id="lnUrl" placeholder="https://\u2026" inputmode="url"><div class="err" id="lnErr"></div><button class="btn" onclick="liensAjouter()" style="margin-top:10px">Ajouter</button></div>' : "";
-  return "<h1>Liens utiles</h1>" + bouton + form + rows;
+  return bouton + form + rows;
 }
 function frpLireLocal() {
   try {
