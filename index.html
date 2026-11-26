@@ -506,9 +506,9 @@ body:not(.rep-nav).lg .app{margin-left:auto !important;margin-right:auto !import
 .cl-back{font:inherit;font-size:14px;font-weight:600;color:#2F6B4F;background:none;border:0;padding:0;cursor:pointer;margin-bottom:8px}
 /* Écran affiché pendant le chargement de l'application */
 .boot{min-height:60vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:var(--mut);font-size:14px}
-.boot-dot{width:28px;height:28px;border:3px solid #dfe4e0;border-top-color:var(--brand);border-radius:50%;animation:boot-spin .8s linear infinite}
-@keyframes boot-spin{to{transform:rotate(360deg)}}
-@media (prefers-reduced-motion:reduce){.boot-dot{animation:none}}
+.boot-logo{width:140px;height:auto;animation:boot-fade 1.1s ease-in-out infinite}
+@keyframes boot-fade{0%,100%{opacity:.45}50%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.boot-logo{animation:none;opacity:1}}
 /* Apparition avec rebond du formulaire d'ajout (ex. Liens externes) */
 @keyframes pop-rebond{0%{opacity:0;transform:scale(.88) translateY(-8px)}100%{opacity:1;transform:scale(1) translateY(0)}}
 .pop-rebond{animation:pop-rebond .45s cubic-bezier(.34,1.56,.64,1)}
@@ -552,7 +552,7 @@ body:not(.rep-nav).lg .app{margin-left:auto !important;margin-right:auto !import
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600&display=swap" rel="stylesheet"></head>
 <body class="lg">
-<div class="app" id="app"><div class="boot" id="boot" role="status"><div class="boot-dot"></div><p>Chargement…</p></div></div>
+<div class="app" id="app"><div class="boot" id="boot" role="status"><img class="boot-logo" src="logo.png" alt="Seconde Vie"><span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Chargement…</span></div></div>
 <script src="liquid-glass.js" defer></script>
 <nav id="nav" class="hide"></nav>
 <div id="modal" class="modal hide"></div>
