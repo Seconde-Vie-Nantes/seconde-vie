@@ -9000,7 +9000,7 @@ function openFeedback() {
     p.className = "fb-panel";
     document.body.appendChild(p);
     if (typeof liquidGlass === "function") {
-      liquidGlass(p, { scale: -70, chroma: 4, border: 0.1, mapBlur: 14, blur: 3, saturate: 1.2 });
+      liquidGlass(p, { scale: -50, chroma: 3, border: 0.1, mapBlur: 14, blur: 1, saturate: 1.05 });
     }
   }
   p.innerHTML = `<div class="fb-head" id="fbHead"><span>Signaler ou suggérer</span><button class="fb-close" onclick="closeFeedback()" title="Fermer">×</button></div>
