@@ -304,9 +304,9 @@ body.lg .ok{background:#def3e5;color:var(--ok)}
 body.lg .warn{background:#fff1d6;color:var(--warn)}
 body.lg .modal{background:rgba(23,38,31,.32);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
 body.lg .modal .card{background:#fff;backdrop-filter:none;-webkit-backdrop-filter:none}
-body.lg .fb-panel{position:fixed;isolation:isolate;cursor:grab;background:rgba(20,26,23,.2);border:1px solid rgba(255,255,255,.22);border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.35),inset 0 1px 1px rgba(255,255,255,.15);color:#fff}
+body.lg .fb-panel{position:fixed;isolation:isolate;cursor:grab;background:rgba(20,26,23,.62);border:1px solid rgba(255,255,255,.22);border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.35),inset 0 1px 1px rgba(255,255,255,.15);color:#fff}
 body.lg .fb-panel::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;border-radius:inherit;background:linear-gradient(135deg,rgba(255,255,255,.1) 0%,rgba(255,255,255,0) 45%)}
-body.lg .fb-panel.lg-fallback{background:rgba(20,26,23,.35)}
+body.lg .fb-panel.lg-fallback{background:rgba(20,26,23,.8)}
 body.lg .fb-panel .m{color:rgba(255,255,255,.65)}
 body.lg .fb-panel label{color:#fff}
 body.lg .fb-panel input,body.lg .fb-panel select,body.lg .fb-panel textarea{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);color:#fff}
@@ -11807,15 +11807,22 @@ async function catPieceRetirer(id, sku) {
   }
   await reload();
 }
-function catPiecesBlocHtml(r) {
+function catPiecesBlocHtml(r, edit) {
   const list = catPiecesAuto(r);
+  if (!edit) {
+    if (!list.length) return "";
+    const puce = (p) => {
+      const s = S.stock.find((x) => x.sku === p.sku);
+      return '<span class="chip">' + (p.qte > 1 ? p.qte + " × " : "") + esc(s ? s.nom : p.sku) + "</span>";
+    };
+    return '<div style="margin-top:10px"><div class="m" style="margin-bottom:6px">Pièces liées par défaut</div><div style="display:flex;flex-wrap:wrap;gap:6px">' + list.map(puce).join("") + "</div></div>";
+  }
   const ligne = (p) => {
     const s = S.stock.find((x) => x.sku === p.sku);
-    const nom = (p.qte > 1 ? p.qte + " × " : "") + (s ? s.nom : p.sku);
-    return '<div class="row" style="align-items:center;gap:8px;padding:3px 0"><span style="flex:1;min-width:0;overflow-wrap:anywhere">' + esc(nom) + '</span><button class="btn ghost sq" title="Retirer la pièce" aria-label="Retirer la pièce" style="color:var(--bad);border-color:var(--bad)" onclick="catPieceRetirer(\'' + r.id + "','" + esc(p.sku) + "')\">" + ICON_TRASH + "</button></div>";
+    return '<div class="card" style="margin:6px 0;padding:10px 12px"><div class="row" style="align-items:center"><div style="flex:1;min-width:0"><div class="t" style="font-size:14px">' + esc(s ? s.nom : p.sku) + '</div><div class="m">' + (p.qte > 1 ? p.qte + " × · " : "") + '<span class="code">' + esc(p.sku) + '</span></div></div><button class="btn ghost sq" title="Retirer la pièce" aria-label="Retirer la pièce" style="color:var(--bad);border-color:var(--bad)" onclick="catPieceRetirer(\'' + r.id + "','" + esc(p.sku) + "')\">" + ICON_TRASH + "</button></div></div>";
   };
   const recherche = CAT_PIECE_SEARCH[r.id] ? '<div style="margin-top:6px"><label>Rechercher une pièce</label><input list="catDl' + r.id + '" placeholder="Nom ou SKU…" oninput="catPieceChoisir(\'' + r.id + '\',this.value)"><div style="display:flex;gap:6px;align-items:center;margin-top:4px"><span class="m">Quantité</span><input id="catPq' + r.id + '" inputmode="numeric" value="1" style="width:80px;margin:0"></div><datalist id="catDl' + r.id + '">' + (S.stock || []).map((s) => '<option value="' + esc(s.nom + " (SKU " + s.sku + ")") + '">').join("") + '</datalist><button class="chip" style="margin-top:4px" onclick="catPieceFermer(\'' + r.id + "')\">Annuler</button></div>" : "";
-  return '<div style="margin-top:10px">' + (list.length ? '<div class="m" style="margin-bottom:2px">Pièces liées par défaut</div>' + list.map(ligne).join("") : "") + '<button class="chip" style="margin-top:6px" onclick="catPieceOuvrir(\'' + r.id + "')\">+ Ajouter une pièce</button>" + recherche + "</div>";
+  return '<div style="margin-top:12px"><label>Pièces liées par défaut</label>' + (list.length ? list.map(ligne).join("") : '<p class="m">Aucune pièce liée pour le moment.</p>') + '<button class="chip" style="margin-top:6px" onclick="catPieceOuvrir(\'' + r.id + "')\">+ Ajouter une pièce</button>" + recherche + "</div>";
 }
 var CAT_EDIT = null;
 function catEditToggle(id) {
@@ -11861,9 +11868,9 @@ function catRow(r) {
   const ok = r.prix != null && !isNaN(+r.prix);
   const entete = '<div class="row" style="align-items:center;justify-content:space-between;gap:8px">' + (edit ? '<div class="t">Modifier la réparation</div>' : '<div style="flex:1;min-width:0"><div class="t">' + esc(r.reparation) + '</div><div class="m">' + (r.duree ? "Durée : " + esc(r.duree) : "Durée à définir") + (r.joy ? " · joystick (1 ou 2)" + (ok ? " · 2 joysticks : " + eur(2 * r.prix - 5) : "") : "") + "</div></div>") + '<div style="display:flex;align-items:center;gap:8px;margin-left:auto"><button class="btn ghost sq" title="' + (edit ? "Terminer la modification" : "Modifier") + '" aria-label="' + (edit ? "Terminer la modification" : "Modifier") + '" onclick="catEditToggle(\'' + r.id + "')\">" + ICON_EDIT + '</button><button class="btn ghost sq" title="Supprimer" aria-label="Supprimer" style="color:var(--bad);border-color:var(--bad)" onclick="delCat(\'' + r.id + "')\">" + ICON_TRASH + "</button></div></div>";
   if (edit) {
-    return '<div class="card">' + entete + '<label>Réparation *</label><input id="catNom' + r.id + '" value="' + esc(r.reparation) + '"><div class="two" style="margin-top:8px"><div><label>Type de réparation</label><select id="catTy' + r.id + '" aria-label="Type de réparation">' + typeRepOpts(r.type_rep) + '</select></div><div><label>Durée de réparation</label><input id="catDu' + r.id + '" value="' + esc(r.duree || "") + '" placeholder="Ex. 1h"></div></div><label>Prix (€)</label><input id="catPx' + r.id + '" inputmode="decimal" value="' + esc(r.prix == null ? "" : r.prix) + `" placeholder="à définir"><div style="display:flex;gap:8px;margin-top:8px"><button class="btn" onclick="catSaveEdit('` + r.id + `')">Enregistrer</button><button class="btn ghost" onclick="catEditToggle('` + r.id + `')">Annuler</button></div><div class="err" id="catErr` + r.id + '"></div>' + catPiecesBlocHtml(r) + "</div>";
+    return '<div class="card">' + entete + '<label>Réparation *</label><input id="catNom' + r.id + '" value="' + esc(r.reparation) + '"><div class="two" style="margin-top:8px"><div><label>Type de réparation</label><select id="catTy' + r.id + '" aria-label="Type de réparation">' + typeRepOpts(r.type_rep) + '</select></div><div><label>Durée de réparation</label><input id="catDu' + r.id + '" value="' + esc(r.duree || "") + '" placeholder="Ex. 1h"></div></div><label>Prix (€)</label><input id="catPx' + r.id + '" inputmode="decimal" value="' + esc(r.prix == null ? "" : r.prix) + `" placeholder="à définir"><div style="display:flex;gap:8px;margin-top:8px"><button class="btn" onclick="catSaveEdit('` + r.id + `')">Enregistrer</button><button class="btn ghost" onclick="catEditToggle('` + r.id + `')">Annuler</button></div><div class="err" id="catErr` + r.id + '"></div>' + catPiecesBlocHtml(r, true) + "</div>";
   }
-  return '<div class="card">' + entete + catPiecesBlocHtml(r) + "</div>";
+  return '<div class="card">' + entete + catPiecesBlocHtml(r, false) + "</div>";
 }
 function addCatForm() {
   return '<div class="card" style="margin-top:10px"><div class="t">Ajouter une réparation pour ce modèle</div><label>Nature *</label><select id="cNat" onchange="catAddNatureChange()">' + natureOpts("") + '</select><div id="cTypeBox"><label>Type de réparation *</label><select id="cTy">' + typeRepOpts("") + '</select></div><div id="cNoteBox" style="display:none"><label>Précision *</label><input id="cNote" placeholder="Ex. Nettoyage port de charge"></div><div class="two" style="margin-top:8px"><div><label>Prix (€)</label><input id="cP" inputmode="decimal" placeholder="à définir"></div><div><label>Durée de réparation</label><input id="cD" placeholder="Ex. 1h"></div></div><button class="btn" style="margin-top:8px" onclick="addCat()">Ajouter</button><div class="err" id="cRErr"></div></div>';
