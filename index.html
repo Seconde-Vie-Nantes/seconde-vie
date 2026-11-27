@@ -11639,6 +11639,8 @@ function catAddToggle() {
     CAT_NEW_QUAL_ADD = false;
     CAT_NEW_QUAL_EDIT = null;
     CAT_NEW_QMODE = "simple";
+    CAT_NEW_PIECES = [];
+    CAT_NEW_PIECE_SEARCH = false;
   }
   render();
 }
@@ -11969,6 +11971,48 @@ function catPiecesBlocHtml(r, edit) {
   const recherche = CAT_PIECE_SEARCH[r.id] ? '<div style="margin-top:6px"><label>Rechercher une pièce</label><input list="catDl' + r.id + '" placeholder="Nom ou SKU…" oninput="catPieceChoisir(\'' + r.id + '\',this.value)"><div style="display:flex;gap:6px;align-items:center;margin-top:4px"><span class="m">Quantité</span><input id="catPq' + r.id + '" inputmode="numeric" value="1" style="width:80px;margin:0"></div><datalist id="catDl' + r.id + '">' + (S.stock || []).map((s) => '<option value="' + esc(s.nom + " (SKU " + s.sku + ")") + '">').join("") + '</datalist><button class="chip" style="margin-top:4px" onclick="catPieceFermer(\'' + r.id + "')\">Annuler</button></div>" : "";
   return '<div style="margin-top:12px"><label>Pièces liées par défaut</label>' + (list.length ? list.map(ligne).join("") : '<p class="m">Aucune pièce liée pour le moment.</p>') + '<button class="chip" style="margin-top:6px" onclick="catPieceOuvrir(\'' + r.id + "')\">+ Ajouter une pièce</button>" + recherche + "</div>";
 }
+var CAT_NEW_PIECES = [], CAT_NEW_PIECE_SEARCH = false;
+function catNewPiecesRefresh() {
+  const box = $("cPiecesBox");
+  if (box) box.innerHTML = catNewPiecesBlocHtml();
+  else render();
+}
+function catNewPieceOuvrir() {
+  CAT_NEW_PIECE_SEARCH = true;
+  catNewPiecesRefresh();
+}
+function catNewPieceFermer() {
+  CAT_NEW_PIECE_SEARCH = false;
+  catNewPiecesRefresh();
+}
+function catNewPieceChoisir(val) {
+  const m = /\(SKU (.+)\)\s*$/.exec(val || "");
+  if (!m) return;
+  const s = (S.stock || []).find((x) => x.sku === m[1]);
+  if (!s) return;
+  const qEl = $("cPq");
+  const q = qEl ? parseInt(qEl.value, 10) : 1;
+  const qte = isNaN(q) || q < 1 ? 1 : q;
+  const list = CAT_NEW_PIECES.slice();
+  const i = list.findIndex((p) => p.sku === s.sku);
+  if (i > -1) list[i] = { sku: s.sku, qte };
+  else list.push({ sku: s.sku, qte });
+  CAT_NEW_PIECES = list;
+  CAT_NEW_PIECE_SEARCH = false;
+  catNewPiecesRefresh();
+}
+function catNewPieceRetirer(sku) {
+  CAT_NEW_PIECES = CAT_NEW_PIECES.filter((p) => p.sku !== sku);
+  catNewPiecesRefresh();
+}
+function catNewPiecesBlocHtml() {
+  const ligne = (p) => {
+    const s = (S.stock || []).find((x) => x.sku === p.sku);
+    return '<div class="card" style="margin:6px 0;padding:10px 12px"><div class="row" style="align-items:center"><div style="flex:1;min-width:0"><div class="t" style="font-size:14px">' + esc(s ? s.nom : p.sku) + '</div><div class="m">' + (p.qte > 1 ? p.qte + " × · " : "") + '<span class="code">' + esc(p.sku) + '</span></div></div><button class="btn ghost sq" title="Retirer la pièce" aria-label="Retirer la pièce" style="color:var(--bad);border-color:var(--bad)" onclick="catNewPieceRetirer(\'' + esc(p.sku) + "')\">" + ICON_TRASH + "</button></div></div>";
+  };
+  const recherche = CAT_NEW_PIECE_SEARCH ? '<div style="margin-top:6px"><label>Rechercher une pièce</label><input list="cPDl" placeholder="Nom ou SKU…" oninput="catNewPieceChoisir(this.value)"><div style="display:flex;gap:6px;align-items:center;margin-top:4px"><span class="m">Quantité</span><input id="cPq" inputmode="numeric" value="1" style="width:80px;margin:0"></div><datalist id="cPDl">' + (S.stock || []).map((s) => '<option value="' + esc(s.nom + " (SKU " + s.sku + ")") + '">').join("") + '</datalist><button class="chip" style="margin-top:4px" onclick="catNewPieceFermer()">Annuler</button></div>' : "";
+  return '<div style="margin-top:12px"><label>Pièces liées par défaut</label>' + (CAT_NEW_PIECES.length ? CAT_NEW_PIECES.map(ligne).join("") : '<p class="m">Aucune pièce liée pour le moment.</p>') + '<button class="chip" style="margin-top:6px" onclick="catNewPieceOuvrir()">+ Ajouter une pièce</button>' + recherche + "</div>";
+}
 function catQualMin(list) {
   const prices = (list || []).map((q) => parseFloat(q.prix)).filter((p) => !isNaN(p));
   return prices.length ? Math.min(...prices) : null;
@@ -12197,7 +12241,7 @@ function catNewQModeToggle(v) {
 function addCatForm() {
   const pretAAjouter = CAT_NEW.app && CAT_NEW.cat && CAT_NEW.mod;
   const qmode = "<label>Qualités</label><select id=\"cQMode\" onchange=\"catNewQModeToggle(this.value)\"><option value=\"simple\"" + (CAT_NEW_QMODE === "simple" ? " selected" : "") + ">Une qualité</option><option value=\"multi\"" + (CAT_NEW_QMODE === "multi" ? " selected" : "") + ">Plusieurs qualités</option></select>";
-  const simpleBox = '<div id="cSimpleBox" style="display:' + (CAT_NEW_QMODE === "multi" ? "none" : "block") + '"><div class="two" style="margin-top:8px"><div><label>Prix (€)</label><input id="cP" inputmode="decimal" placeholder="à définir"></div><div><label>Durée de réparation</label><input id="cD" placeholder="Ex. 1h"></div></div></div>';
+  const simpleBox = '<div id="cSimpleBox" style="display:' + (CAT_NEW_QMODE === "multi" ? "none" : "block") + '"><div class="two" style="margin-top:8px"><div><label>Prix (€)</label><input id="cP" inputmode="decimal" placeholder="à définir"></div><div><label>Durée de réparation</label><input id="cD" placeholder="Ex. 1h"></div></div><div id="cPiecesBox">' + catNewPiecesBlocHtml() + "</div></div>";
   const multiBox = '<div id="cMultiBox" style="display:' + (CAT_NEW_QMODE === "multi" ? "block" : "none") + '"><div id="cQualBox">' + catNewQualBlocHtml() + "</div></div>";
   return '<div class="card" style="margin-top:10px"><div class="t">Ajouter une réparation</div>' + catNewPickerHtml() + (pretAAjouter ? natureFieldsHtml("c", "", "", "") + qmode + simpleBox + multiBox + '<button class="btn" style="margin-top:8px" onclick="addCat()">Ajouter</button><div class="err" id="cRErr"></div>' : '<p class="m" style="margin-top:8px">Choisis d’abord l’appareil, la marque et le modèle concernés.</p>') + "</div>";
 }
@@ -12223,7 +12267,7 @@ async function addCat() {
     }
     pr = raw === "" ? null : raw;
   }
-  const { error } = await SB.from("catalogue").insert({ appareil: CAT_NEW.app, categorie: CAT_NEW.cat, modele: CAT_NEW.mod, reparation: n.rep, prix: pr, duree: durNorm(du), joy: false, type_rep: n.ty || null, nature: n.nat, titre: n.titre || null, qualites: hasQual ? CAT_NEW_QUAL : null });
+  const { error } = await SB.from("catalogue").insert({ appareil: CAT_NEW.app, categorie: CAT_NEW.cat, modele: CAT_NEW.mod, reparation: n.rep, prix: pr, duree: durNorm(du), joy: false, type_rep: n.ty || null, nature: n.nat, titre: n.titre || null, qualites: hasQual ? CAT_NEW_QUAL : null, pieces_auto: !hasQual && CAT_NEW_PIECES.length ? CAT_NEW_PIECES : null });
   if (error) {
     err.textContent = msgErr(error);
     return;
@@ -12231,6 +12275,8 @@ async function addCat() {
   CAT_NEW_QUAL = [];
   CAT_NEW_QUAL_ADD = false;
   CAT_NEW_QMODE = "simple";
+  CAT_NEW_PIECES = [];
+  CAT_NEW_PIECE_SEARCH = false;
   toast("Réparation ajoutée");
   await reload();
 }
