@@ -11601,6 +11601,8 @@ function devOpts(cid) {
   return ds.length ? ds.map((d) => '<option value="' + d.id + '">' + esc(devNom(d)) + (d.couleur ? " · " + esc(d.couleur) : "") + " — " + esc(d.type === "Téléphone" ? "IMEI " + d.imei : "SN " + (d.sn || "")) + "</option>").join("") : '<option value="">Aucun appareil : ajoute-le dans la fiche client</option>';
 }
 var CAT = { app: "", cat: "", mod: "" }, APPS = ["Console", "Manette", "Téléphone", "PC portable"];
+var CAT_SEARCH = "", CAT_FILT_OPEN = false, CAT_ADD_OPEN = false, CAT_NEW = { app: "", cat: "", gam: "", mod: "" };
+var ICON_FILTER = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h18l-7 8.5V19l-4 2v-8.5z"></path></svg>';
 var CAT_SEED = [["Console", null, "PlayStation", "PS5", "Lecteur", "79", "24 h", false], ["Console", null, "Nintendo", "Nintendo DS (Tank)", "Écran haut", null, null, false], ["Console", null, "Nintendo", "Nintendo DS (Tank)", "Écran bas", null, null, false], ["Console", null, "Nintendo", "Nintendo DS Lite", "Écran haut", null, null, false], ["Console", null, "Nintendo", "Nintendo DS Lite", "Écran bas", null, null, false], ["Console", null, "Nintendo", "Nintendo DSi", "Écran haut", null, null, false], ["Console", null, "Nintendo", "Nintendo DSi", "Écran bas", null, null, false], ["Console", null, "Nintendo", "Nintendo DSi XL", "Écran haut", null, null, false], ["Console", null, "Nintendo", "Nintendo DSi XL", "Écran bas", null, null, false], ["Console", null, "Nintendo", "Nintendo 3DS", "Écran haut", null, null, false], ["Console", null, "Nintendo", "Nintendo 3DS", "Écran bas", null, null, false], ["Console", null, "Nintendo", "Nintendo 3DS XL", "Écran haut", null, null, false], ["Console", null, "Nintendo", "Nintendo 3DS XL", "Écran bas", null, null, false], ["Console", null, "Nintendo", "New Nintendo 3DS", "Écran haut", null, null, false], ["Console", null, "Nintendo", "New Nintendo 3DS", "Écran bas", null, null, false], ["Console", null, "Nintendo", "New Nintendo 3DS XL", "Écran haut", null, null, false], ["Console", null, "Nintendo", "New Nintendo 3DS XL", "Écran bas", null, null, false], ["Console", null, "Nintendo", "Nintendo 2DS", "Remplacement écran haut + bas", null, null, false], ["Console", null, "Nintendo", "New Nintendo 2DS XL", "Remplacement écran haut + bas", null, null, false], ["Console", null, "Nintendo", "Nintendo", "Écran LCD", "60", null, false], ["Console", null, "Nintendo", "Nintendo", "Vitre tactile", "50", null, false], ["Console", null, "Nintendo", "Nintendo", "Bloc avant complet (LCD + tactile + châssis)", "100", null, false], ["Console", null, "Nintendo", "Nintendo", "Connecteur LCD", "75", null, false], ["Console", null, "Nintendo", "Nintendo", "Écran bleu fixe", "140", null, false], ["Console", null, "Nintendo", "Nintendo", "Prise jack (casque)", "35", null, false], ["Console", null, "Nintendo", "Nintendo", "Lecteur de cartouches", "45", null, false], ["Console", null, "Nintendo", "Nintendo", "Connecteur USB-C (charge)", "80", null, false], ["Console", null, "Nintendo", "Nintendo", "Connecteur micro SD (carte mère)", "75", null, false], ["Console", null, "Nintendo", "Nintendo", "Port carte micro SD", "35", null, false], ["Console", null, "Nintendo", "Nintendo", "Batterie", "50", null, false], ["Console", null, "Nintendo", "Nintendo", "Gauge (gestion batterie)", "80", null, false], ["Console", null, "Nintendo", "Nintendo", "Multi-réparation (IC, lecteur, joystick Joy-con)", "115", null, false], ["Console", null, "Nintendo", "Nintendo", "Ventilateur", "40", null, false], ["Console", null, "Nintendo", "Nintendo", "Pâte thermique et nettoyage des radiateurs", "30", null, false], ["Console", null, "Nintendo", "Nintendo", "Boutons Power / Volume", "35", null, false], ["Console", null, "Nintendo", "Nintendo", "Rails de fixation Joy-con (console)", "35", null, false], ["Console", null, "Nintendo", "Nintendo", "Châssis", "60", null, false], ["Console", null, "Nintendo", "Nintendo", "Coque (arrière ou complète)", "40", null, false], ["Console", null, "Nintendo", "Nintendo", "Carte mère complète", "200", null, false], ["Console", null, "Nintendo", "Nintendo", "Désoxydation carte mère", "40", null, false], ["Console", null, "Nintendo", "Nintendo Switch / Switch Lite", "Connecteur batterie", "50", null, false], ["Console", null, "Nintendo", "Nintendo Switch / Switch Lite", "Remplacement IC (M92T36 / BQ24193 / PI3USB)", "70", null, false], ["Console", null, "Nintendo", "Dock TV Nintendo Switch", "Port USB-C mâle", "35", null, false], ["Console", null, "Nintendo", "Dock TV Nintendo Switch", "Dock TV (HDMI, USB, USB-C)", "50", null, false], ["Manette", null, "PlayStation", "DualSense (PS5)", "Stick", "25", "45 min", false], ["Manette", null, "Nintendo", "Joy-con Switch", "Joystick (drift)", "15", null, false], ["Manette", null, "Nintendo", "Joy-con Switch", "Vibreur HD", "20", null, false], ["Manette", null, "Nintendo", "Joy-con Switch", "Blocs de verrouillage rapide", "15", null, false], ["Manette", null, "Nintendo", "Joy-con Switch", "Changement de coque", "20", null, false], ["Manette", null, "Nintendo", "Joy-con Switch", "Rail de fixation", "20", null, false], ["Manette", null, "Nintendo", "Joy-con Switch", "Boutons SR, SL, synchro et LED", "15", null, false], ["Manette", null, "Nintendo", "Joy-con gauche", "Gâchette ZL", "20", null, false], ["Manette", null, "Nintendo", "Joy-con droit", "Gâchette ZR", "20", null, false], ["Manette", null, "Nintendo", "Joy-con gauche", "Gâchette L et bouton Moins", "20", null, false], ["Manette", null, "Nintendo", "Joy-con gauche", "Carte mère", "35", null, false], ["Manette", null, "Nintendo", "Joy-con droit", "Carte mère", "35", null, false], ["Manette", null, "Nintendo", "Pro Switch", "Joysticks externes", "20", null, false], ["Manette", null, "Nintendo", "Pro Switch", "Joystick interne", "25", null, false], ["Manette", null, "XBOX", "360", "Capuchons joysticks", "10", null, false], ["Manette", null, "XBOX", "360", "LB / RB", "20", null, false], ["Manette", null, "XBOX", "One", "Capuchons joysticks", "10", null, false], ["Manette", null, "XBOX", "One", "Suppression du drift", null, null, true], ["Manette", null, "XBOX", "One", "Joystick Hall effect", null, null, true], ["Manette", null, "XBOX", "One", "Joystick TMR", "34.99", null, true], ["Manette", null, "XBOX", "One", "LB / RB", null, null, false], ["Manette", null, "XBOX", "One", "Vibreur", null, null, false], ["Manette", null, "XBOX", "One", "Bouton", null, null, false], ["Manette", null, "XBOX", "One", "Coque", null, null, false], ["Manette", null, "XBOX", "One S / X", "Capuchons joysticks", "10", null, false], ["Manette", null, "XBOX", "One S / X", "Suppression du drift", null, null, true], ["Manette", null, "XBOX", "One S / X", "Joystick Hall effect", null, null, true], ["Manette", null, "XBOX", "One S / X", "Joystick TMR", "34.99", null, true], ["Manette", null, "XBOX", "One S / X", "LB / RB", null, null, false], ["Manette", null, "XBOX", "One S / X", "Vibreur", null, null, false], ["Manette", null, "XBOX", "One S / X", "Bouton", null, null, false], ["Manette", null, "XBOX", "One S / X", "Coque", null, null, false], ["Manette", null, "XBOX", "Series X|S", "Capuchons joysticks", "10", null, false], ["Manette", null, "XBOX", "Series X|S", "Suppression du drift", null, null, true], ["Manette", null, "XBOX", "Series X|S", "Joystick Hall effect", null, null, true], ["Manette", null, "XBOX", "Series X|S", "Joystick TMR", "34.99", null, true], ["Manette", null, "XBOX", "Series X|S", "LB / RB", null, null, false], ["Manette", null, "XBOX", "Series X|S", "Vibreur", null, null, false], ["Manette", null, "XBOX", "Series X|S", "Bouton", null, null, false], ["Manette", null, "XBOX", "Series X|S", "Coque", null, null, false], ["Manette", null, "XBOX", "360", "Ne s'allume plus", "devis", null, false], ["Manette", null, "PlayStation", "DualShock 3 (PS3)", "Capuchons joysticks", "10", null, false], ["Manette", null, "PlayStation", "DualShock 3 (PS3)", "Suppression du drift", null, null, true], ["Manette", null, "PlayStation", "DualShock 3 (PS3)", "Joystick Hall effect", null, null, true], ["Manette", null, "PlayStation", "DualShock 3 (PS3)", "Joystick TMR", "34.99", null, true], ["Manette", null, "PlayStation", "DualShock 4 (PS4)", "Capuchons joysticks", "10", null, false], ["Manette", null, "PlayStation", "DualShock 4 (PS4)", "Suppression du drift", null, null, true], ["Manette", null, "PlayStation", "DualShock 4 (PS4)", "Joystick Hall effect", null, null, true], ["Manette", null, "PlayStation", "DualShock 4 (PS4)", "Joystick TMR", "34.99", null, true], ["Manette", null, "PlayStation", "DualSense (PS5)", "Capuchons joysticks", "10", null, false], ["Manette", null, "PlayStation", "DualSense (PS5)", "Suppression du drift", null, null, true], ["Manette", null, "PlayStation", "DualSense (PS5)", "Joystick Hall effect", null, null, true], ["Manette", null, "PlayStation", "DualSense (PS5)", "Joystick TMR", "34.99", null, true], ["Téléphone", null, "Apple", "iPhone 13", "Écran", "89", "2 h", false], ["Téléphone", null, "Apple", "iPhone 13", "Batterie", "49", "1 h", false], ["Téléphone", null, "Samsung", "Galaxy S22", "Connecteur de charge", "59", "1 h 30", false], ["Mods", "Console", "Nintendo", "Switch", "Puce", "120", "48 h", false], ["Mods", "Manette", "PlayStation", "DualSense", "Coque personnalisée", "35", "1 h", false], ["Mods", "Manette", "Nintendo", "Joy-con Switch", "Coques custom (paire)", "35", null, false]];
 function srt(a) {
   return a.slice().sort(function(x, y) {
@@ -11624,6 +11626,32 @@ function setCat(k, v) {
 function catResetFiltres() {
   CAT = { app: "", cat: "", mod: "" };
   render();
+}
+function catAddToggle() {
+  CAT_ADD_OPEN = !CAT_ADD_OPEN;
+  if (CAT_ADD_OPEN) CAT_NEW = { app: CAT.app || "", cat: CAT.cat || "", gam: CAT.gam || "", mod: CAT.mod || "" };
+  render();
+}
+function setCatNew(k, v) {
+  CAT_NEW[k] = v;
+  if (k === "app") {
+    CAT_NEW.cat = "";
+    CAT_NEW.gam = "";
+    CAT_NEW.mod = "";
+  }
+  if (k === "cat") {
+    CAT_NEW.gam = "";
+    CAT_NEW.mod = "";
+  }
+  if (k === "gam") CAT_NEW.mod = "";
+  render();
+}
+function catNewPickerHtml() {
+  const brands = marquesApp(CAT_NEW.app);
+  const gams = gammesFor(CAT_NEW.app, CAT_NEW.cat);
+  const mods = gams.length ? CAT_NEW.gam ? modelsFor(CAT_NEW.app, CAT_NEW.cat, CAT_NEW.gam) : [] : modelsFor(CAT_NEW.app, CAT_NEW.cat);
+  const montreMod = CAT_NEW.app && CAT_NEW.cat && (!gams.length || CAT_NEW.gam);
+  return '<label>Type d’appareil *</label><select onchange="setCatNew(\'app\',this.value)">' + optList(APPS, CAT_NEW.app, "Type d’appareil…") + "</select>" + (CAT_NEW.app ? '<div class="two" style="margin-top:8px"><div><label>Marque *</label><select onchange="setCatNew(\'cat\',this.value)">' + optList(brands, CAT_NEW.cat, "Marque…") + "</select></div>" + (gams.length ? '<div><label>Gamme *</label><select onchange="setCatNew(\'gam\',this.value)">' + optList(gams, CAT_NEW.gam || "", "Gamme…") + "</select></div>" : '<div><label>Modèle *</label><select onchange="setCatNew(\'mod\',this.value)">' + optList(mods, CAT_NEW.mod, "Modèle…") + "</select></div>") + "</div>" : "") + (montreMod && gams.length ? '<div style="margin-top:8px"><label>Modèle *</label><select onchange="setCatNew(\'mod\',this.value)">' + modOpts(mods, CAT_NEW.gam, CAT_NEW.mod) + "</select></div>" : "");
 }
 function optList(arr, sel, ph) {
   return '<option value="">' + ph + "</option>" + arr.map(function(v) {
@@ -11716,21 +11744,26 @@ function modOpts(mods, gam, sel) {
   const cut = gam ? gam.length + 3 : 0;
   return '<option value="">Modèle…</option>' + mods.map((m) => '<option value="' + esc(m) + '"' + (m === sel ? " selected" : "") + ">" + esc(cut ? m.slice(cut) : m) + "</option>").join("");
 }
+function catSearchMatch(r, q) {
+  if (!q) return true;
+  const hay = [r.reparation, r.modele, r.categorie, r.appareil === "Mods" ? r.cible : r.appareil].filter(Boolean).join(" ").toLowerCase();
+  return hay.indexOf(q.trim().toLowerCase()) > -1;
+}
 function catalogueView() {
   const rows = S.catalogue;
   if (!rows.length) return '<h1>Réparations &amp; Mods</h1><p class="m">Le catalogue est vide.</p><button class="btn" onclick="importCat()">Importer le catalogue de base</button>';
   const inApp = (r) => !CAT.app || r.appareil === CAT.app || r.appareil === "Mods" && r.cible === CAT.app;
-  const base = rows.filter(inApp);
   const brands = marquesApp(CAT.app);
   const gams = gammesFor(CAT.app, CAT.cat);
   const mods = gams.length ? CAT.gam ? modelsFor(CAT.app, CAT.cat, CAT.gam) : [] : modelsFor(CAT.app, CAT.cat);
-  const list = rows.filter((r) => inApp(r) && (!CAT.cat || r.categorie === CAT.cat) && (!CAT.mod || r.modele === CAT.mod)).sort((a, b) => String(a.appareil).localeCompare(String(b.appareil), "fr") || String(a.categorie).localeCompare(String(b.categorie), "fr") || String(a.modele).localeCompare(String(b.modele), "fr") || a.reparation.localeCompare(b.reparation, "fr"));
-  const aucune = CAT.mod ? "Aucune réparation pour ce modèle." : "Aucune réparation pour ce choix.";
+  const list = rows.filter((r) => inApp(r) && (!CAT.cat || r.categorie === CAT.cat) && (!CAT.mod || r.modele === CAT.mod) && catSearchMatch(r, CAT_SEARCH)).sort((a, b) => String(a.appareil).localeCompare(String(b.appareil), "fr") || String(a.categorie).localeCompare(String(b.categorie), "fr") || String(a.modele).localeCompare(String(b.modele), "fr") || a.reparation.localeCompare(b.reparation, "fr"));
+  const aucune = CAT.mod || CAT.cat || CAT.app || CAT_SEARCH ? "Aucune réparation pour ce choix." : "Aucune réparation pour le moment.";
   const corps = list.length ? list.map((r) => catRow(r)).join("") : '<p class="m">' + aucune + "</p>";
-  const body = corps + (CAT.mod ? addCatForm() : "") + (CAT.cat && !gams.length && !mods.length ? '<p class="m" style="margin-top:10px">Pour ajouter un modèle, crée-le d’abord dans l’onglet Appareils.</p>' : "");
-  const montreMod = CAT.app && (!gams.length || CAT.gam);
-  const filtres = '<div class="stk-filt"><div style="display:flex;gap:6px;align-items:center"><select style="flex:1;min-width:0" onchange="setCat(\'app\',this.value)">' + optList(APPS, CAT.app, "Type d’appareil…") + '</select><button class="btn ghost small" type="button" style="margin:0;flex:none" onclick="catResetFiltres()">Supprimer les filtres</button></div>' + (CAT.app ? '<select onchange="setCat(\'cat\',this.value)">' + optList(brands, CAT.cat, "Marque…") + "</select>" : "") + (CAT.app && gams.length ? '<select onchange="setCat(\'gam\',this.value)">' + optList(gams, CAT.gam || "", "Gamme…") + "</select>" : "") + (montreMod ? '<select onchange="setCat(\'mod\',this.value)">' + (gams.length ? modOpts(mods, CAT.gam, CAT.mod) : optList(mods, CAT.mod, "Modèle…")) + "</select>" : "") + "</div>";
-  return "<h1>Réparations &amp; Mods</h1>" + filtres + '<div style="margin-top:10px">' + body + "</div>";
+  const montreMod = CAT.app && CAT.cat && (!gams.length || CAT.gam);
+  const filtres = CAT_FILT_OPEN ? '<div class="stk-filt" style="margin-top:8px"><select onchange="setCat(\'app\',this.value)">' + optList(APPS, CAT.app, "Type d’appareil…") + "</select>" + (CAT.app ? '<select onchange="setCat(\'cat\',this.value)">' + optList(brands, CAT.cat, "Marque…") + "</select>" : "") + (CAT.app && gams.length ? '<select onchange="setCat(\'gam\',this.value)">' + optList(gams, CAT.gam || "", "Gamme…") + "</select>" : "") + (montreMod ? '<select onchange="setCat(\'mod\',this.value)">' + (gams.length ? modOpts(mods, CAT.gam, CAT.mod) : optList(mods, CAT.mod, "Modèle…")) + "</select>" : "") + "</div>" : "";
+  const barre = '<div style="display:flex;gap:8px;align-items:center;margin-top:8px"><button class="btn sq" title="' + (CAT_ADD_OPEN ? "Fermer le formulaire" : "Ajouter une réparation") + '" aria-label="' + (CAT_ADD_OPEN ? "Fermer le formulaire" : "Ajouter une réparation") + '" onclick="catAddToggle()"><span class="ic' + (CAT_ADD_OPEN ? " minus" : "") + '"></span></button><input style="flex:1;min-width:0;margin:0" placeholder="Rechercher un appareil ou une réparation…" value="' + esc(CAT_SEARCH) + '" oninput="CAT_SEARCH=this.value;render()"></div><div style="display:flex;gap:8px;align-items:center;margin-top:8px"><button class="btn ghost sq" title="Filtres" aria-label="Filtres" onclick="CAT_FILT_OPEN=!CAT_FILT_OPEN;render()">' + ICON_FILTER + '</button><button class="btn ghost sq" title="Supprimer les filtres" aria-label="Supprimer les filtres" onclick="catResetFiltres()">' + ICON_X + "</button></div>" + filtres;
+  const body = (CAT_ADD_OPEN ? addCatForm() : "") + corps;
+  return "<h1>Réparations &amp; Mods</h1>" + barre + '<div style="margin-top:10px">' + body + "</div>";
 }
 // Types de réparation : pour en ajouter un plus tard, ajoute son nom dans TYPES_REP.
 const TYPES_REP = ["Écran", "Batterie", "Caméra", "Bouton", "Devis", "Autre"];
@@ -11829,7 +11862,7 @@ async function catSaveEdit(id) {
   if (!r) return;
   const err = $("catErr" + id);
   err.textContent = "";
-  const n = natureCollecter("cat" + id, err);
+  const n = natureCollecter("cat" + id, err, r.modele);
   if (!n) return;
   const du = $("catDu" + id).value.trim();
   const pxRaw = $("catPx" + id).value.trim().replace(",", ".");
@@ -11874,7 +11907,7 @@ function natureFieldsHtml(prefix, nat, ty, note) {
   const autre = nat === "Autre";
   return '<label>Nature *</label><select id="' + prefix + 'Nat" onchange="natureToggle(\'' + prefix + '\')">' + natureOpts(nat) + '</select><div id="' + prefix + 'TypeBox" style="display:' + (autre ? "none" : "block") + '"><label>Type de réparation *</label><select id="' + prefix + 'Ty" aria-label="Type de réparation">' + typeRepOpts(ty) + '</select></div><div id="' + prefix + 'NoteBox" style="display:' + (autre ? "block" : "none") + '"><label>Précision *</label><input id="' + prefix + 'Note" value="' + esc(note || "") + '" placeholder="Ex. Nettoyage port de charge"></div>';
 }
-function natureCollecter(prefix, err) {
+function natureCollecter(prefix, err, modele) {
   const nat = $(prefix + "Nat").value;
   if (!nat) {
     err.textContent = "Choisis la nature de la réparation.";
@@ -11893,23 +11926,23 @@ function natureCollecter(prefix, err) {
     err.textContent = "Choisis le type de réparation.";
     return null;
   }
-  return { nat, ty, rep: nat + " " + ty.toLowerCase() + (CAT.mod ? " " + CAT.mod : "") };
+  return { nat, ty, rep: nat + " " + ty.toLowerCase() + (modele ? " " + modele : "") };
 }
 function addCatForm() {
-  return '<div class="card" style="margin-top:10px"><div class="t">Ajouter une réparation pour ce modèle</div>' + natureFieldsHtml("c", "", "", "") + '<div class="two" style="margin-top:8px"><div><label>Prix (€)</label><input id="cP" inputmode="decimal" placeholder="à définir"></div><div><label>Durée de réparation</label><input id="cD" placeholder="Ex. 1h"></div></div><button class="btn" style="margin-top:8px" onclick="addCat()">Ajouter</button><div class="err" id="cRErr"></div></div>';
+  const pretAAjouter = CAT_NEW.app && CAT_NEW.cat && CAT_NEW.mod;
+  return '<div class="card" style="margin-top:10px"><div class="t">Ajouter une réparation</div>' + catNewPickerHtml() + (pretAAjouter ? natureFieldsHtml("c", "", "", "") + '<div class="two" style="margin-top:8px"><div><label>Prix (€)</label><input id="cP" inputmode="decimal" placeholder="à définir"></div><div><label>Durée de réparation</label><input id="cD" placeholder="Ex. 1h"></div></div><button class="btn" style="margin-top:8px" onclick="addCat()">Ajouter</button><div class="err" id="cRErr"></div>' : '<p class="m" style="margin-top:8px">Choisis d’abord l’appareil, la marque et le modèle concernés.</p>') + "</div>";
 }
 async function addCat() {
   const err = $("cRErr");
   err.textContent = "";
-  const n = natureCollecter("c", err);
+  const n = natureCollecter("c", err, CAT_NEW.mod);
   if (!n) return;
   const pr = $("cP").value.trim().replace(",", "."), du = $("cD").value.trim();
   if (pr !== "" && pr !== "devis" && (isNaN(+pr) || +pr < 0)) {
     err.textContent = "Prix invalide.";
     return;
   }
-  const ref = S.catalogue.find((r) => r.modele === CAT.mod);
-  const { error } = await SB.from("catalogue").insert({ appareil: CAT.app, categorie: ref ? ref.categorie : CAT.cat || "Autre", modele: CAT.mod, reparation: n.rep, prix: pr === "" ? null : pr, duree: durNorm(du), joy: false, type_rep: n.ty || null, nature: n.nat });
+  const { error } = await SB.from("catalogue").insert({ appareil: CAT_NEW.app, categorie: CAT_NEW.cat, modele: CAT_NEW.mod, reparation: n.rep, prix: pr === "" ? null : pr, duree: durNorm(du), joy: false, type_rep: n.ty || null, nature: n.nat });
   if (error) {
     err.textContent = msgErr(error);
     return;
