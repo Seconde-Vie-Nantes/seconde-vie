@@ -11879,7 +11879,7 @@ async function catSaveEdit(id) {
     return;
   }
   const prix = pxRaw === "" ? null : pxRaw;
-  const { error } = await SB.from("catalogue").update({ reparation: n.rep, duree: durNorm(du), type_rep: n.ty || null, nature: n.nat, prix }).eq("id", id);
+  const { error } = await SB.from("catalogue").update({ reparation: n.rep, duree: durNorm(du), type_rep: n.ty || null, nature: n.nat, titre: n.titre || null, prix }).eq("id", id);
   if (error) {
     err.textContent = msgErr(error);
     return;
@@ -11902,18 +11902,18 @@ function catRow(r) {
   const absent = !S.appBaseErr && ROLE === "rep" && !baseHasTrio(t, r.categorie, r.modele);
   const entete = '<div class="row" style="align-items:center;justify-content:space-between;gap:8px">' + (edit ? '<div class="t">Modifier la réparation</div>' : '<div style="flex:1;min-width:0"><div class="t">' + esc(r.reparation) + (absent ? repere("Marque ou modèle absent de la base Appareils : à corriger") : "") + '</div><div class="m">' + (ok ? eur(r.prix) + " · " : "") + (r.duree ? "Durée : " + esc(r.duree) : "Durée à définir") + (r.joy ? " · joystick (1 ou 2)" + (ok ? " · 2 joysticks : " + eur(2 * r.prix - 5) : "") : "") + "</div></div>") + '<div style="display:flex;align-items:center;gap:8px;margin-left:auto"><button class="btn ghost sq" title="' + (edit ? "Terminer la modification" : "Modifier") + '" aria-label="' + (edit ? "Terminer la modification" : "Modifier") + '" onclick="catEditToggle(\'' + r.id + "')\">" + ICON_EDIT + '</button><button class="btn ghost sq" title="Supprimer" aria-label="Supprimer" style="color:var(--bad);border-color:var(--bad)" onclick="delCat(\'' + r.id + "')\">" + ICON_TRASH + "</button></div></div>";
   if (edit) {
-    return '<div class="card">' + entete + natureFieldsHtml("cat" + r.id, r.nature || "", r.type_rep || "", r.nature === "Autre" ? r.reparation : "") + '<div class="two" style="margin-top:8px"><div><label>Durée de réparation</label><input id="catDu' + r.id + '" value="' + esc(r.duree || "") + '" placeholder="Ex. 1h"></div><div><label>Prix (€)</label><input id="catPx' + r.id + '" inputmode="decimal" value="' + esc(r.prix == null ? "" : r.prix) + `" placeholder="à définir"></div></div><div style="display:flex;gap:8px;margin-top:8px"><button class="btn" onclick="catSaveEdit('` + r.id + `')">Enregistrer</button><button class="btn ghost" onclick="catEditToggle('` + r.id + `')">Annuler</button></div><div class="err" id="catErr` + r.id + '"></div>' + catPiecesBlocHtml(r, true) + "</div>";
+    return '<div class="card">' + entete + natureFieldsHtml("cat" + r.id, r.nature || "", r.type_rep || "", r.titre || "") + '<div class="two" style="margin-top:8px"><div><label>Durée de réparation</label><input id="catDu' + r.id + '" value="' + esc(r.duree || "") + '" placeholder="Ex. 1h"></div><div><label>Prix (€)</label><input id="catPx' + r.id + '" inputmode="decimal" value="' + esc(r.prix == null ? "" : r.prix) + `" placeholder="à définir"></div></div><div style="display:flex;gap:8px;margin-top:8px"><button class="btn" onclick="catSaveEdit('` + r.id + `')">Enregistrer</button><button class="btn ghost" onclick="catEditToggle('` + r.id + `')">Annuler</button></div><div class="err" id="catErr` + r.id + '"></div>' + catPiecesBlocHtml(r, true) + "</div>";
   }
   return '<div class="card" style="min-height:72px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center">' + entete + catPiecesBlocHtml(r, false) + "</div>";
 }
 function natureToggle(prefix) {
   const autre = $(prefix + "Nat") && $(prefix + "Nat").value === "Autre";
   if ($(prefix + "TypeBox")) $(prefix + "TypeBox").style.display = autre ? "none" : "block";
-  if ($(prefix + "NoteBox")) $(prefix + "NoteBox").style.display = autre ? "block" : "none";
+  if ($(prefix + "NoteLbl")) $(prefix + "NoteLbl").textContent = autre ? "Titre *" : "Titre (remplace le type dans le nom, facultatif)";
 }
-function natureFieldsHtml(prefix, nat, ty, note) {
+function natureFieldsHtml(prefix, nat, ty, titre) {
   const autre = nat === "Autre";
-  return '<label>Nature *</label><select id="' + prefix + 'Nat" onchange="natureToggle(\'' + prefix + '\')">' + natureOpts(nat) + '</select><div id="' + prefix + 'TypeBox" style="display:' + (autre ? "none" : "block") + '"><label>Type de réparation *</label><select id="' + prefix + 'Ty" aria-label="Type de réparation">' + typeRepOpts(ty) + '</select></div><div id="' + prefix + 'NoteBox" style="display:' + (autre ? "block" : "none") + '"><label>Précision *</label><input id="' + prefix + 'Note" value="' + esc(note || "") + '" placeholder="Ex. Nettoyage port de charge"></div>';
+  return '<label>Nature *</label><select id="' + prefix + 'Nat" onchange="natureToggle(\'' + prefix + '\')">' + natureOpts(nat) + '</select><div id="' + prefix + 'TypeBox" style="display:' + (autre ? "none" : "block") + '"><label>Type de réparation *</label><select id="' + prefix + 'Ty" aria-label="Type de réparation">' + typeRepOpts(ty) + "</select></div><label id=\"" + prefix + 'NoteLbl">' + (autre ? "Titre *" : "Titre (remplace le type dans le nom, facultatif)") + '</label><input id="' + prefix + 'Note" value="' + esc(titre || "") + '" placeholder="Ex. ressort pile">';
 }
 function natureCollecter(prefix, err, modele) {
   const nat = $(prefix + "Nat").value;
@@ -11921,20 +11921,20 @@ function natureCollecter(prefix, err, modele) {
     err.textContent = "Choisis la nature de la réparation.";
     return null;
   }
+  const titre = ($(prefix + "Note") ? $(prefix + "Note").value : "").trim();
   if (nat === "Autre") {
-    const note = ($(prefix + "Note") ? $(prefix + "Note").value : "").trim();
-    if (!note) {
-      err.textContent = "Écris une précision : elle sert de nom à la réparation.";
+    if (!titre) {
+      err.textContent = "Écris un titre : il sert de nom à la réparation.";
       return null;
     }
-    return { nat, ty: "", rep: note };
+    return { nat, ty: "", titre, rep: nat + " " + titre.toLowerCase() + (modele ? " " + modele : "") };
   }
   const ty = $(prefix + "Ty").value;
   if (!ty) {
     err.textContent = "Choisis le type de réparation.";
     return null;
   }
-  return { nat, ty, rep: nat + " " + ty.toLowerCase() + (modele ? " " + modele : "") };
+  return { nat, ty, titre, rep: nat + " " + (titre ? titre.toLowerCase() : ty.toLowerCase()) + (modele ? " " + modele : "") };
 }
 function addCatForm() {
   const pretAAjouter = CAT_NEW.app && CAT_NEW.cat && CAT_NEW.mod;
@@ -11950,7 +11950,7 @@ async function addCat() {
     err.textContent = "Prix invalide.";
     return;
   }
-  const { error } = await SB.from("catalogue").insert({ appareil: CAT_NEW.app, categorie: CAT_NEW.cat, modele: CAT_NEW.mod, reparation: n.rep, prix: pr === "" ? null : pr, duree: durNorm(du), joy: false, type_rep: n.ty || null, nature: n.nat });
+  const { error } = await SB.from("catalogue").insert({ appareil: CAT_NEW.app, categorie: CAT_NEW.cat, modele: CAT_NEW.mod, reparation: n.rep, prix: pr === "" ? null : pr, duree: durNorm(du), joy: false, type_rep: n.ty || null, nature: n.nat, titre: n.titre || null });
   if (error) {
     err.textContent = msgErr(error);
     return;
