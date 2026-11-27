@@ -8543,7 +8543,7 @@ const REP = {
     <div id="stkAdd" class="card${STK_ADD ? "" : " hide"}">
       <label>Nom</label><input id="sN">
       <label>Type de pièce</label>${catSelHtml("sCat", "", "— Choisir un type —")}
-      <label>Prix (€)</label><input id="sPx" inputmode="decimal" placeholder="0">
+      <div class="two"><div><label>Prix HT (€)</label><input id="sHT" inputmode="decimal" placeholder="0" oninput="depCalc('ht','s')"></div><div><label>Prix TTC (€) · TVA 20 %</label><input id="sTTC" inputmode="decimal" placeholder="0" oninput="depCalc('ttc','s')"></div></div>
       <label>Date du prix</label><div class="date-wrap"><input id="sDt" type="date"><button type="button" class="date-x" title="Effacer" onclick="dateClear('sDt')">×</button></div>
       <label>Lien pour commander</label><input id="sLi" placeholder="https://…">
       <label>Quantité</label><input id="sQt" inputmode="numeric" value="0">
@@ -13145,7 +13145,7 @@ function editPiece(sku) {
   const x = S.stock.find((y) => y.sku === sku);
   MP.e = x.modeles && x.modeles.length ? x.modeles.slice() : x.modele ? [x.modele] : [];
   MP_PLUS.e = false;
-  $("pe-" + sku).innerHTML = '<div class="card" style="margin:8px 0 12px"><div class="row" style="justify-content:space-between;align-items:center"><span class="t">Modifier : ' + esc(x.nom) + '</span><button class="chip" onclick="$(\'pe-' + esc(x.sku) + '\').innerHTML=\'\'">Fermer</button></div><label>SKU</label><input id="ep-s" value="' + esc(x.sku) + '"><label>Nom</label><input id="ep-n" value="' + esc(x.nom) + `"><label>Type de pièce</label>${catSelHtml("ep-cat", x.categorie || "", "— Aucun —")}<label>Prix (€)</label><input id="ep-px" inputmode="decimal" value="${x.prix == null ? "" : x.prix}"><label>Date du prix</label><div class="date-wrap"><input id="ep-dt" type="date" value="${x.prix_date ? String(x.prix_date).slice(0, 10) : ""}"><button type="button" class="date-x" title="Effacer" onclick="dateClear('ep-dt')">×</button></div><label>Lien pour commander</label><input id="ep-li" value="${esc(x.lien || "")}" placeholder="https://…"><label>Modèles</label><div id="mp-e"></div><label>Photos de la pièce</label>${photosBloc("piece", x.sku)}<button class="btn" onclick="savePiece2('` + sku + `')">Enregistrer</button><div class="err" id="ep-err"></div></div>`;
+  $("pe-" + sku).innerHTML = '<div class="card" style="margin:8px 0 12px"><div class="row" style="justify-content:space-between;align-items:center"><span class="t">Modifier : ' + esc(x.nom) + '</span><button class="chip" onclick="$(\'pe-' + esc(x.sku) + '\').innerHTML=\'\'">Fermer</button></div><label>SKU</label><input id="ep-s" value="' + esc(x.sku) + '"><label>Nom</label><input id="ep-n" value="' + esc(x.nom) + `"><label>Type de pièce</label>${catSelHtml("ep-cat", x.categorie || "", "— Aucun —")}<div class="two"><div><label>Prix HT (€)</label><input id="epHT" inputmode="decimal" value="${x.prix == null ? "" : htOf(x.prix)}" oninput="depCalc('ht','ep')"></div><div><label>Prix TTC (€) · TVA 20 %</label><input id="epTTC" inputmode="decimal" value="${x.prix == null ? "" : x.prix}" oninput="depCalc('ttc','ep')"></div></div><label>Date du prix</label><div class="date-wrap"><input id="ep-dt" type="date" value="${x.prix_date ? String(x.prix_date).slice(0, 10) : ""}"><button type="button" class="date-x" title="Effacer" onclick="dateClear('ep-dt')">×</button></div><label>Lien pour commander</label><input id="ep-li" value="${esc(x.lien || "")}" placeholder="https://…"><label>Modèles</label><div id="mp-e"></div><label>Photos de la pièce</label>${photosBloc("piece", x.sku)}<button class="btn" onclick="savePiece2('` + sku + `')">Enregistrer</button><div class="err" id="ep-err"></div></div>`;
   mpDraw("e");
   $("pe-" + sku).scrollIntoView({ block: "nearest", inline: "nearest" });
 }
@@ -13179,7 +13179,7 @@ async function savePiece2(sku) {
   }
   const modeles = MP.e || [];
   const ancien = S.stock.find((y) => y.sku === sku) || {};
-  const ch = stkChampsForm({ cat: "ep-cat", px: "ep-px", dt: "ep-dt", li: "ep-li" });
+  const ch = stkChampsForm({ cat: "ep-cat", ttc: "epTTC", dt: "ep-dt", li: "ep-li" });
   const { error } = await SB.from("stock").update(Object.assign({ nom, type: typeOf(modeles), modeles, modele: modeles.join(", ") || null }, stkPayload(ch, ancien))).eq("sku", sku);
   if (error) {
     err.textContent = msgErr(error);
@@ -14378,7 +14378,7 @@ async function addPieceCmd(did, sku) {
 }
 function stkChampsForm(ids) {
   const v = (id) => { const e = $(id); return e ? e.value.trim() : ""; };
-  const px = v(ids.px);
+  const px = v(ids.ttc);
   return { categorie: v(ids.cat) || null, prix: px === "" ? null : pnumP(px), prix_date: v(ids.dt) || null, lien: v(ids.li) || null };
 }
 function stkPayload(ch, ancien) {
@@ -14777,7 +14777,7 @@ async function addStock() {
     return;
   }
   const max = S.stock.reduce((t, s) => Math.max(t, parseInt(String(s.sku).replace(/\D/g, ""), 10) || 0), 1e3);
-  const ch = stkChampsForm({ cat: "sCat", px: "sPx", dt: "sDt", li: "sLi" });
+  const ch = stkChampsForm({ cat: "sCat", ttc: "sTTC", dt: "sDt", li: "sLi" });
   const { error } = await SB.from("stock").insert(Object.assign({ sku: "PC-" + (max + 1), nom, type: typeOf(modeles), modeles, modele: modeles.join(", "), qte: q, res: 0 }, stkPayload(ch, null)));
   if (error) {
     err.textContent = msgErr(error);
