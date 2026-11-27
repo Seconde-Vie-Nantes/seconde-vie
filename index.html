@@ -7401,6 +7401,48 @@ function depEditToggle(id) {
   DEP_OPEN = false;
   render();
 }
+var DEP_FACT_OPEN = false;
+function depFactToggle() {
+  DEP_FACT_OPEN = !DEP_FACT_OPEN;
+  render();
+}
+function depFacturesListe() {
+  const map = {};
+  (S.depenses || []).forEach((x) => {
+    if (!x.facture_path) return;
+    if (!map[x.facture_path]) map[x.facture_path] = { path: x.facture_path, items: [], numero: "", date: x.date || "" };
+    const f = map[x.facture_path];
+    f.items.push(x);
+    const m = /·\s*facture\s*(\S+)/i.exec(x.libelle || "");
+    if (m && !f.numero) f.numero = m[1];
+    if (x.date && (!f.date || String(x.date) < String(f.date))) f.date = x.date;
+  });
+  return Object.values(map).sort((a, b) => String(b.date).localeCompare(String(a.date)));
+}
+function depFacturesHtml() {
+  const liste = depFacturesListe();
+  if (!liste.length) return '<p class="m" style="margin-top:8px">Aucune facture importée pour le moment.</p>';
+  const row = (f) => {
+    const total = f.items.reduce((t, x) => t + (+x.montant || 0), 0);
+    return '<div class="card" style="margin-top:8px"><div class="row" style="align-items:center"><div><div class="t">' + (f.numero ? "Facture " + esc(f.numero) : "Facture") + '</div><div class="m">' + (f.date ? fr(f.date) + " · " : "") + f.items.length + " ligne(s) · " + eur(total) + ' TTC</div></div><div style="display:flex;align-items:center;gap:10px;margin-left:auto"><button class="btn ghost sq" title="Voir la facture" aria-label="Voir la facture" onclick="openFacture(\'' + esc(facturePublicUrl(f.path)) + '\')">' + ICON_DOC + '</button><button class="btn ghost sq" title="Supprimer la facture et ses dépenses" aria-label="Supprimer la facture" style="color:var(--bad);border-color:var(--bad)" onclick="deleteFacture(\'' + esc(f.path) + '\')">' + ICON_TRASH + "</button></div></div></div>";
+  };
+  return liste.map(row).join("");
+}
+async function deleteFacture(path) {
+  const liste = depFacturesListe();
+  const f = liste.find((x) => x.path === path);
+  const n = f ? f.items.length : 0;
+  if (!confirm("Supprimer cette facture et les " + n + " dépense(s) liée(s) ? Cette action est irréversible.")) return;
+  const ids = (S.depenses || []).filter((x) => x.facture_path === path).map((x) => x.id);
+  const { error } = await SB.from("depenses").delete().in("id", ids);
+  if (error) {
+    toast(msgErr(error));
+    return;
+  }
+  await SB.storage.from(FACTURE_BUCKET).remove([path]);
+  flash("Facture et dépenses liées supprimées");
+  await reload();
+}
 async function updateDepense(id) {
   const err = $("edErr");
   err.textContent = "";
@@ -7468,8 +7510,10 @@ function depensesPage() {
   const rows = list.length ? list.map((x) => DEP_EDIT === x.id ? rowEdit(x) : rowView(x)).join("") : '<p class="m">Aucune dépense enregistrée.</p>';
   const retour = VIEW === "dashpage" ? '<div style="margin:4px 0 10px"><button class="btn small ghost" onclick="go(\'dashboard\')">← Tableau de bord</button></div>' : "";
   const pdfBtn = '<label class="btn ghost small" title="Importer une facture (.pdf)" style="cursor:pointer;position:relative;display:inline-flex;margin-top:10px">' + (DEP_PDF_BUSY ? "Lecture…" : "Importer une facture (.pdf)") + (DEP_PDF_BUSY ? "" : '<input type="file" accept="application/pdf" onchange="depImportPdf(this)" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none">') + "</label>";
+  const factBtn = '<button class="btn ghost small" style="margin-top:10px;margin-left:8px" onclick="depFactToggle()">' + (DEP_FACT_OPEN ? "Masquer les factures importées" : "Gérer les factures importées") + "</button>";
+  const factPanel = DEP_FACT_OPEN ? '<div style="margin-top:8px">' + depFacturesHtml() + "</div>" : "";
   const filtres = '<div style="display:flex;gap:8px;align-items:center;margin-top:10px"><button class="btn ghost sq" title="Supprimer les filtres" aria-label="Supprimer les filtres" onclick="depResetFiltres()">' + ICON_FILTER + '</button><div class="stk-filt" style="margin:0;flex:1"><select onchange="depSet(\'cat\',this.value)">' + selOpts([["", "Toutes catégories"]].concat(cats.map((c) => [c, c])), DEP_F.cat) + '</select><div class="date-wrap"><input type="date" value="' + esc(DEP_F.from) + '" onchange="depSet(\'from\',this.value)" placeholder="Du"><button type="button" class="date-x" title="Effacer" onclick="depSet(\'from\',\'\')">×</button></div><div class="date-wrap"><input type="date" value="' + esc(DEP_F.to) + '" onchange="depSet(\'to\',this.value)" placeholder="Au"><button type="button" class="date-x" title="Effacer" onclick="depSet(\'to\',\'\')">×</button></div><select onchange="depSortSet(this.value)">' + selOpts([["recent", "Trier : plus récentes"], ["ancien", "Trier : plus anciennes"], ["montant_desc", "Trier : montant décroissant"], ["montant_asc", "Trier : montant croissant"]], DEP_SORT) + "</select></div></div>";
-  return retour + `<h1>Dépenses</h1><div class="two" style="margin-bottom:10px">` + bloc("Ce mois", sumT(moisList)) + bloc("Total", sumT(all)) + '</div>' + (DEP_PDF_PREVIEW ? depPdfPreviewHtml() : "") + '<div class="card">' + depEntete() + (DEP_OPEN ? '<label>Date</label><div class="date-wrap"><input id="depDate" type="date" value="' + todayIso() + `"><button type="button" class="date-x" title="Effacer" onclick="dateClear('depDate')">×</button></div><div class="two"><div><label>Montant HT (€)</label><input id="depHT" inputmode="decimal" placeholder="0" oninput="depCalc('ht')"></div><div><label>Montant TTC (€) · TVA 20 %</label><input id="depTTC" inputmode="decimal" placeholder="0" oninput="depCalc('ttc')"></div></div><label>Libellé</label><input id="depLib" placeholder="Ex. Écran PS5 fournisseur"><label>Catégorie</label><select id="depCat">` + cats.map((c) => "<option>" + c + "</option>").join("") + '</select><div id="depErr" class="err"></div><button class="btn" onclick="addDepense()">Ajouter la dépense</button>' : "") + pdfBtn + "</div>" + filtres + '<h2 style="margin-top:14px">Historique</h2>' + rows;
+  return retour + `<h1>Dépenses</h1><div class="two" style="margin-bottom:10px">` + bloc("Ce mois", sumT(moisList)) + bloc("Total", sumT(all)) + '</div>' + (DEP_PDF_PREVIEW ? depPdfPreviewHtml() : "") + '<div class="card">' + depEntete() + (DEP_OPEN ? '<label>Date</label><div class="date-wrap"><input id="depDate" type="date" value="' + todayIso() + `"><button type="button" class="date-x" title="Effacer" onclick="dateClear('depDate')">×</button></div><div class="two"><div><label>Montant HT (€)</label><input id="depHT" inputmode="decimal" placeholder="0" oninput="depCalc('ht')"></div><div><label>Montant TTC (€) · TVA 20 %</label><input id="depTTC" inputmode="decimal" placeholder="0" oninput="depCalc('ttc')"></div></div><label>Libellé</label><input id="depLib" placeholder="Ex. Écran PS5 fournisseur"><label>Catégorie</label><select id="depCat">` + cats.map((c) => "<option>" + c + "</option>").join("") + '</select><div id="depErr" class="err"></div><button class="btn" onclick="addDepense()">Ajouter la dépense</button>' : "") + pdfBtn + factBtn + factPanel + "</div>" + filtres + '<h2 style="margin-top:14px">Historique</h2>' + rows;
 }
 async function addDepense() {
   const err = $("depErr");
@@ -15349,6 +15393,10 @@ function makeDemoSB() {
         filters.push((r) => r[col] === val);
         return b;
       },
+      in(col, vals) {
+        filters.push((r) => (vals || []).includes(r[col]));
+        return b;
+      },
       insert(rows) {
         op = "insert";
         payload = Array.isArray(rows) ? rows : [rows];
@@ -15380,7 +15428,8 @@ function makeDemoSB() {
   return {
     from,
     auth: { getSession: async () => ({ data: { session: null } }), signOut: async () => ({ error: null }) },
-    rpc: async () => ({ data: null, error: { message: "Action indisponible dans l’aperçu" } })
+    rpc: async () => ({ data: null, error: { message: "Action indisponible dans l’aperçu" } }),
+    storage: { from: () => ({ remove: async () => ({ error: null }), upload: async () => ({ error: null }), getPublicUrl: (p) => ({ data: { publicUrl: "#" + p } }) }) }
   };
 }
 function startDemo() {
