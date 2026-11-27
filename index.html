@@ -11959,7 +11959,8 @@ function catalogueView() {
   const montreMod = CAT.app && CAT.cat && (!gams.length || CAT.gam);
   const filtres = '<div class="stk-filt" style="margin-top:8px"><select onchange="setCat(\'app\',this.value)">' + optList(APPS, CAT.app, "Type d’appareil…") + "</select>" + (CAT.app ? '<select onchange="setCat(\'cat\',this.value)">' + optList(brands, CAT.cat, "Marque…") + "</select>" : "") + (CAT.app && gams.length ? '<select onchange="setCat(\'gam\',this.value)">' + optList(gams, CAT.gam || "", "Gamme…") + "</select>" : "") + (montreMod ? '<select onchange="setCat(\'mod\',this.value)">' + (gams.length ? modOpts(mods, CAT.gam, CAT.mod) : optList(mods, CAT.mod, "Modèle…")) + "</select>" : "") + '<select onchange="catSortInput(this.value)">' + selOpts([["recent", "Trier : plus récentes"], ["ancien", "Trier : plus anciennes"], ["nom", "Trier : nom (A→Z)"], ["appareil", "Trier : appareil"]], CAT_SORT) + "</select></div>";
   const barre = '<div style="display:flex;gap:8px;align-items:center;margin-top:8px"><button class="btn sq" title="' + (CAT_ADD_OPEN ? "Fermer le formulaire" : "Ajouter une réparation") + '" aria-label="' + (CAT_ADD_OPEN ? "Fermer le formulaire" : "Ajouter une réparation") + '" onclick="catAddToggle()"><span class="ic' + (CAT_ADD_OPEN ? " minus" : "") + '"></span></button><input style="flex:1;min-width:0;margin:0" placeholder="Rechercher un appareil ou une réparation…" value="' + esc(CAT_SEARCH) + '" oninput="catSearchInput(this.value)"></div><div style="display:flex;gap:8px;align-items:center;margin-top:8px"><button class="btn ghost sq" title="Supprimer les filtres" aria-label="Supprimer les filtres" onclick="catResetFiltres()">' + ICON_FILTER + "</button>" + filtres.replace('<div class="stk-filt" style="margin-top:8px">', '<div class="stk-filt" style="margin:0;flex:1">') + "</div>";
-  return "<h1>Nos prestations</h1>" + barre + '<div style="margin-top:10px" id="catBody">' + catBodyHtml() + "</div>";
+  const majBtn = ROLE === "rep" ? '<button class="btn ghost small" style="margin-top:8px" onclick="catMettreAJourNoms()">Mettre à jour les noms</button>' : "";
+  return "<h1>Nos prestations</h1>" + barre + majBtn + '<div style="margin-top:10px" id="catBody">' + catBodyHtml() + "</div>";
 }
 // Types de réparation : pour en ajouter un plus tard, ajoute son nom dans TYPES_REP.
 const TYPES_REP = ["Écran", "Batterie", "Caméra", "Bouton", "Connecteur de charge", "Devis", "Autre"];
@@ -12268,9 +12269,10 @@ function catRow(r) {
   const ok = r.prix != null && !isNaN(+r.prix);
   const t = r.appareil === "Mods" ? r.cible : r.appareil;
   const absent = !S.appBaseErr && ROLE === "rep" && !baseHasTrio(t, r.categorie, r.modele);
+  const incomplet = ROLE === "rep" && catNomIncomplet(r);
   const prixPrefix = hasQual && r.qualites.length > 1 ? "à partir de " : "";
   const dureeTxt = hasQual ? "" : r.duree ? "Durée : " + esc(r.duree) : "Durée à définir";
-  const entete = '<div class="row" style="align-items:center;justify-content:space-between;gap:8px">' + (edit ? '<div class="t">Modifier la réparation</div>' : '<div style="flex:1;min-width:0"><div class="t">' + esc(r.reparation) + (absent ? repere("Marque ou modèle absent de la base Appareils : à corriger") : "") + '</div><div class="m">' + (ok ? prixPrefix + eur(r.prix) + (dureeTxt ? " · " : "") : "") + dureeTxt + (r.joy ? " · joystick (1 ou 2)" + (ok ? " · 2 joysticks : " + eur(2 * r.prix - 5) : "") : "") + "</div></div>") + '<div style="display:flex;align-items:center;gap:8px;margin-left:auto"><button class="btn ghost sq" title="' + (edit ? "Terminer la modification" : "Modifier") + '" aria-label="' + (edit ? "Terminer la modification" : "Modifier") + '" onclick="catEditToggle(\'' + r.id + "')\">" + ICON_EDIT + '</button><button class="btn ghost sq" title="Supprimer" aria-label="Supprimer" style="color:var(--bad);border-color:var(--bad)" onclick="delCat(\'' + r.id + "')\">" + ICON_TRASH + "</button></div></div>";
+  const entete = '<div class="row" style="align-items:center;justify-content:space-between;gap:8px">' + (edit ? '<div class="t">Modifier la réparation</div>' : '<div style="flex:1;min-width:0"><div class="t">' + esc(r.reparation) + (absent ? repere("Marque ou modèle absent de la base Appareils : à corriger") : "") + (incomplet ? repere("Nom incomplet (nature, type/titre ou modèle manquant) : à corriger via Modifier") : "") + '</div><div class="m">' + (ok ? prixPrefix + eur(r.prix) + (dureeTxt ? " · " : "") : "") + dureeTxt + (r.joy ? " · joystick (1 ou 2)" + (ok ? " · 2 joysticks : " + eur(2 * r.prix - 5) : "") : "") + "</div></div>") + '<div style="display:flex;align-items:center;gap:8px;margin-left:auto"><button class="btn ghost sq" title="' + (edit ? "Terminer la modification" : "Modifier") + '" aria-label="' + (edit ? "Terminer la modification" : "Modifier") + '" onclick="catEditToggle(\'' + r.id + "')\">" + ICON_EDIT + '</button><button class="btn ghost sq" title="Supprimer" aria-label="Supprimer" style="color:var(--bad);border-color:var(--bad)" onclick="delCat(\'' + r.id + "')\">" + ICON_TRASH + "</button></div></div>";
   if (edit) {
     const qmode = "<label>Qualités</label><select onchange=\"catEditQModeToggle('" + r.id + "',this.value)\"><option value=\"simple\"" + (hasQual ? "" : " selected") + ">Une qualité</option><option value=\"multi\"" + (hasQual ? " selected" : "") + ">Plusieurs qualités</option></select>";
     const simpleBox = '<div id="catSimpleBox' + r.id + '" style="display:' + (hasQual ? "none" : "block") + '"><div class="two" style="margin-top:8px"><div><label>Durée de réparation</label><input id="catDu' + r.id + '" value="' + esc(r.duree || "") + '" placeholder="Ex. 1h"></div><div><label>Prix (€)</label><input id="catPx' + r.id + '" inputmode="decimal" value="' + esc(r.prix == null ? "" : r.prix) + '" placeholder="à définir"></div></div>' + catPiecesBlocHtml(r, true) + "</div>";
@@ -12308,6 +12310,37 @@ function natureCollecter(prefix, err, modele) {
     return null;
   }
   return { nat, ty, titre, rep: nat + " " + (titre ? titre.toLowerCase() : ty.toLowerCase()) + (modele ? " " + modele : "") };
+}
+function catNomIncomplet(r) {
+  return !r.nature || !r.modele || !((r.titre && r.titre.trim()) || (r.type_rep && r.type_rep.trim()));
+}
+function catNomAttendu(r) {
+  if (!r.nature) return null;
+  const titre = (r.titre || "").trim();
+  if (r.nature === "Autre") {
+    if (!titre) return null;
+    return r.nature + " " + titre.toLowerCase() + (r.modele ? " " + r.modele : "");
+  }
+  const ty = (r.type_rep || "").trim();
+  if (!titre && !ty) return null;
+  return r.nature + " " + (titre ? titre.toLowerCase() : ty.toLowerCase()) + (r.modele ? " " + r.modele : "");
+}
+async function catMettreAJourNoms() {
+  const rows = S.catalogue || [];
+  let maj = 0, incomplets = 0, ko = 0;
+  for (const r of rows) {
+    if (catNomIncomplet(r)) {
+      incomplets++;
+      continue;
+    }
+    const attendu = catNomAttendu(r);
+    if (attendu && attendu !== r.reparation) {
+      const { error } = await SB.from("catalogue").update({ reparation: attendu }).eq("id", r.id);
+      if (error) ko++; else maj++;
+    }
+  }
+  await reload();
+  flash(maj + " nom(s) mis à jour" + (incomplets ? ", " + incomplets + " à corriger (point d’exclamation)" : "") + (ko ? ", " + ko + " erreur(s)" : ""));
 }
 var CAT_NEW_QMODE = "simple";
 function catNewQModeToggle(v) {
