@@ -6329,7 +6329,10 @@ function pstOpts(p) {
 }
 const PUCES = [["Puce Switch V1", "Switch V1"], ["Puce Switch V2", "Switch V2"], ["Puce Switch Lite", "Switch Lite"], ["Puce Switch OLED", "Switch OLED"]];
 const GMAPS_KEY = "";
-const REP_NAV = [["accueil", "Accueil"], ["dashboard", "Tableau de bord"], ["clients", "Clients"], ["depenses", "Dépenses"], ["agenda", "Agenda"], ["dossiers", "Réparations et ventes"], ["qualirepar", "Qualirépar"], ["appareils", "Appareils"], ["new", "Nouvelle prestation"], ["newvente", "Nouvelle vente"], ["ventes", "Ventes"], ["avisClients", "Avis clients"], ["avis", "Suggestions & Bugs"], ["stock", "Stock"], ["catalogue", "Nos prestations"], ["dbadmin", "Bases de données"]];
+const REP_NAV = [["accueil", "Accueil"], ["dashboard", "Tableau de bord"], ["clients", "Clients"], ["depenses", "Dépenses"], ["dossiers", "Réparations et ventes"], ["appareils", "Appareils"], ["ventes", "Ventes"], ["stock", "Stock"], ["catalogue", "Nos prestations"], ["agenda", "Agenda"], ["qualirepar", "Qualirépar"], ["new", "Nouvelle prestation"], ["newvente", "Nouvelle vente"], ["avisClients", "Avis clients"]];
+const REP_NAV_AVIS = ["avis", "Suggestions & Bugs"];
+const REP_NAV_DBADMIN = ["dbadmin", "Bases de données"];
+const REP_NAV_ALL = REP_NAV.concat([REP_NAV_AVIS, REP_NAV_DBADMIN]);
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s != null ? s : "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const telLink = (t) => {
@@ -6864,7 +6867,7 @@ function render() {
     nav.classList.remove("hide");
     const __navTop = nav.scrollTop, __navLeft = nav.scrollLeft;
     const navBtn = ([v, l]) => `<button class="${VIEW === v ? "on" : ""}" onclick="go('${v}')">${l}</button>`;
-    nav.innerHTML = REP_NAV.filter(([v]) => v !== "ventes").map(navBtn).join("") + '<div class="nav-sep" aria-hidden="true"></div>' + REP_NAV.filter(([v]) => v === "ventes").map(navBtn).join("") + navOutils() + outilsInlineHtml() + '<a class="nav-ecran" href="reparations-en-cours.html" target="_blank" rel="noopener">Réparations en cours ↗</a><button class="nav-copy" title="Copie toutes les suggestions et bugs non archivés" onclick="copierRecapNonArchive()">Copier le récap</button><button class="nav-logout" onclick="logout()">Déconnexion</button>';
+    nav.innerHTML = REP_NAV.filter(([v]) => v !== "ventes").map(navBtn).join("") + '<div class="nav-sep" aria-hidden="true"></div>' + REP_NAV.filter(([v]) => v === "ventes").map(navBtn).join("") + navOutils() + outilsInlineHtml() + navBtn(REP_NAV_DBADMIN) + '<a class="nav-ecran" href="reparations-en-cours.html" target="_blank" rel="noopener">Réparations en cours ↗</a><button class="nav-copy" title="Copie toutes les suggestions et bugs non archivés" onclick="copierRecapNonArchive()">Copier le récap</button>' + navBtn(REP_NAV_AVIS) + '<button class="nav-logout" onclick="logout()">Déconnexion</button>';
     nav.scrollTop = __navTop;
     nav.scrollLeft = __navLeft;
     /* L'en-tête (logo) est gardé tel quel d'une page à l'autre : on ne remplace que le contenu en dessous, sinon le haut de la page saute à chaque clic */
@@ -8470,7 +8473,7 @@ const REP = {
       ["piece", "Pièces à commander", D.aCmd.length, false]
     ];
     const statH = stats.map(([k, l, v, alert]) => `<button class="card acc-stat" onclick="dashPage('` + k + `')"><div class="acc-l">` + l + '</div><div class="acc-v' + (alert ? " alert" : "") + '">' + v + "</div></button>").join("");
-    const navH = REP_NAV.filter(([v]) => v !== "accueil").map(([v, l]) => `<button class="card acc-nav" onclick="go('` + v + `')">` + esc(l) + " →</button>").join("");
+    const navH = REP_NAV_ALL.filter(([v]) => v !== "accueil").map(([v, l]) => `<button class="card acc-nav" onclick="go('` + v + `')">` + esc(l) + " →</button>").join("");
     return '<h1>Accueil</h1><h2>Les plus importants</h2><div class="acc-grid">' + statH + '</div><h2>Accès rapide</h2><div class="acc-grid">' + navH + "</div>";
   },
   dashboard: () => dashboardView(),
@@ -8741,7 +8744,7 @@ function detectPage() {
   });
   if (best) return best.getAttribute("data-page");
   if (ROLE !== "rep") return "Espace client";
-  const nav = REP_NAV.find(([v]) => v === VIEW);
+  const nav = REP_NAV_ALL.find(([v]) => v === VIEW);
   return "Espace réparateur" + (DOSSIER ? " · Détail réparation" : nav ? " · " + nav[1] : "");
 }
 var FB_HIDDEN = function() {
