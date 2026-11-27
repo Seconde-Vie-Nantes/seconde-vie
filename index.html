@@ -11621,6 +11621,10 @@ function setCat(k, v) {
   if (k === "gam") CAT.mod = "";
   render();
 }
+function catResetFiltres() {
+  CAT = { app: "", cat: "", mod: "" };
+  render();
+}
 function optList(arr, sel, ph) {
   return '<option value="">' + ph + "</option>" + arr.map(function(v) {
     return "<option" + (v === sel ? " selected" : "") + ">" + esc(v) + "</option>";
@@ -11725,7 +11729,7 @@ function catalogueView() {
   const corps = list.length ? list.map((r) => (CAT.mod ? "" : catLibelle(r)) + catRow(r)).join("") : '<p class="m">' + aucune + "</p>";
   const body = corps + (CAT.mod ? addCatForm() : "") + (CAT.cat && !gams.length && !mods.length ? '<p class="m" style="margin-top:10px">Pour ajouter un modèle, crée-le d’abord dans l’onglet Appareils.</p>' : "");
   const montreMod = CAT.app && (!gams.length || CAT.gam);
-  const filtres = '<div class="stk-filt">' + '<select onchange="setCat(\'app\',this.value)">' + optList(APPS, CAT.app, "Type d’appareil…") + "</select>" + (CAT.app ? '<select onchange="setCat(\'cat\',this.value)">' + optList(brands, CAT.cat, "Marque…") + "</select>" : "") + (CAT.app && gams.length ? '<select onchange="setCat(\'gam\',this.value)">' + optList(gams, CAT.gam || "", "Gamme…") + "</select>" : "") + (montreMod ? '<select onchange="setCat(\'mod\',this.value)">' + (gams.length ? modOpts(mods, CAT.gam, CAT.mod) : optList(mods, CAT.mod, "Modèle…")) + "</select>" : "") + "</div>";
+  const filtres = '<div class="stk-filt">' + '<button type="button" class="btn ghost sq" title="Supprimer les filtres" aria-label="Supprimer les filtres" onclick="catResetFiltres()">' + ICON_X + "</button>" + '<select onchange="setCat(\'app\',this.value)">' + optList(APPS, CAT.app, "Type d’appareil…") + "</select>" + (CAT.app ? '<select onchange="setCat(\'cat\',this.value)">' + optList(brands, CAT.cat, "Marque…") + "</select>" : "") + (CAT.app && gams.length ? '<select onchange="setCat(\'gam\',this.value)">' + optList(gams, CAT.gam || "", "Gamme…") + "</select>" : "") + (montreMod ? '<select onchange="setCat(\'mod\',this.value)">' + (gams.length ? modOpts(mods, CAT.gam, CAT.mod) : optList(mods, CAT.mod, "Modèle…")) + "</select>" : "") + "</div>";
   return "<h1>Réparations &amp; Mods</h1>" + filtres + '<div style="margin-top:10px">' + body + "</div>";
 }
 function catLibelle(r) {
@@ -11740,15 +11744,10 @@ const TYPES_HORS_QUALI = ["Devis", "Autre"];
 function typeRepOpts(sel) {
   return '<option value="">Type…</option>' + TYPES_REP.map((t) => '<option value="' + esc(t) + '"' + (t === sel ? " selected" : "") + ">" + esc(t) + "</option>").join("");
 }
-async function setTypeRep(id, v) {
-  const { error } = await SB.from("catalogue").update({ type_rep: v || null }).eq("id", id);
-  if (error) {
-    toast(msgErr(error));
-    render();
-    return;
-  }
-  toast("Type enregistré");
-  await reload();
+// Nature de la réparation : sert à construire automatiquement son nom (ex. « Remplacement batterie »).
+const NATURES_REP = ["Réparation", "Remplacement", "Mod", "Autre"];
+function natureOpts(sel) {
+  return '<option value="">Nature…</option>' + NATURES_REP.map((n) => '<option value="' + esc(n) + '"' + (n === sel ? " selected" : "") + ">" + esc(n) + "</option>").join("");
 }
 // Type de la réparation liée à une fiche (retrouvé dans le catalogue par nom, modèle et type d’appareil).
 function typeRepDossier(d) {
@@ -11867,21 +11866,42 @@ function catRow(r) {
   return '<div class="card">' + entete + catPiecesBlocHtml(r) + "</div>";
 }
 function addCatForm() {
-  return '<div class="card" style="margin-top:10px"><div class="t">Ajouter une réparation pour ce modèle</div><label>Réparation *</label><input id="cR"><div class="two"><div><label>Prix (€)</label><input id="cP" inputmode="decimal" placeholder="à définir"></div><div><label>Durée de réparation</label><input id="cD" placeholder="Ex. 1h"></div></div><button class="btn" onclick="addCat()">Ajouter</button><div class="err" id="cRErr"></div></div>';
+  return '<div class="card" style="margin-top:10px"><div class="t">Ajouter une réparation pour ce modèle</div><label>Nature *</label><select id="cNat" onchange="catAddNatureChange()">' + natureOpts("") + '</select><div id="cTypeBox"><label>Type de réparation *</label><select id="cTy">' + typeRepOpts("") + '</select></div><div id="cNoteBox" style="display:none"><label>Précision *</label><input id="cNote" placeholder="Ex. Nettoyage port de charge"></div><div class="two" style="margin-top:8px"><div><label>Prix (€)</label><input id="cP" inputmode="decimal" placeholder="à définir"></div><div><label>Durée de réparation</label><input id="cD" placeholder="Ex. 1h"></div></div><button class="btn" style="margin-top:8px" onclick="addCat()">Ajouter</button><div class="err" id="cRErr"></div></div>';
+}
+function catAddNatureChange() {
+  const autre = $("cNat") && $("cNat").value === "Autre";
+  if ($("cTypeBox")) $("cTypeBox").style.display = autre ? "none" : "block";
+  if ($("cNoteBox")) $("cNoteBox").style.display = autre ? "block" : "none";
 }
 async function addCat() {
-  const rep = $("cR").value.trim(), pr = $("cP").value.trim().replace(",", "."), du = $("cD").value.trim(), err = $("cRErr");
+  const nat = $("cNat").value, pr = $("cP").value.trim().replace(",", "."), du = $("cD").value.trim(), err = $("cRErr");
   err.textContent = "";
-  if (!rep) {
-    err.textContent = "Indique la réparation.";
+  if (!nat) {
+    err.textContent = "Choisis la nature de la réparation.";
     return;
+  }
+  let rep, ty = "";
+  if (nat === "Autre") {
+    const note = ($("cNote") ? $("cNote").value : "").trim();
+    if (!note) {
+      err.textContent = "Écris une précision : elle sert de nom à la réparation.";
+      return;
+    }
+    rep = note;
+  } else {
+    ty = $("cTy").value;
+    if (!ty) {
+      err.textContent = "Choisis le type de réparation.";
+      return;
+    }
+    rep = nat + " " + ty.toLowerCase() + (CAT.mod ? " " + CAT.mod : "");
   }
   if (pr !== "" && pr !== "devis" && (isNaN(+pr) || +pr < 0)) {
     err.textContent = "Prix invalide.";
     return;
   }
   const ref = S.catalogue.find((r) => r.modele === CAT.mod);
-  const { error } = await SB.from("catalogue").insert({ appareil: CAT.app, categorie: ref ? ref.categorie : CAT.cat || "Autre", modele: CAT.mod, reparation: rep, prix: pr === "" ? null : pr, duree: durNorm(du), joy: false });
+  const { error } = await SB.from("catalogue").insert({ appareil: CAT.app, categorie: ref ? ref.categorie : CAT.cat || "Autre", modele: CAT.mod, reparation: rep, prix: pr === "" ? null : pr, duree: durNorm(du), joy: false, type_rep: ty || null });
   if (error) {
     err.textContent = msgErr(error);
     return;
