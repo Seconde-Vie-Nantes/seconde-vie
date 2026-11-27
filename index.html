@@ -6329,7 +6329,7 @@ function pstOpts(p) {
 }
 const PUCES = [["Puce Switch V1", "Switch V1"], ["Puce Switch V2", "Switch V2"], ["Puce Switch Lite", "Switch Lite"], ["Puce Switch OLED", "Switch OLED"]];
 const GMAPS_KEY = "";
-const REP_NAV = [["accueil", "Accueil"], ["dashboard", "Tableau de bord"], ["clients", "Clients"], ["depenses", "Dépenses"], ["agenda", "Agenda"], ["dossiers", "Réparations et ventes"], ["qualirepar", "Qualirépar"], ["appareils", "Appareils"], ["new", "Nouvelle prestation"], ["newvente", "Nouvelle vente"], ["ventes", "Ventes"], ["avisClients", "Avis clients"], ["avis", "Suggestions & Bugs"], ["stock", "Stock"], ["catalogue", "Réparations & Mods"], ["dbadmin", "Bases de données"]];
+const REP_NAV = [["accueil", "Accueil"], ["dashboard", "Tableau de bord"], ["clients", "Clients"], ["depenses", "Dépenses"], ["agenda", "Agenda"], ["dossiers", "Réparations et ventes"], ["qualirepar", "Qualirépar"], ["appareils", "Appareils"], ["new", "Nouvelle prestation"], ["newvente", "Nouvelle vente"], ["ventes", "Ventes"], ["avisClients", "Avis clients"], ["avis", "Suggestions & Bugs"], ["stock", "Stock"], ["catalogue", "Nos prestations"], ["dbadmin", "Bases de données"]];
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s != null ? s : "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const telLink = (t) => {
@@ -11949,14 +11949,14 @@ function catSortInput(v) {
 }
 function catalogueView() {
   const rows = S.catalogue;
-  if (!rows.length) return '<h1>Réparations &amp; Mods</h1><p class="m">Le catalogue est vide.</p><button class="btn" onclick="importCat()">Importer le catalogue de base</button>';
+  if (!rows.length) return '<h1>Nos prestations</h1><p class="m">Le catalogue est vide.</p><button class="btn" onclick="importCat()">Importer le catalogue de base</button>';
   const brands = marquesApp(CAT.app);
   const gams = gammesFor(CAT.app, CAT.cat);
   const mods = gams.length ? CAT.gam ? modelsFor(CAT.app, CAT.cat, CAT.gam) : [] : modelsFor(CAT.app, CAT.cat);
   const montreMod = CAT.app && CAT.cat && (!gams.length || CAT.gam);
   const filtres = '<div class="stk-filt" style="margin-top:8px"><select onchange="setCat(\'app\',this.value)">' + optList(APPS, CAT.app, "Type d’appareil…") + "</select>" + (CAT.app ? '<select onchange="setCat(\'cat\',this.value)">' + optList(brands, CAT.cat, "Marque…") + "</select>" : "") + (CAT.app && gams.length ? '<select onchange="setCat(\'gam\',this.value)">' + optList(gams, CAT.gam || "", "Gamme…") + "</select>" : "") + (montreMod ? '<select onchange="setCat(\'mod\',this.value)">' + (gams.length ? modOpts(mods, CAT.gam, CAT.mod) : optList(mods, CAT.mod, "Modèle…")) + "</select>" : "") + '<select onchange="catSortInput(this.value)">' + selOpts([["recent", "Trier : plus récentes"], ["ancien", "Trier : plus anciennes"], ["nom", "Trier : nom (A→Z)"], ["appareil", "Trier : appareil"]], CAT_SORT) + "</select></div>";
   const barre = '<div style="display:flex;gap:8px;align-items:center;margin-top:8px"><button class="btn sq" title="' + (CAT_ADD_OPEN ? "Fermer le formulaire" : "Ajouter une réparation") + '" aria-label="' + (CAT_ADD_OPEN ? "Fermer le formulaire" : "Ajouter une réparation") + '" onclick="catAddToggle()"><span class="ic' + (CAT_ADD_OPEN ? " minus" : "") + '"></span></button><input style="flex:1;min-width:0;margin:0" placeholder="Rechercher un appareil ou une réparation…" value="' + esc(CAT_SEARCH) + '" oninput="catSearchInput(this.value)"></div><div style="display:flex;gap:8px;align-items:center;margin-top:8px"><button class="btn ghost sq" title="Supprimer les filtres" aria-label="Supprimer les filtres" onclick="catResetFiltres()">' + ICON_FILTER + "</button>" + filtres.replace('<div class="stk-filt" style="margin-top:8px">', '<div class="stk-filt" style="margin:0;flex:1">') + "</div>";
-  return "<h1>Réparations &amp; Mods</h1>" + barre + '<div style="margin-top:10px" id="catBody">' + catBodyHtml() + "</div>";
+  return "<h1>Nos prestations</h1>" + barre + '<div style="margin-top:10px" id="catBody">' + catBodyHtml() + "</div>";
 }
 // Types de réparation : pour en ajouter un plus tard, ajoute son nom dans TYPES_REP.
 const TYPES_REP = ["Écran", "Batterie", "Caméra", "Bouton", "Connecteur de charge", "Devis", "Autre"];
