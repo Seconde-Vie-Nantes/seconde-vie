@@ -11749,21 +11749,29 @@ function catSearchMatch(r, q) {
   const hay = [r.reparation, r.modele, r.categorie, r.appareil === "Mods" ? r.cible : r.appareil].filter(Boolean).join(" ").toLowerCase();
   return hay.indexOf(q.trim().toLowerCase()) > -1;
 }
-function catalogueView() {
+function catBodyHtml() {
   const rows = S.catalogue;
-  if (!rows.length) return '<h1>Réparations &amp; Mods</h1><p class="m">Le catalogue est vide.</p><button class="btn" onclick="importCat()">Importer le catalogue de base</button>';
   const inApp = (r) => !CAT.app || r.appareil === CAT.app || r.appareil === "Mods" && r.cible === CAT.app;
-  const brands = marquesApp(CAT.app);
-  const gams = gammesFor(CAT.app, CAT.cat);
-  const mods = gams.length ? CAT.gam ? modelsFor(CAT.app, CAT.cat, CAT.gam) : [] : modelsFor(CAT.app, CAT.cat);
   const list = rows.filter((r) => inApp(r) && (!CAT.cat || r.categorie === CAT.cat) && (!CAT.mod || r.modele === CAT.mod) && catSearchMatch(r, CAT_SEARCH)).sort((a, b) => String(a.appareil).localeCompare(String(b.appareil), "fr") || String(a.categorie).localeCompare(String(b.categorie), "fr") || String(a.modele).localeCompare(String(b.modele), "fr") || a.reparation.localeCompare(b.reparation, "fr"));
   const aucune = CAT.mod || CAT.cat || CAT.app || CAT_SEARCH ? "Aucune réparation pour ce choix." : "Aucune réparation pour le moment.";
   const corps = list.length ? list.map((r) => catRow(r)).join("") : '<p class="m">' + aucune + "</p>";
+  return (CAT_ADD_OPEN ? addCatForm() : "") + corps;
+}
+function catSearchInput(v) {
+  CAT_SEARCH = v;
+  const el = $("catBody");
+  if (el) el.innerHTML = catBodyHtml();
+}
+function catalogueView() {
+  const rows = S.catalogue;
+  if (!rows.length) return '<h1>Réparations &amp; Mods</h1><p class="m">Le catalogue est vide.</p><button class="btn" onclick="importCat()">Importer le catalogue de base</button>';
+  const brands = marquesApp(CAT.app);
+  const gams = gammesFor(CAT.app, CAT.cat);
+  const mods = gams.length ? CAT.gam ? modelsFor(CAT.app, CAT.cat, CAT.gam) : [] : modelsFor(CAT.app, CAT.cat);
   const montreMod = CAT.app && CAT.cat && (!gams.length || CAT.gam);
   const filtres = '<div class="stk-filt" style="margin-top:8px"><select onchange="setCat(\'app\',this.value)">' + optList(APPS, CAT.app, "Type d’appareil…") + "</select>" + (CAT.app ? '<select onchange="setCat(\'cat\',this.value)">' + optList(brands, CAT.cat, "Marque…") + "</select>" : "") + (CAT.app && gams.length ? '<select onchange="setCat(\'gam\',this.value)">' + optList(gams, CAT.gam || "", "Gamme…") + "</select>" : "") + (montreMod ? '<select onchange="setCat(\'mod\',this.value)">' + (gams.length ? modOpts(mods, CAT.gam, CAT.mod) : optList(mods, CAT.mod, "Modèle…")) + "</select>" : "") + "</div>";
-  const barre = '<div style="display:flex;gap:8px;align-items:center;margin-top:8px"><button class="btn sq" title="' + (CAT_ADD_OPEN ? "Fermer le formulaire" : "Ajouter une réparation") + '" aria-label="' + (CAT_ADD_OPEN ? "Fermer le formulaire" : "Ajouter une réparation") + '" onclick="catAddToggle()"><span class="ic' + (CAT_ADD_OPEN ? " minus" : "") + '"></span></button><input style="flex:1;min-width:0;margin:0" placeholder="Rechercher un appareil ou une réparation…" value="' + esc(CAT_SEARCH) + '" oninput="CAT_SEARCH=this.value;render()"></div><div style="display:flex;gap:8px;align-items:center;margin-top:8px"><button class="btn ghost sq" title="Supprimer les filtres" aria-label="Supprimer les filtres" onclick="catResetFiltres()">' + ICON_FILTER + "</button>" + filtres.replace('<div class="stk-filt" style="margin-top:8px">', '<div class="stk-filt" style="margin:0;flex:1">') + "</div>";
-  const body = (CAT_ADD_OPEN ? addCatForm() : "") + corps;
-  return "<h1>Réparations &amp; Mods</h1>" + barre + '<div style="margin-top:10px">' + body + "</div>";
+  const barre = '<div style="display:flex;gap:8px;align-items:center;margin-top:8px"><button class="btn sq" title="' + (CAT_ADD_OPEN ? "Fermer le formulaire" : "Ajouter une réparation") + '" aria-label="' + (CAT_ADD_OPEN ? "Fermer le formulaire" : "Ajouter une réparation") + '" onclick="catAddToggle()"><span class="ic' + (CAT_ADD_OPEN ? " minus" : "") + '"></span></button><input style="flex:1;min-width:0;margin:0" placeholder="Rechercher un appareil ou une réparation…" value="' + esc(CAT_SEARCH) + '" oninput="catSearchInput(this.value)"></div><div style="display:flex;gap:8px;align-items:center;margin-top:8px"><button class="btn ghost sq" title="Supprimer les filtres" aria-label="Supprimer les filtres" onclick="catResetFiltres()">' + ICON_FILTER + "</button>" + filtres.replace('<div class="stk-filt" style="margin-top:8px">', '<div class="stk-filt" style="margin:0;flex:1">') + "</div>";
+  return "<h1>Réparations &amp; Mods</h1>" + barre + '<div style="margin-top:10px" id="catBody">' + catBodyHtml() + "</div>";
 }
 // Types de réparation : pour en ajouter un plus tard, ajoute son nom dans TYPES_REP.
 const TYPES_REP = ["Écran", "Batterie", "Caméra", "Bouton", "Devis", "Autre"];
