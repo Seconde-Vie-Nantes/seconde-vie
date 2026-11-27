@@ -7418,6 +7418,10 @@ async function updateDepense(id) {
     err.textContent = "Montant invalide : saisis le montant HT ou TTC.";
     return;
   }
+  if ((S.depenses || []).some((x) => x.id !== id && (x.libelle || "").trim().toLowerCase() === lib.toLowerCase())) {
+    err.textContent = "Impossible : une facture est déjà enregistrée avec ce nom.";
+    return;
+  }
   const { error } = await SB.from("depenses").update({ date, libelle: lib, montant: Math.round(ttc * 100) / 100, categorie: $("edCat").value }).eq("id", id);
   if (error) {
     err.textContent = msgErr(error);
@@ -7482,6 +7486,10 @@ async function addDepense() {
   }
   if (isNaN(ttc) || ttc < 0) {
     err.textContent = "Montant invalide : saisis le montant HT ou TTC.";
+    return;
+  }
+  if ((S.depenses || []).some((x) => (x.libelle || "").trim().toLowerCase() === lib.toLowerCase())) {
+    err.textContent = "Impossible : une facture est déjà enregistrée avec ce nom.";
     return;
   }
   const { error } = await SB.from("depenses").insert({ date, libelle: lib, montant: Math.round(ttc * 100) / 100, categorie: $("depCat").value });
