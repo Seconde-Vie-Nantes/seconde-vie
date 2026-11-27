@@ -8614,7 +8614,7 @@ const REP = {
     const piecesTab = `
     <div class="row" style="gap:8px;align-items:center;flex-wrap:nowrap;margin-top:4px">
       <button class="btn sq" id="stkAddB" title="${STK_ADD ? "Fermer le formulaire" : "Ajouter une pièce"}" aria-label="${STK_ADD ? "Fermer le formulaire" : "Ajouter une pièce"}" onclick="stkAddToggle()"><span class="ic${STK_ADD ? " minus" : ""}"></span></button>
-      <label class="btn ghost sq" title="Importer une commande (.csv)" aria-label="Importer une commande (.csv)" style="cursor:pointer;position:relative">${ICON_UPLOAD}<input type="file" accept=".csv,text/csv" onchange="stkImportCsv(this)" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"></label>
+      <label class="btn ghost sq" title="Importer une commande (.csv)" aria-label="Importer une commande (.csv)" style="cursor:pointer;position:relative">${ICON_UPLOAD}<input type="file" accept=".csv,text/csv,text/plain,text/comma-separated-values,application/csv,application/vnd.ms-excel" onchange="stkImportCsv(this)" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"></label>
       <input id="sQ" placeholder="Rechercher (SKU, pièce, type ou modèle)" value="${esc(STK_Q)}" oninput="STK_Q=this.value;$('stkL').innerHTML=stkHtml(STK_Q)" style="flex:1;min-width:0;margin:0">
     </div>
     ${STK_CSV_PREVIEW ? stkCsvPreviewHtml() : ""}
