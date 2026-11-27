@@ -11769,15 +11769,27 @@ function catPieceFermer(id) {
   delete CAT_PIECE_SEARCH[id];
   render();
 }
+function catPiecesAuto(r) {
+  if (r.pieces_auto && r.pieces_auto.length) return r.pieces_auto;
+  return r.piece_sku ? [{ sku: r.piece_sku, qte: 1 }] : [];
+}
 function catPieceChoisir(id, val) {
   const m = /\(SKU (.+)\)\s*$/.exec(val || "");
   if (!m) return;
   const s = S.stock.find((x) => x.sku === m[1]);
   if (!s) return;
-  catPieceLier(id, s.sku);
+  const qEl = $("catPq" + id);
+  const q = qEl ? parseInt(qEl.value, 10) : 1;
+  catPieceAjouter(id, s.sku, isNaN(q) || q < 1 ? 1 : q);
 }
-async function catPieceLier(id, sku) {
-  const { error } = await SB.from("catalogue").update({ piece_sku: sku }).eq("id", id);
+async function catPieceAjouter(id, sku, qte) {
+  const r = S.catalogue.find((x) => x.id === id);
+  if (!r) return;
+  const list = catPiecesAuto(r).slice();
+  const i = list.findIndex((p) => p.sku === sku);
+  if (i > -1) list[i] = { sku, qte };
+  else list.push({ sku, qte });
+  const { error } = await SB.from("catalogue").update({ pieces_auto: list }).eq("id", id);
   if (error) {
     toast(msgErr(error));
     return;
@@ -11785,20 +11797,74 @@ async function catPieceLier(id, sku) {
   delete CAT_PIECE_SEARCH[id];
   await reload();
 }
-async function catPieceRetirer(id) {
-  const { error } = await SB.from("catalogue").update({ piece_sku: null }).eq("id", id);
+async function catPieceRetirer(id, sku) {
+  const r = S.catalogue.find((x) => x.id === id);
+  if (!r) return;
+  const list = catPiecesAuto(r).filter((p) => p.sku !== sku);
+  const { error } = await SB.from("catalogue").update({ pieces_auto: list }).eq("id", id);
   if (error) {
     toast(msgErr(error));
     return;
   }
   await reload();
 }
+function catPiecesBlocHtml(r) {
+  const list = catPiecesAuto(r);
+  const ligne = (p) => {
+    const s = S.stock.find((x) => x.sku === p.sku);
+    const nom = (p.qte > 1 ? p.qte + " × " : "") + (s ? s.nom : p.sku);
+    return '<div class="row" style="align-items:center;gap:8px;padding:3px 0"><span style="flex:1;min-width:0;overflow-wrap:anywhere">' + esc(nom) + '</span><button class="btn ghost sq" title="Retirer la pièce" aria-label="Retirer la pièce" style="color:var(--bad);border-color:var(--bad)" onclick="catPieceRetirer(\'' + r.id + "','" + esc(p.sku) + "')\">" + ICON_TRASH + "</button></div>";
+  };
+  const recherche = CAT_PIECE_SEARCH[r.id] ? '<div style="margin-top:6px"><label>Rechercher une pièce</label><input list="catDl' + r.id + '" placeholder="Nom ou SKU…" oninput="catPieceChoisir(\'' + r.id + '\',this.value)"><div style="display:flex;gap:6px;align-items:center;margin-top:4px"><span class="m">Quantité</span><input id="catPq' + r.id + '" inputmode="numeric" value="1" style="width:80px;margin:0"></div><datalist id="catDl' + r.id + '">' + (S.stock || []).map((s) => '<option value="' + esc(s.nom + " (SKU " + s.sku + ")") + '">').join("") + '</datalist><button class="chip" style="margin-top:4px" onclick="catPieceFermer(\'' + r.id + "')\">Annuler</button></div>" : "";
+  return '<div style="margin-top:10px">' + (list.length ? '<div class="m" style="margin-bottom:2px">Pièces liées par défaut</div>' + list.map(ligne).join("") : "") + '<button class="chip" style="margin-top:6px" onclick="catPieceOuvrir(\'' + r.id + "')\">+ Ajouter une pièce</button>" + recherche + "</div>";
+}
+var CAT_EDIT = null;
+function catEditToggle(id) {
+  CAT_EDIT = CAT_EDIT === id ? null : id;
+  render();
+}
+async function catSaveEdit(id) {
+  const r = S.catalogue.find((x) => x.id === id);
+  if (!r) return;
+  const err = $("catErr" + id);
+  err.textContent = "";
+  const nom = $("catNom" + id).value.trim();
+  const du = $("catDu" + id).value.trim();
+  const ty = $("catTy" + id).value;
+  const pxRaw = $("catPx" + id).value.trim().replace(",", ".");
+  if (!nom) {
+    err.textContent = "Indique la réparation.";
+    return;
+  }
+  if (pxRaw !== "" && pxRaw !== "devis" && (isNaN(+pxRaw) || +pxRaw < 0)) {
+    err.textContent = "Prix invalide.";
+    return;
+  }
+  const prix = pxRaw === "" ? null : pxRaw;
+  const { error } = await SB.from("catalogue").update({ reparation: nom, duree: durNorm(du), type_rep: ty || null, prix }).eq("id", id);
+  if (error) {
+    err.textContent = msgErr(error);
+    return;
+  }
+  if (nom !== r.reparation) {
+    const ids = (S.devices || []).filter((d) => nz(d.modele) === nz(r.modele) && (r.appareil === "Mods" || d.type === r.appareil)).map((d) => d.id);
+    if (ids.length) {
+      const { error: e2 } = await SB.from("dossiers").update({ panne: nom }).in("device_id", ids).eq("panne", r.reparation);
+      if (e2) toast(msgErr(e2));
+    }
+  }
+  CAT_EDIT = null;
+  flash("Réparation modifiée");
+  await reload();
+}
 function catRow(r) {
+  const edit = CAT_EDIT === r.id;
   const ok = r.prix != null && !isNaN(+r.prix);
-  const piece = r.piece_sku ? S.stock.find((s) => s.sku === r.piece_sku) : null;
-  const pieceBloc = piece ? '<div class="m" style="margin-top:10px">Pièce liée par défaut : <b>' + esc(piece.nom) + "</b> (SKU " + esc(piece.sku) + ')</div><div style="margin-top:6px;display:flex;gap:8px;flex-wrap:wrap"><button class="chip" onclick="catPieceOuvrir(\'' + r.id + "')\">Changer</button><button class=\"chip late\" onclick=\"catPieceRetirer('" + r.id + '\')">Retirer</button></div>' : '<div style="margin-top:10px"><button class="chip" onclick="catPieceOuvrir(\'' + r.id + "')\">+ Lier une pièce par défaut</button></div>";
-  const recherche = CAT_PIECE_SEARCH[r.id] ? '<div style="margin-top:6px"><label>Rechercher une pièce</label><input list="catDl' + r.id + '" placeholder="Nom ou SKU…" oninput="catPieceChoisir(\'' + r.id + "',this.value)\"><datalist id=\"catDl" + r.id + '">' + (S.stock || []).map((s) => '<option value="' + esc(s.nom + " (SKU " + s.sku + ")") + '">').join("") + '</datalist><button class="chip" style="margin-top:4px" onclick="catPieceFermer(\'' + r.id + "')\">Annuler</button></div>" : "";
-  return '<div class="card"><div class="row" style="align-items:center;justify-content:space-between;gap:8px"><div style="flex:1;min-width:0"><div class="t">' + esc(r.reparation) + '</div><div class="m">' + (r.duree ? "Durée : " + esc(r.duree) : "Durée à définir") + (r.joy ? " · joystick (1 ou 2)" + (ok ? " · 2 joysticks : " + eur(2 * r.prix - 5) : "") : "") + '</div></div><div style="display:flex;align-items:center;gap:8px;margin-left:auto"><button class="btn ghost sq" title="Renommer la réparation" aria-label="Renommer la réparation" onclick="catRenommer(\'' + r.id + "')\">" + ICON_EDIT + '</button><button class="btn ghost sq" title="Supprimer" aria-label="Supprimer" style="color:var(--bad);border-color:var(--bad)" onclick="delCat(\'' + r.id + "')\">" + ICON_TRASH + "</button></div></div>" + '<div class="two" style="margin-top:10px"><div><label>Type de réparation</label><select aria-label="Type de réparation" onchange="setTypeRep(\'' + r.id + '\', this.value)">' + typeRepOpts(r.type_rep) + '</select></div><div><label>Prix</label><div style="display:flex;gap:6px;align-items:center"><input inputmode="decimal" value="' + esc(r.prix == null ? "" : r.prix) + `" placeholder="à définir" onchange="setPrixCat('` + r.id + `',this.value)"><span class="m">€</span></div></div></div>` + pieceBloc + recherche + "</div>";
+  const entete = '<div class="row" style="align-items:center;justify-content:space-between;gap:8px">' + (edit ? '<div class="t">Modifier la réparation</div>' : '<div style="flex:1;min-width:0"><div class="t">' + esc(r.reparation) + '</div><div class="m">' + (r.duree ? "Durée : " + esc(r.duree) : "Durée à définir") + (r.joy ? " · joystick (1 ou 2)" + (ok ? " · 2 joysticks : " + eur(2 * r.prix - 5) : "") : "") + "</div></div>") + '<div style="display:flex;align-items:center;gap:8px;margin-left:auto"><button class="btn ghost sq" title="' + (edit ? "Terminer la modification" : "Modifier") + '" aria-label="' + (edit ? "Terminer la modification" : "Modifier") + '" onclick="catEditToggle(\'' + r.id + "')\">" + ICON_EDIT + '</button><button class="btn ghost sq" title="Supprimer" aria-label="Supprimer" style="color:var(--bad);border-color:var(--bad)" onclick="delCat(\'' + r.id + "')\">" + ICON_TRASH + "</button></div></div>";
+  if (edit) {
+    return '<div class="card">' + entete + '<label>Réparation *</label><input id="catNom' + r.id + '" value="' + esc(r.reparation) + '"><div class="two" style="margin-top:8px"><div><label>Type de réparation</label><select id="catTy' + r.id + '" aria-label="Type de réparation">' + typeRepOpts(r.type_rep) + '</select></div><div><label>Durée de réparation</label><input id="catDu' + r.id + '" value="' + esc(r.duree || "") + '" placeholder="Ex. 1h"></div></div><label>Prix (€)</label><input id="catPx' + r.id + '" inputmode="decimal" value="' + esc(r.prix == null ? "" : r.prix) + `" placeholder="à définir"><div style="display:flex;gap:8px;margin-top:8px"><button class="btn" onclick="catSaveEdit('` + r.id + `')">Enregistrer</button><button class="btn ghost" onclick="catEditToggle('` + r.id + `')">Annuler</button></div><div class="err" id="catErr` + r.id + '"></div>' + catPiecesBlocHtml(r) + "</div>";
+  }
+  return '<div class="card">' + entete + catPiecesBlocHtml(r) + "</div>";
 }
 function addCatForm() {
   return '<div class="card" style="margin-top:10px"><div class="t">Ajouter une réparation pour ce modèle</div><label>Réparation *</label><input id="cR"><div class="two"><div><label>Prix (€)</label><input id="cP" inputmode="decimal" placeholder="à définir"></div><div><label>Durée de réparation</label><input id="cD" placeholder="Ex. 1h"></div></div><button class="btn" onclick="addCat()">Ajouter</button><div class="err" id="cRErr"></div></div>';
@@ -11821,43 +11887,6 @@ async function addCat() {
     return;
   }
   toast("Réparation ajoutée");
-  await reload();
-}
-async function setPrixCat(id, v) {
-  v = String(v).trim().replace(",", ".");
-  const p = v === "" ? null : v;
-  if (p !== null && p !== "devis" && (isNaN(+p) || +p < 0)) {
-    toast("Prix invalide");
-    render();
-    return;
-  }
-  const { error } = await SB.from("catalogue").update({ prix: p }).eq("id", id);
-  if (error) {
-    toast(msgErr(error));
-    return;
-  }
-  toast("Prix enregistré");
-  await reload();
-}
-async function catRenommer(id) {
-  const r = S.catalogue.find((x) => x.id === id);
-  if (!r) return;
-  const nom = (prompt("Nouveau nom de la réparation", r.reparation) || "").trim();
-  if (!nom || nom === r.reparation) return;
-  const { error } = await SB.from("catalogue").update({ reparation: nom }).eq("id", id);
-  if (error) {
-    toast(msgErr(error));
-    return;
-  }
-  const ids = (S.devices || []).filter((d) => nz(d.modele) === nz(r.modele) && (r.appareil === "Mods" || d.type === r.appareil)).map((d) => d.id);
-  if (ids.length) {
-    const { error: e2 } = await SB.from("dossiers").update({ panne: nom }).in("device_id", ids).eq("panne", r.reparation);
-    if (e2) {
-      toast(msgErr(e2));
-      return;
-    }
-  }
-  toast("Réparation renommée");
   await reload();
 }
 async function delCat(id) {
@@ -12438,23 +12467,25 @@ async function autoLierPiecesCatalogue(dossierId, dev, lignes) {
   if (!dev || !lignes || !lignes.length) return;
   for (const l of lignes) {
     const r = (S.catalogue || []).find((c) => c.reparation === l.nom && nz(c.modele) === nz(dev.modele) && (c.appareil === "Mods" ? c.cible === dev.type : c.appareil === dev.type));
-    if (!r || !r.piece_sku) continue;
-    const s = S.stock.find((x) => x.sku === r.piece_sku);
-    if (!s) continue;
-    const qte = 1;
-    if (s.qte >= qte) {
-      const up = await SB.from("stock").update({ qte: s.qte - qte, res: s.res + qte }).eq("sku", s.sku);
-      if (up.error) {
-        toast(msgErr(up.error));
-        continue;
+    if (!r) continue;
+    for (const pa of catPiecesAuto(r)) {
+      const s = S.stock.find((x) => x.sku === pa.sku);
+      if (!s) continue;
+      const qte = pa.qte || 1;
+      if (s.qte >= qte) {
+        const up = await SB.from("stock").update({ qte: s.qte - qte, res: s.res + qte }).eq("sku", s.sku);
+        if (up.error) {
+          toast(msgErr(up.error));
+          continue;
+        }
+        s.qte -= qte;
+        s.res += qte;
+        const { error } = await SB.from("pieces_dossier").insert(Object.assign({ dossier_id: dossierId, nom: s.nom, qte, statut: "Réservée", sku: s.sku }, stkCoutPiece(s.sku)));
+        if (error) toast(msgErr(error));
+      } else {
+        const { error } = await SB.from("pieces_dossier").insert(Object.assign({ dossier_id: dossierId, nom: s.nom, qte, statut: "À commander", sku: s.sku }, stkCoutPiece(s.sku)));
+        if (error) toast(msgErr(error));
       }
-      s.qte -= qte;
-      s.res += qte;
-      const { error } = await SB.from("pieces_dossier").insert(Object.assign({ dossier_id: dossierId, nom: s.nom, qte, statut: "Réservée", sku: s.sku }, stkCoutPiece(s.sku)));
-      if (error) toast(msgErr(error));
-    } else {
-      const { error } = await SB.from("pieces_dossier").insert(Object.assign({ dossier_id: dossierId, nom: s.nom, qte, statut: "À commander", sku: s.sku }, stkCoutPiece(s.sku)));
-      if (error) toast(msgErr(error));
     }
   }
 }
