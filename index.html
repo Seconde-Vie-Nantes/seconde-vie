@@ -12345,12 +12345,23 @@ function catNomAttendu(r) {
   if (!titre && !ty) return null;
   return r.nature + " " + (titre ? titre.toLowerCase() : ty.toLowerCase()) + (r.modele ? " " + r.modele : "");
 }
+function catNomSansModele(nom, modele) {
+  if (!modele) return false;
+  return (nom || "").toLowerCase().indexOf(String(modele).toLowerCase()) === -1;
+}
 async function catMettreAJourNoms() {
   const rows = S.catalogue || [];
   let maj = 0, incomplets = 0, ko = 0;
   for (const r of rows) {
     if (catNomIncomplet(r)) {
       incomplets++;
+      /* Même sans nature/type/titre complets, le modèle est déjà connu dans le catalogue :
+         on l'ajoute au nom existant s'il n'y figure pas, pour qu'il reste visible en attendant la correction. */
+      if (catNomSansModele(r.reparation, r.modele)) {
+        const attendu = (r.reparation || "").trim() + " " + r.modele;
+        const { error } = await SB.from("catalogue").update({ reparation: attendu }).eq("id", r.id);
+        if (error) ko++; else maj++;
+      }
       continue;
     }
     const attendu = catNomAttendu(r);
@@ -12360,7 +12371,7 @@ async function catMettreAJourNoms() {
     }
   }
   await reload();
-  flash(maj + " nom(s) mis à jour" + (incomplets ? ", " + incomplets + " à corriger (point d’exclamation)" : "") + (ko ? ", " + ko + " erreur(s)" : ""));
+  flash(maj + " nom(s) mis à jour" + (incomplets ? ", " + incomplets + " encore à corriger (point d’exclamation)" : "") + (ko ? ", " + ko + " erreur(s)" : ""));
 }
 var CAT_NEW_QMODE = "simple";
 function catNewQModeToggle(v) {
