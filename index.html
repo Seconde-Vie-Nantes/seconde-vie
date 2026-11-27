@@ -6946,6 +6946,7 @@ async function go(v) {
     VENTE_OPEN = false;
     VENTE_EDIT = null;
     VENTE_LIGNES = [];
+    VTYPE = "appareil";
     VT_COMPAT = false;
     MP.v = [];
     PKS.v = { app: "", cat: "" };
@@ -9631,13 +9632,14 @@ function suivreColis(id) {
   window.open(base + encodeURIComponent(v.suivi), "_blank", "noopener");
 }
 var VENTE_LIGNES = [];
+var VTYPE = "appareil";
 function venteLignes(v) {
   if (Array.isArray(v.lignes) && v.lignes.length) return v.lignes;
   if (v.appareil) return [{ appareil: v.appareil, categorie: v.categorie, modele: v.modele, quantite: v.quantite || 1, appareil_id: v.appareil_id || null, couleur: null }];
   return [];
 }
 function venteTitre(v) {
-  const t = venteLignes(v).map((l) => [l.appareil, l.categorie, l.modele, l.couleur, l.sn ? "SN " + l.sn : null].filter(Boolean).join(" · ") + (l.quantite > 1 ? " × " + l.quantite : "")).join(" + ");
+  const t = venteLignes(v).map((l) => l.piece_sku ? l.piece_nom + (l.quantite > 1 ? " × " + l.quantite : "") : [l.appareil, l.categorie, l.modele, l.couleur, l.sn ? "SN " + l.sn : null].filter(Boolean).join(" · ") + (l.quantite > 1 ? " × " + l.quantite : "")).join(" + ");
   return t || "Vente";
 }
 function lignesRes(lignes) {
@@ -9646,6 +9648,45 @@ function lignesRes(lignes) {
     if (l.appareil_id) m[l.appareil_id] = (m[l.appareil_id] || 0) + (l.quantite || 1);
   });
   return m;
+}
+function lignesResPieces(lignes) {
+  const m = {};
+  lignes.forEach((l) => {
+    if (l.piece_sku) m[l.piece_sku] = (m[l.piece_sku] || 0) + (l.quantite || 1);
+  });
+  return m;
+}
+async function pieceAdj(sku, dq, dr) {
+  const s = (S.stock || []).find((x) => x.sku === sku);
+  if (!s) return "Pièce introuvable dans le stock.";
+  const { error } = await SB.from("stock").update({ qte: s.qte + dq, res: (s.res || 0) + dr }).eq("sku", sku);
+  return error ? msgErr(error) : null;
+}
+function vPieceOpts() {
+  return (S.stock || []).slice().sort((a, b) => String(a.nom).localeCompare(String(b.nom), "fr")).map((s) => '<option value="' + esc(s.sku) + '">' + esc(s.nom) + " (" + (s.qte - (s.res || 0)) + " dispo)</option>").join("");
+}
+function vArtTypeChange(v) {
+  VTYPE = v;
+  $("vApBox").style.display = v === "piece" ? "none" : "block";
+  $("vPieceBox").style.display = v === "piece" ? "block" : "none";
+}
+function vAddLignePiece() {
+  const err = $("vErr");
+  err.textContent = "";
+  const sku = $("vPieceSku").value;
+  const s = (S.stock || []).find((x) => x.sku === sku);
+  if (!s) {
+    err.textContent = "Choisis une pièce.";
+    return;
+  }
+  const qte = parseInt($("vPieceQte").value, 10);
+  if (isNaN(qte) || qte < 1) {
+    err.textContent = "Quantité invalide.";
+    return;
+  }
+  VENTE_LIGNES.push({ piece_sku: s.sku, piece_nom: s.nom, quantite: qte });
+  $("vPieceQte").value = "1";
+  vDrawLignes();
 }
 function vLigneFromForm() {
   let l;
@@ -9675,6 +9716,7 @@ function vLigneFromForm() {
 function vLignesHtml() {
   if (venteEnCli()) return cliLignesHtml();
   return VENTE_LIGNES.map((l, i) => {
+    if (l.piece_sku) return '<span class="chip ok" style="margin:2px 4px 2px 0">Pièce · ' + esc(l.piece_nom) + (l.quantite > 1 ? " × " + l.quantite : "") + ' · réservée du stock <button style="border:0;background:none;cursor:pointer;font-weight:700" onclick="vDelLigne(' + i + ')">×</button></span>';
     const dev = l.appareil_id ? (S.stockApp || []).find((x) => x.id === l.appareil_id) : null;
     return '<span class="chip ok" style="margin:2px 4px 2px 0">' + esc([l.appareil, l.categorie, l.modele, l.couleur].filter(Boolean).join(" · ")) + (l.quantite > 1 ? " × " + l.quantite : "") + (dev ? " · réservé du stock" : "") + (l.acheter ? " · à acheter" : "") + ' <button style="border:0;background:none;cursor:pointer;font-weight:700" onclick="vDelLigne(' + i + ')">×</button></span>';
   }).join("") || '<p class="m">Aucun modèle ajouté pour le moment.</p>';
@@ -9756,7 +9798,9 @@ function ventesFormHtml(ed) {
       <div class="t" style="margin-bottom:6px">${ed ? "Modifier la vente" : "Nouvelle vente"}</div>
       <div class="t" style="font-size:14px">Modèles de la vente</div>
       <div id="vLignes">${vLignesHtml()}</div>
-      <div style="border-top:1px solid var(--line);margin-top:8px;padding-top:8px"><div class="t" style="font-size:14px">Ajouter un modèle</div>
+      <div style="border-top:1px solid var(--line);margin-top:8px;padding-top:8px"><div class="t" style="font-size:14px">Ajouter un article</div>
+      <label>Type d’article</label><select id="vArtType" onchange="vArtTypeChange(this.value)"><option value="appareil"${VTYPE === "appareil" ? " selected" : ""}>Appareil</option><option value="piece"${VTYPE === "piece" ? " selected" : ""}>Pièce</option></select>
+      <div id="vApBox" style="display:${VTYPE === "piece" ? "none" : "block"}">
       <label>Type / marque / modèle</label><div id="mp-v"></div>
       <label style="font-weight:400;display:flex;align-items:center;gap:6px;margin-top:6px"><input type="checkbox" id="vCompat" style="width:auto;margin:0" onchange="vCompatChange(this.checked)"> Compatible : je précise le modèle</label>
       <div id="vCompatBox" style="display:none"><input id="vCompatTxt" placeholder="De quel modèle s’agit-il ? Ex. PS4 Slim"></div>
@@ -9766,6 +9810,10 @@ function ventesFormHtml(ed) {
       <label style="font-weight:400;display:flex;align-items:center;gap:6px;margin-top:6px"><input type="checkbox" id="vAchat" style="width:auto;margin:0" onchange="vAchatChange(this.checked)"> Pas en stock : mettre dans « Appareils à acheter »</label>
       <label>Quantité de ce modèle</label><input id="vQte" inputmode="numeric" oninput="numOnly(this)" value="1">
       <button class="chip ok" type="button" onclick="vAddLigne()">+ Ajouter ce modèle à la vente</button></div>
+      <div id="vPieceBox" style="display:${VTYPE === "piece" ? "block" : "none"}">
+      <label>Pièce (du stock)</label><select id="vPieceSku">${vPieceOpts()}</select>
+      <label>Quantité de cette pièce</label><input id="vPieceQte" inputmode="numeric" oninput="numOnly(this)" value="1">
+      <button class="chip ok" type="button" onclick="vAddLignePiece()">+ Ajouter cette pièce à la vente</button></div></div>
       <div class="row" style="align-items:center;justify-content:space-between;margin-top:12px"><label style="margin:0">Client</label><label style="margin:0;font-weight:400;display:flex;align-items:center;gap:6px"><input type="checkbox" id="vPasse" style="width:auto;margin:0" ${passe ? "checked" : ""} onchange="toggleVPasse(this.checked)"> Client de passage</label></div>
       <div id="vAcc" style="display:${passe ? "none" : "block"}"><select id="vCli"><option value="">- Sélectionner -</option>${S.clients.filter((c) => !c.deleted_at).map((c) => `<option value="${c.id}"${(ed ? ed.client_id : VENTE_CLI_PRE) === c.id ? " selected" : ""}>${esc(fullName(c))}</option>`).join("")}</select></div>
       <div id="vPas" style="display:${passe ? "block" : "none"}"><select id="vTyp" onchange="vTypChange(this.value)"><option value="">- Sélectionner -</option>${opt("sans", "sans nom")}${opt("avec", "avec nom")}${opt("leboncoin", "leboncoin (nécessite pseudo)")}</select>
@@ -9845,6 +9893,7 @@ function editVente(id) {
   }
   DOSS_TAB = "ventes";
   VENTE_LIGNES = venteLignes(v).map((l) => Object.assign({}, l));
+  VTYPE = "appareil";
   VT_COMPAT = false;
   VT_SEL = null;
   MP.v = [];
@@ -10141,7 +10190,7 @@ async function saveVente() {
   const old = editing ? venteLignes((S.ventes || []).find((v) => v.id === VENTE_EDIT) || {}) : [];
   const oldKeys = new Set(old.map(lineKey));
   for (const l of VENTE_LIGNES) {
-    if (l.appareil_id || l.acheter || oldKeys.has(lineKey(l))) continue;
+    if (l.piece_sku || l.appareil_id || l.acheter || oldKeys.has(lineKey(l))) continue;
     err.textContent = (l.modele || "Ce modèle") + " : pas en stock. Choisis l’appareil du stock, ou coche « Pas en stock » pour le mettre dans les appareils à acheter.";
     return;
   }
@@ -10155,6 +10204,19 @@ async function saveVente() {
     const dispo = x.qte + (had[id] || 0);
     if (dispo < want[id]) {
       err.textContent = x.nom + " : stock insuffisant (" + dispo + " disponible(s), " + want[id] + " demandé(s)).";
+      return;
+    }
+  }
+  const hadP = lignesResPieces(old), wantP = lignesResPieces(VENTE_LIGNES);
+  for (const sku of Object.keys(wantP)) {
+    const x = (S.stock || []).find((s) => s.sku === sku);
+    if (!x) {
+      err.textContent = "Une pièce choisie n’est plus disponible en stock.";
+      return;
+    }
+    const dispo = x.qte + (hadP[sku] || 0);
+    if (dispo < wantP[sku]) {
+      err.textContent = x.nom + " : stock insuffisant (" + dispo + " disponible(s), " + wantP[sku] + " demandé(s)).";
       return;
     }
   }
@@ -10214,9 +10276,18 @@ async function saveVente() {
       if (e) toast(e);
     }
   }
+  const skus = /* @__PURE__ */ new Set([...Object.keys(hadP), ...Object.keys(wantP)]);
+  for (const sku of skus) {
+    const dq = (hadP[sku] || 0) - (wantP[sku] || 0), dr = (wantP[sku] || 0) - (hadP[sku] || 0);
+    if (dq || dr) {
+      const e = await pieceAdj(sku, dq, dr);
+      if (e) toast(e);
+    }
+  }
   VENTE_OPEN = false;
   VENTE_EDIT = null;
   VENTE_LIGNES = [];
+  VTYPE = "appareil";
   VT_COMPAT = false;
   MP.v = [];
   PKS.v = { app: "", cat: "" };
@@ -10327,6 +10398,7 @@ async function deleteVente(id) {
   VENTE_OPEN = false;
   VENTE_EDIT = null;
   VENTE_LIGNES = [];
+  VTYPE = "appareil";
   CLI_VENTE = null;
   flash("Vente supprimée");
   await reload();
@@ -11259,6 +11331,7 @@ function cliVenteReset() {
   VENTE_OPEN = false;
   VENTE_EDIT = null;
   VENTE_LIGNES = [];
+  VTYPE = "appareil";
   VT_COMPAT = false;
   MP.v = [];
   PKS.v = { app: "", cat: "" };
@@ -11278,6 +11351,7 @@ function cliVenteEdit(id) {
   VENTE_EDIT = id;
   VENTE_OPEN = true;
   VENTE_LIGNES = venteLignes(v).map((l) => Object.assign({}, l));
+  VTYPE = "appareil";
   CLI_VENTE = v.client_id;
   VENTE_CLI_PRE = v.client_id;
   render();
@@ -13440,6 +13514,16 @@ async function deleteStock(sku) {
     return;
   }
   if (!confirm("Supprimer « " + x.nom + " » du stock ?")) return;
+  const photos = (S.photos || []).filter((p) => p.piece_sku === sku);
+  if (photos.length) {
+    const { error: pe } = await SB.from("photos").delete().eq("piece_sku", sku);
+    if (pe) {
+      toast(msgErr(pe));
+      return;
+    }
+    const paths = photos.map((p) => p.path).filter(Boolean);
+    if (paths.length) await SB.storage.from(PHOTO_BUCKET).remove(paths);
+  }
   const { error } = await SB.from("stock").delete().eq("sku", sku);
   if (error) {
     toast(msgErr(error));
