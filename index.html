@@ -10473,6 +10473,25 @@ function abMarquesFor(t) {
 function abModelesFor(t, m) {
   return t && m ? [...new Set((S.appBase || []).filter((x) => x.type === t && x.marque === m).map((x) => x.modele).filter(Boolean))].sort((a, b) => a.localeCompare(b, "fr")) : [];
 }
+const IPHONE_MODELES = ["iPhone 4", "iPhone 4S", "iPhone 5", "iPhone 5C", "iPhone 5S", "iPhone 6", "iPhone 6 Plus", "iPhone 6S", "iPhone 6S Plus", "iPhone SE (2016)", "iPhone 7", "iPhone 7 Plus", "iPhone 8", "iPhone 8 Plus", "iPhone X", "iPhone XR", "iPhone XS", "iPhone XS Max", "iPhone 11", "iPhone 11 Pro", "iPhone 11 Pro Max", "iPhone SE (2020)", "iPhone 12 mini", "iPhone 12", "iPhone 12 Pro", "iPhone 12 Pro Max", "iPhone 13 mini", "iPhone 13", "iPhone 13 Pro", "iPhone 13 Pro Max", "iPhone SE (2022)", "iPhone 14", "iPhone 14 Plus", "iPhone 14 Pro", "iPhone 14 Pro Max", "iPhone 15", "iPhone 15 Plus", "iPhone 15 Pro", "iPhone 15 Pro Max", "iPhone 16", "iPhone 16 Plus", "iPhone 16 Pro", "iPhone 16 Pro Max", "iPhone 16e", "iPhone 17e", "iPhone 17", "iPhone Air", "iPhone 17 Pro", "iPhone 17 Pro Max"];
+async function importIphones() {
+  if (S.appBaseErr) {
+    toast("La table Appareils n’existe pas encore.");
+    return;
+  }
+  const manquants = IPHONE_MODELES.filter((mo) => !baseHasTrio("Téléphone", "Apple", mo));
+  if (!manquants.length) {
+    toast("Tous les iPhone (4 à 17 Pro Max) sont déjà dans la base.");
+    return;
+  }
+  const { error } = await SB.from("appareils_base").insert(manquants.map((mo) => ({ type: "Téléphone", marque: "Apple", modele: mo })));
+  if (error) {
+    toast(msgErr(error));
+    return;
+  }
+  flash(manquants.length + " modèle(s) iPhone ajouté(s)");
+  await reload();
+}
 function baseHasTrio(t, m, mo) {
   return (S.appBase || []).some((x) => abKey(x) === abKey({ type: t, marque: m, modele: mo }));
 }
@@ -11177,7 +11196,8 @@ function appareilsHtml() {
   AB_MM.abMo = false;
   AB_MM.abG = false;
   AB_MM.abC = false;
-  return head + '<div class="row" style="gap:8px;align-items:center;flex-wrap:nowrap;margin-top:4px">' + abAddHtml() + '<input id="abQ" placeholder="Rechercher (type, marque, modèle)" value="' + esc(AB_F.q) + '" oninput="AB_F.q=this.value;abRefresh()" style="flex:1;min-width:0;margin:0"></div><div id="abAdd" class="card' + (AB_MM.abAdd ? "" : " hide") + '"><label>Type *</label>' + abSelHtml("abT", "", abTypes(), "— Choisir un type —", "Nouveau type", true) + "<label>Marque *</label>" + abSelHtml("abM", "", [], "— Choisir une marque —", "Nouvelle marque", false) + "<label>Gamme (facultatif)</label>" + abSelHtml("abG", "", [], "— Aucune gamme —", "Nouvelle gamme", false) + "<label>Modèle *</label>" + abSelHtml("abMo", "", [], "— Choisir un modèle —", "Nouveau modèle", false) + '<label>Couleurs (facultatif)</label><div id="abCB_add">' + abCoulBox("add") + '</div><button class="btn" onclick="abAjouter()">Ajouter à la base</button><div class="err" id="abErr"></div></div>' + abFiltresHtml() + '<div class="row" style="gap:6px;flex-wrap:wrap;margin:8px 0"><select onchange="AB_SORT=this.value;abRefresh()">' + selOpts([["nom", "Trier : nom"], ["type", "Trier : type"], ["marque", "Trier : marque"], ["recent", "Trier : plus récents"]], AB_SORT) + '</select></div><div class="ab-scroll" id="abL">' + abListe() + "</div>";
+  const iphoneBtn = '<button class="btn ghost small" style="margin:8px 0" onclick="importIphones()">Importer les iPhone Apple (4 → 17 Pro Max)</button>';
+  return head + iphoneBtn + '<div class="row" style="gap:8px;align-items:center;flex-wrap:nowrap;margin-top:4px">' + abAddHtml() + '<input id="abQ" placeholder="Rechercher (type, marque, modèle)" value="' + esc(AB_F.q) + '" oninput="AB_F.q=this.value;abRefresh()" style="flex:1;min-width:0;margin:0"></div><div id="abAdd" class="card' + (AB_MM.abAdd ? "" : " hide") + '"><label>Type *</label>' + abSelHtml("abT", "", abTypes(), "— Choisir un type —", "Nouveau type", true) + "<label>Marque *</label>" + abSelHtml("abM", "", [], "— Choisir une marque —", "Nouvelle marque", false) + "<label>Gamme (facultatif)</label>" + abSelHtml("abG", "", [], "— Aucune gamme —", "Nouvelle gamme", false) + "<label>Modèle *</label>" + abSelHtml("abMo", "", [], "— Choisir un modèle —", "Nouveau modèle", false) + '<label>Couleurs (facultatif)</label><div id="abCB_add">' + abCoulBox("add") + '</div><button class="btn" onclick="abAjouter()">Ajouter à la base</button><div class="err" id="abErr"></div></div>' + abFiltresHtml() + '<div class="row" style="gap:6px;flex-wrap:wrap;margin:8px 0"><select onchange="AB_SORT=this.value;abRefresh()">' + selOpts([["nom", "Trier : nom"], ["type", "Trier : type"], ["marque", "Trier : marque"], ["recent", "Trier : plus récents"]], AB_SORT) + '</select></div><div class="ab-scroll" id="abL">' + abListe() + "</div>";
 }
 var ICON_EDIT = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"></path><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>';
 var ICON_UPLOAD = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4"></path><path d="M7 9l5-5 5 5"></path><path d="M5 20h14"></path></svg>';
