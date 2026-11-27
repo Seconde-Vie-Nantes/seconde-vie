@@ -11726,16 +11726,11 @@ function catalogueView() {
   const mods = gams.length ? CAT.gam ? modelsFor(CAT.app, CAT.cat, CAT.gam) : [] : modelsFor(CAT.app, CAT.cat);
   const list = rows.filter((r) => inApp(r) && (!CAT.cat || r.categorie === CAT.cat) && (!CAT.mod || r.modele === CAT.mod)).sort((a, b) => String(a.appareil).localeCompare(String(b.appareil), "fr") || String(a.categorie).localeCompare(String(b.categorie), "fr") || String(a.modele).localeCompare(String(b.modele), "fr") || a.reparation.localeCompare(b.reparation, "fr"));
   const aucune = CAT.mod ? "Aucune réparation pour ce modèle." : "Aucune réparation pour ce choix.";
-  const corps = list.length ? list.map((r) => (CAT.mod ? "" : catLibelle(r)) + catRow(r)).join("") : '<p class="m">' + aucune + "</p>";
+  const corps = list.length ? list.map((r) => catRow(r)).join("") : '<p class="m">' + aucune + "</p>";
   const body = corps + (CAT.mod ? addCatForm() : "") + (CAT.cat && !gams.length && !mods.length ? '<p class="m" style="margin-top:10px">Pour ajouter un modèle, crée-le d’abord dans l’onglet Appareils.</p>' : "");
   const montreMod = CAT.app && (!gams.length || CAT.gam);
   const filtres = '<div class="stk-filt"><div style="display:flex;gap:6px;align-items:center"><select style="flex:1;min-width:0" onchange="setCat(\'app\',this.value)">' + optList(APPS, CAT.app, "Type d’appareil…") + '</select><button class="btn ghost small" type="button" style="margin:0;flex:none" onclick="catResetFiltres()">Supprimer les filtres</button></div>' + (CAT.app ? '<select onchange="setCat(\'cat\',this.value)">' + optList(brands, CAT.cat, "Marque…") + "</select>" : "") + (CAT.app && gams.length ? '<select onchange="setCat(\'gam\',this.value)">' + optList(gams, CAT.gam || "", "Gamme…") + "</select>" : "") + (montreMod ? '<select onchange="setCat(\'mod\',this.value)">' + (gams.length ? modOpts(mods, CAT.gam, CAT.mod) : optList(mods, CAT.mod, "Modèle…")) + "</select>" : "") + "</div>";
   return "<h1>Réparations &amp; Mods</h1>" + filtres + '<div style="margin-top:10px">' + body + "</div>";
-}
-function catLibelle(r) {
-  const t = r.appareil === "Mods" ? r.cible : r.appareil;
-  const absent = !S.appBaseErr && ROLE === "rep" && !baseHasTrio(t, r.categorie, r.modele);
-  return '<div class="m" style="margin:10px 0 4px">' + esc([t, r.categorie, r.modele].filter(Boolean).join(" · ")) + (absent ? repere("Marque ou modèle absent de la base Appareils : à corriger") : "") + "</div>";
 }
 // Types de réparation : pour en ajouter un plus tard, ajoute son nom dans TYPES_REP.
 const TYPES_REP = ["Écran", "Batterie", "Caméra", "Bouton", "Devis", "Autre"];
@@ -11834,28 +11829,24 @@ async function catSaveEdit(id) {
   if (!r) return;
   const err = $("catErr" + id);
   err.textContent = "";
-  const nom = $("catNom" + id).value.trim();
+  const n = natureCollecter("cat" + id, err);
+  if (!n) return;
   const du = $("catDu" + id).value.trim();
-  const ty = $("catTy" + id).value;
   const pxRaw = $("catPx" + id).value.trim().replace(",", ".");
-  if (!nom) {
-    err.textContent = "Indique la réparation.";
-    return;
-  }
   if (pxRaw !== "" && pxRaw !== "devis" && (isNaN(+pxRaw) || +pxRaw < 0)) {
     err.textContent = "Prix invalide.";
     return;
   }
   const prix = pxRaw === "" ? null : pxRaw;
-  const { error } = await SB.from("catalogue").update({ reparation: nom, duree: durNorm(du), type_rep: ty || null, prix }).eq("id", id);
+  const { error } = await SB.from("catalogue").update({ reparation: n.rep, duree: durNorm(du), type_rep: n.ty || null, nature: n.nat, prix }).eq("id", id);
   if (error) {
     err.textContent = msgErr(error);
     return;
   }
-  if (nom !== r.reparation) {
+  if (n.rep !== r.reparation) {
     const ids = (S.devices || []).filter((d) => nz(d.modele) === nz(r.modele) && (r.appareil === "Mods" || d.type === r.appareil)).map((d) => d.id);
     if (ids.length) {
-      const { error: e2 } = await SB.from("dossiers").update({ panne: nom }).in("device_id", ids).eq("panne", r.reparation);
+      const { error: e2 } = await SB.from("dossiers").update({ panne: n.rep }).in("device_id", ids).eq("panne", r.reparation);
       if (e2) toast(msgErr(e2));
     }
   }
@@ -11866,49 +11857,59 @@ async function catSaveEdit(id) {
 function catRow(r) {
   const edit = CAT_EDIT === r.id;
   const ok = r.prix != null && !isNaN(+r.prix);
-  const entete = '<div class="row" style="align-items:center;justify-content:space-between;gap:8px">' + (edit ? '<div class="t">Modifier la réparation</div>' : '<div style="flex:1;min-width:0"><div class="t">' + esc(r.reparation) + '</div><div class="m">' + (r.duree ? "Durée : " + esc(r.duree) : "Durée à définir") + (r.joy ? " · joystick (1 ou 2)" + (ok ? " · 2 joysticks : " + eur(2 * r.prix - 5) : "") : "") + "</div></div>") + '<div style="display:flex;align-items:center;gap:8px;margin-left:auto"><button class="btn ghost sq" title="' + (edit ? "Terminer la modification" : "Modifier") + '" aria-label="' + (edit ? "Terminer la modification" : "Modifier") + '" onclick="catEditToggle(\'' + r.id + "')\">" + ICON_EDIT + '</button><button class="btn ghost sq" title="Supprimer" aria-label="Supprimer" style="color:var(--bad);border-color:var(--bad)" onclick="delCat(\'' + r.id + "')\">" + ICON_TRASH + "</button></div></div>";
+  const t = r.appareil === "Mods" ? r.cible : r.appareil;
+  const absent = !S.appBaseErr && ROLE === "rep" && !baseHasTrio(t, r.categorie, r.modele);
+  const entete = '<div class="row" style="align-items:center;justify-content:space-between;gap:8px">' + (edit ? '<div class="t">Modifier la réparation</div>' : '<div style="flex:1;min-width:0"><div class="t">' + esc(r.reparation) + (absent ? repere("Marque ou modèle absent de la base Appareils : à corriger") : "") + '</div><div class="m">' + (ok ? eur(r.prix) + " · " : "") + (r.duree ? "Durée : " + esc(r.duree) : "Durée à définir") + (r.joy ? " · joystick (1 ou 2)" + (ok ? " · 2 joysticks : " + eur(2 * r.prix - 5) : "") : "") + "</div></div>") + '<div style="display:flex;align-items:center;gap:8px;margin-left:auto"><button class="btn ghost sq" title="' + (edit ? "Terminer la modification" : "Modifier") + '" aria-label="' + (edit ? "Terminer la modification" : "Modifier") + '" onclick="catEditToggle(\'' + r.id + "')\">" + ICON_EDIT + '</button><button class="btn ghost sq" title="Supprimer" aria-label="Supprimer" style="color:var(--bad);border-color:var(--bad)" onclick="delCat(\'' + r.id + "')\">" + ICON_TRASH + "</button></div></div>";
   if (edit) {
-    return '<div class="card">' + entete + '<label>Réparation *</label><input id="catNom' + r.id + '" value="' + esc(r.reparation) + '"><div class="two" style="margin-top:8px"><div><label>Type de réparation</label><select id="catTy' + r.id + '" aria-label="Type de réparation">' + typeRepOpts(r.type_rep) + '</select></div><div><label>Durée de réparation</label><input id="catDu' + r.id + '" value="' + esc(r.duree || "") + '" placeholder="Ex. 1h"></div></div><label>Prix (€)</label><input id="catPx' + r.id + '" inputmode="decimal" value="' + esc(r.prix == null ? "" : r.prix) + `" placeholder="à définir"><div style="display:flex;gap:8px;margin-top:8px"><button class="btn" onclick="catSaveEdit('` + r.id + `')">Enregistrer</button><button class="btn ghost" onclick="catEditToggle('` + r.id + `')">Annuler</button></div><div class="err" id="catErr` + r.id + '"></div>' + catPiecesBlocHtml(r, true) + "</div>";
+    return '<div class="card">' + entete + natureFieldsHtml("cat" + r.id, r.nature || "", r.type_rep || "", r.nature === "Autre" ? r.reparation : "") + '<div class="two" style="margin-top:8px"><div><label>Durée de réparation</label><input id="catDu' + r.id + '" value="' + esc(r.duree || "") + '" placeholder="Ex. 1h"></div><div><label>Prix (€)</label><input id="catPx' + r.id + '" inputmode="decimal" value="' + esc(r.prix == null ? "" : r.prix) + `" placeholder="à définir"></div></div><div style="display:flex;gap:8px;margin-top:8px"><button class="btn" onclick="catSaveEdit('` + r.id + `')">Enregistrer</button><button class="btn ghost" onclick="catEditToggle('` + r.id + `')">Annuler</button></div><div class="err" id="catErr` + r.id + '"></div>' + catPiecesBlocHtml(r, true) + "</div>";
   }
-  return '<div class="card">' + entete + catPiecesBlocHtml(r, false) + "</div>";
+  return '<div class="card" style="min-height:72px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center">' + entete + catPiecesBlocHtml(r, false) + "</div>";
 }
-function addCatForm() {
-  return '<div class="card" style="margin-top:10px"><div class="t">Ajouter une réparation pour ce modèle</div><label>Nature *</label><select id="cNat" onchange="catAddNatureChange()">' + natureOpts("") + '</select><div id="cTypeBox"><label>Type de réparation *</label><select id="cTy">' + typeRepOpts("") + '</select></div><div id="cNoteBox" style="display:none"><label>Précision *</label><input id="cNote" placeholder="Ex. Nettoyage port de charge"></div><div class="two" style="margin-top:8px"><div><label>Prix (€)</label><input id="cP" inputmode="decimal" placeholder="à définir"></div><div><label>Durée de réparation</label><input id="cD" placeholder="Ex. 1h"></div></div><button class="btn" style="margin-top:8px" onclick="addCat()">Ajouter</button><div class="err" id="cRErr"></div></div>';
+function natureToggle(prefix) {
+  const autre = $(prefix + "Nat") && $(prefix + "Nat").value === "Autre";
+  if ($(prefix + "TypeBox")) $(prefix + "TypeBox").style.display = autre ? "none" : "block";
+  if ($(prefix + "NoteBox")) $(prefix + "NoteBox").style.display = autre ? "block" : "none";
 }
-function catAddNatureChange() {
-  const autre = $("cNat") && $("cNat").value === "Autre";
-  if ($("cTypeBox")) $("cTypeBox").style.display = autre ? "none" : "block";
-  if ($("cNoteBox")) $("cNoteBox").style.display = autre ? "block" : "none";
+function natureFieldsHtml(prefix, nat, ty, note) {
+  const autre = nat === "Autre";
+  return '<label>Nature *</label><select id="' + prefix + 'Nat" onchange="natureToggle(\'' + prefix + '\')">' + natureOpts(nat) + '</select><div id="' + prefix + 'TypeBox" style="display:' + (autre ? "none" : "block") + '"><label>Type de réparation *</label><select id="' + prefix + 'Ty" aria-label="Type de réparation">' + typeRepOpts(ty) + '</select></div><div id="' + prefix + 'NoteBox" style="display:' + (autre ? "block" : "none") + '"><label>Précision *</label><input id="' + prefix + 'Note" value="' + esc(note || "") + '" placeholder="Ex. Nettoyage port de charge"></div>';
 }
-async function addCat() {
-  const nat = $("cNat").value, pr = $("cP").value.trim().replace(",", "."), du = $("cD").value.trim(), err = $("cRErr");
-  err.textContent = "";
+function natureCollecter(prefix, err) {
+  const nat = $(prefix + "Nat").value;
   if (!nat) {
     err.textContent = "Choisis la nature de la réparation.";
-    return;
+    return null;
   }
-  let rep, ty = "";
   if (nat === "Autre") {
-    const note = ($("cNote") ? $("cNote").value : "").trim();
+    const note = ($(prefix + "Note") ? $(prefix + "Note").value : "").trim();
     if (!note) {
       err.textContent = "Écris une précision : elle sert de nom à la réparation.";
-      return;
+      return null;
     }
-    rep = note;
-  } else {
-    ty = $("cTy").value;
-    if (!ty) {
-      err.textContent = "Choisis le type de réparation.";
-      return;
-    }
-    rep = nat + " " + ty.toLowerCase() + (CAT.mod ? " " + CAT.mod : "");
+    return { nat, ty: "", rep: note };
   }
+  const ty = $(prefix + "Ty").value;
+  if (!ty) {
+    err.textContent = "Choisis le type de réparation.";
+    return null;
+  }
+  return { nat, ty, rep: nat + " " + ty.toLowerCase() + (CAT.mod ? " " + CAT.mod : "") };
+}
+function addCatForm() {
+  return '<div class="card" style="margin-top:10px"><div class="t">Ajouter une réparation pour ce modèle</div>' + natureFieldsHtml("c", "", "", "") + '<div class="two" style="margin-top:8px"><div><label>Prix (€)</label><input id="cP" inputmode="decimal" placeholder="à définir"></div><div><label>Durée de réparation</label><input id="cD" placeholder="Ex. 1h"></div></div><button class="btn" style="margin-top:8px" onclick="addCat()">Ajouter</button><div class="err" id="cRErr"></div></div>';
+}
+async function addCat() {
+  const err = $("cRErr");
+  err.textContent = "";
+  const n = natureCollecter("c", err);
+  if (!n) return;
+  const pr = $("cP").value.trim().replace(",", "."), du = $("cD").value.trim();
   if (pr !== "" && pr !== "devis" && (isNaN(+pr) || +pr < 0)) {
     err.textContent = "Prix invalide.";
     return;
   }
   const ref = S.catalogue.find((r) => r.modele === CAT.mod);
-  const { error } = await SB.from("catalogue").insert({ appareil: CAT.app, categorie: ref ? ref.categorie : CAT.cat || "Autre", modele: CAT.mod, reparation: rep, prix: pr === "" ? null : pr, duree: durNorm(du), joy: false, type_rep: ty || null });
+  const { error } = await SB.from("catalogue").insert({ appareil: CAT.app, categorie: ref ? ref.categorie : CAT.cat || "Autre", modele: CAT.mod, reparation: n.rep, prix: pr === "" ? null : pr, duree: durNorm(du), joy: false, type_rep: n.ty || null, nature: n.nat });
   if (error) {
     err.textContent = msgErr(error);
     return;
