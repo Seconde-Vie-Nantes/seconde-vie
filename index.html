@@ -11633,6 +11633,7 @@ function catAddToggle() {
     CAT_NEW = { app: CAT.app || "", cat: CAT.cat || "", gam: CAT.gam || "", mod: CAT.mod || "" };
     CAT_NEW_QUAL = [];
     CAT_NEW_QUAL_ADD = false;
+    CAT_NEW_QMODE = "simple";
   }
   render();
 }
@@ -11652,13 +11653,14 @@ function catNewQualAddToggle() {
   catNewQualRefresh();
 }
 function catNewQualAjouterForm() {
-  return '<div class="card" style="margin-top:6px;padding:10px 12px"><label>Nom de la qualité</label><input id="cQl" placeholder="Ex. LCD, OLED, Reconditionné"><label>Prix (€)</label><input id="cQp" inputmode="decimal" placeholder="0"><label>Pièce liée</label><input list="cQDl" id="cQs" placeholder="Nom ou SKU…"><datalist id="cQDl">' + (S.stock || []).map((s) => '<option value="' + esc(s.nom + " (SKU " + s.sku + ")") + '">').join("") + '</datalist><div style="display:flex;gap:8px;margin-top:8px"><button class="btn" onclick="catNewQualAjouter()">Ajouter</button><button class="btn ghost" onclick="catNewQualAddToggle()">Annuler</button></div><div class="err" id="cQErr"></div></div>';
+  return '<div class="card" style="margin-top:6px;padding:10px 12px"><label>Nom de la qualité</label><input id="cQl" placeholder="Ex. LCD, OLED, Reconditionné"><div class="two"><div><label>Prix (€)</label><input id="cQp" inputmode="decimal" placeholder="0"></div><div><label>Durée de réparation</label><input id="cQd" placeholder="Ex. 1h"></div></div><label>Pièce liée</label><input list="cQDl" id="cQs" placeholder="Nom ou SKU…"><datalist id="cQDl">' + (S.stock || []).map((s) => '<option value="' + esc(s.nom + " (SKU " + s.sku + ")") + '">').join("") + '</datalist><div style="display:flex;gap:8px;margin-top:8px"><button class="btn" onclick="catNewQualAjouter()">Ajouter</button><button class="btn ghost" onclick="catNewQualAddToggle()">Annuler</button></div><div class="err" id="cQErr"></div></div>';
 }
 function catNewQualAjouter() {
   const err = $("cQErr");
   err.textContent = "";
   const label = $("cQl").value.trim();
   const prixRaw = $("cQp").value.trim().replace(",", ".");
+  const duree = durNorm($("cQd").value.trim());
   const skuVal = $("cQs").value.trim();
   const m = /\(SKU (.+)\)\s*$/.exec(skuVal);
   if (!label) {
@@ -11673,7 +11675,7 @@ function catNewQualAjouter() {
     err.textContent = "Choisis une pièce dans la liste.";
     return;
   }
-  CAT_NEW_QUAL.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), label, prix: prixRaw, sku: m[1] });
+  CAT_NEW_QUAL.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), label, prix: prixRaw, duree, sku: m[1] });
   CAT_NEW_QUAL_ADD = false;
   catNewQualRefresh();
 }
@@ -11685,7 +11687,7 @@ function catNewQualBlocHtml() {
   const sorted = CAT_NEW_QUAL.slice().sort((a, b) => (parseFloat(a.prix) || 0) - (parseFloat(b.prix) || 0));
   const ligne = (q) => {
     const s = (S.stock || []).find((x) => x.sku === q.sku);
-    return '<div class="card" style="margin:6px 0;padding:10px 12px"><div class="row" style="align-items:center"><div style="flex:1;min-width:0"><div class="t" style="font-size:14px">' + esc(q.label) + " · " + eur(q.prix) + '</div><div class="m">' + esc(s ? s.nom : q.sku) + ' · <span class="code">' + esc(q.sku) + '</span></div></div><button class="btn ghost sq" title="Retirer cette qualité" aria-label="Retirer cette qualité" style="color:var(--bad);border-color:var(--bad)" onclick="catNewQualSupprimer(\'' + q.id + "')\">" + ICON_TRASH + "</button></div></div>";
+    return '<div class="card" style="margin:6px 0;padding:10px 12px"><div class="row" style="align-items:center"><div style="flex:1;min-width:0"><div class="t" style="font-size:14px">' + esc(q.label) + " · " + eur(q.prix) + (q.duree ? " · " + esc(q.duree) : "") + '</div><div class="m">' + esc(s ? s.nom : q.sku) + ' · <span class="code">' + esc(q.sku) + '</span></div></div><button class="btn ghost sq" title="Retirer cette qualité" aria-label="Retirer cette qualité" style="color:var(--bad);border-color:var(--bad)" onclick="catNewQualSupprimer(\'' + q.id + "')\">" + ICON_TRASH + "</button></div></div>";
   };
   return '<div style="margin-top:12px"><label>Qualités de pièce (facultatif — sinon prix et pièce uniques ci-dessus)</label>' + (sorted.length ? sorted.map(ligne).join("") : '<p class="m">Aucune qualité ajoutée.</p>') + (CAT_NEW_QUAL_ADD ? catNewQualAjouterForm() : '<button class="chip" style="margin-top:6px" onclick="catNewQualAddToggle()">+ Ajouter une qualité</button>') + "</div>";
 }
@@ -11931,7 +11933,7 @@ function catQualAddToggle(id) {
   render();
 }
 function catQualAjouterForm(id) {
-  return '<div class="card" style="margin-top:6px;padding:10px 12px"><label>Nom de la qualité</label><input id="catQl' + id + '" placeholder="Ex. LCD, OLED, Reconditionné"><label>Prix (€)</label><input id="catQp' + id + '" inputmode="decimal" placeholder="0"><label>Pièce liée</label><input list="catQDl' + id + '" id="catQs' + id + '" placeholder="Nom ou SKU…"><datalist id="catQDl' + id + '">' + (S.stock || []).map((s) => '<option value="' + esc(s.nom + " (SKU " + s.sku + ")") + '">').join("") + '</datalist><div style="display:flex;gap:8px;margin-top:8px"><button class="btn" onclick="catQualAjouter(\'' + id + "')\">Ajouter</button><button class=\"btn ghost\" onclick=\"catQualAddToggle('" + id + "')\">Annuler</button></div><div class=\"err\" id=\"catQErr" + id + '"></div></div>';
+  return '<div class="card" style="margin-top:6px;padding:10px 12px"><label>Nom de la qualité</label><input id="catQl' + id + '" placeholder="Ex. LCD, OLED, Reconditionné"><div class="two"><div><label>Prix (€)</label><input id="catQp' + id + '" inputmode="decimal" placeholder="0"></div><div><label>Durée de réparation</label><input id="catQd' + id + '" placeholder="Ex. 1h"></div></div><label>Pièce liée</label><input list="catQDl' + id + '" id="catQs' + id + '" placeholder="Nom ou SKU…"><datalist id="catQDl' + id + '">' + (S.stock || []).map((s) => '<option value="' + esc(s.nom + " (SKU " + s.sku + ")") + '">').join("") + '</datalist><div style="display:flex;gap:8px;margin-top:8px"><button class="btn" onclick="catQualAjouter(\'' + id + "')\">Ajouter</button><button class=\"btn ghost\" onclick=\"catQualAddToggle('" + id + "')\">Annuler</button></div><div class=\"err\" id=\"catQErr" + id + '"></div></div>';
 }
 async function catQualAjouter(id) {
   const r = S.catalogue.find((x) => x.id === id);
@@ -11940,6 +11942,7 @@ async function catQualAjouter(id) {
   err.textContent = "";
   const label = $("catQl" + id).value.trim();
   const prixRaw = $("catQp" + id).value.trim().replace(",", ".");
+  const duree = durNorm($("catQd" + id).value.trim());
   const skuVal = $("catQs" + id).value.trim();
   const m = /\(SKU (.+)\)\s*$/.exec(skuVal);
   if (!label) {
@@ -11955,7 +11958,7 @@ async function catQualAjouter(id) {
     return;
   }
   const list = (r.qualites || []).slice();
-  list.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), label, prix: prixRaw, sku: m[1] });
+  list.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), label, prix: prixRaw, duree, sku: m[1] });
   const { error } = await SB.from("catalogue").update({ qualites: list, prix: catQualMin(list) }).eq("id", id);
   if (error) {
     err.textContent = msgErr(error);
@@ -11982,15 +11985,19 @@ function catQualBlocHtml(r, edit) {
     if (!sorted.length) return "";
     const puce = (q) => {
       const s = (S.stock || []).find((x) => x.sku === q.sku);
-      return '<span class="chip">' + esc(q.label) + " – " + eur(q.prix) + (s ? " · " + esc(s.nom) : "") + "</span>";
+      return '<span class="chip">' + esc(q.label) + " – " + eur(q.prix) + (q.duree ? " · " + esc(q.duree) : "") + (s ? " · " + esc(s.nom) : "") + "</span>";
     };
     return '<div style="margin-top:10px"><div class="m" style="margin-bottom:6px">Qualités disponibles (du moins cher au plus cher)</div><div style="display:flex;flex-wrap:wrap;gap:6px">' + sorted.map(puce).join("") + "</div></div>";
   }
   const ligne = (q) => {
     const s = (S.stock || []).find((x) => x.sku === q.sku);
-    return '<div class="card" style="margin:6px 0;padding:10px 12px"><div class="row" style="align-items:center"><div style="flex:1;min-width:0"><div class="t" style="font-size:14px">' + esc(q.label) + " · " + eur(q.prix) + '</div><div class="m">' + esc(s ? s.nom : q.sku) + ' · <span class="code">' + esc(q.sku) + '</span></div></div><button class="btn ghost sq" title="Retirer cette qualité" aria-label="Retirer cette qualité" style="color:var(--bad);border-color:var(--bad)" onclick="catQualSupprimer(\'' + r.id + "','" + q.id + "')\">" + ICON_TRASH + "</button></div></div>";
+    return '<div class="card" style="margin:6px 0;padding:10px 12px"><div class="row" style="align-items:center"><div style="flex:1;min-width:0"><div class="t" style="font-size:14px">' + esc(q.label) + " · " + eur(q.prix) + (q.duree ? " · " + esc(q.duree) : "") + '</div><div class="m">' + esc(s ? s.nom : q.sku) + ' · <span class="code">' + esc(q.sku) + '</span></div></div><button class="btn ghost sq" title="Retirer cette qualité" aria-label="Retirer cette qualité" style="color:var(--bad);border-color:var(--bad)" onclick="catQualSupprimer(\'' + r.id + "','" + q.id + "')\">" + ICON_TRASH + "</button></div></div>";
   };
   return '<div style="margin-top:12px"><label>Qualités de pièce (le prix affiché dans la liste est le minimum ; triées ici du moins cher au plus cher)</label>' + (sorted.length ? sorted.map(ligne).join("") : '<p class="m">Aucune qualité pour le moment : la réparation garde un prix et une pièce uniques.</p>') + (CAT_QUAL_ADD[r.id] ? catQualAjouterForm(r.id) : '<button class="chip" style="margin-top:6px" onclick="catQualAddToggle(\'' + r.id + "')\">+ Ajouter une qualité</button>") + "</div>";
+}
+function catEditQModeToggle(id, v) {
+  if ($("catSimpleBox" + id)) $("catSimpleBox" + id).style.display = v === "simple" ? "block" : "none";
+  if ($("catMultiBox" + id)) $("catMultiBox" + id).style.display = v === "multi" ? "block" : "none";
 }
 var CAT_EDIT = null;
 function catEditToggle(id) {
@@ -12004,18 +12011,25 @@ async function catSaveEdit(id) {
   err.textContent = "";
   const n = natureCollecter("cat" + id, err, r.modele);
   if (!n) return;
-  const du = $("catDu" + id).value.trim();
-  const hasQual = r.qualites && r.qualites.length > 0;
-  let prix = r.prix;
-  if (!hasQual) {
+  const multiBox = $("catMultiBox" + id);
+  const hasQual = !!(multiBox && multiBox.style.display !== "none");
+  let prix = r.prix, du = r.duree || "", qualites = r.qualites || null;
+  if (hasQual) {
+    if (!r.qualites || !r.qualites.length) {
+      err.textContent = "Ajoute au moins une qualité, ou repasse en « Une qualité ».";
+      return;
+    }
+  } else {
+    du = $("catDu" + id).value.trim();
     const pxRaw = $("catPx" + id).value.trim().replace(",", ".");
     if (pxRaw !== "" && pxRaw !== "devis" && (isNaN(+pxRaw) || +pxRaw < 0)) {
       err.textContent = "Prix invalide.";
       return;
     }
     prix = pxRaw === "" ? null : pxRaw;
+    qualites = null;
   }
-  const { error } = await SB.from("catalogue").update({ reparation: n.rep, duree: durNorm(du), type_rep: n.ty || null, nature: n.nat, titre: n.titre || null, prix }).eq("id", id);
+  const { error } = await SB.from("catalogue").update({ reparation: n.rep, duree: durNorm(du), type_rep: n.ty || null, nature: n.nat, titre: n.titre || null, prix, qualites }).eq("id", id);
   if (error) {
     err.textContent = msgErr(error);
     return;
@@ -12038,10 +12052,13 @@ function catRow(r) {
   const t = r.appareil === "Mods" ? r.cible : r.appareil;
   const absent = !S.appBaseErr && ROLE === "rep" && !baseHasTrio(t, r.categorie, r.modele);
   const prixPrefix = hasQual && r.qualites.length > 1 ? "à partir de " : "";
-  const entete = '<div class="row" style="align-items:center;justify-content:space-between;gap:8px">' + (edit ? '<div class="t">Modifier la réparation</div>' : '<div style="flex:1;min-width:0"><div class="t">' + esc(r.reparation) + (absent ? repere("Marque ou modèle absent de la base Appareils : à corriger") : "") + '</div><div class="m">' + (ok ? prixPrefix + eur(r.prix) + " · " : "") + (r.duree ? "Durée : " + esc(r.duree) : "Durée à définir") + (r.joy ? " · joystick (1 ou 2)" + (ok ? " · 2 joysticks : " + eur(2 * r.prix - 5) : "") : "") + "</div></div>") + '<div style="display:flex;align-items:center;gap:8px;margin-left:auto"><button class="btn ghost sq" title="' + (edit ? "Terminer la modification" : "Modifier") + '" aria-label="' + (edit ? "Terminer la modification" : "Modifier") + '" onclick="catEditToggle(\'' + r.id + "')\">" + ICON_EDIT + '</button><button class="btn ghost sq" title="Supprimer" aria-label="Supprimer" style="color:var(--bad);border-color:var(--bad)" onclick="delCat(\'' + r.id + "')\">" + ICON_TRASH + "</button></div></div>";
+  const dureeTxt = hasQual ? "" : r.duree ? "Durée : " + esc(r.duree) : "Durée à définir";
+  const entete = '<div class="row" style="align-items:center;justify-content:space-between;gap:8px">' + (edit ? '<div class="t">Modifier la réparation</div>' : '<div style="flex:1;min-width:0"><div class="t">' + esc(r.reparation) + (absent ? repere("Marque ou modèle absent de la base Appareils : à corriger") : "") + '</div><div class="m">' + (ok ? prixPrefix + eur(r.prix) + (dureeTxt ? " · " : "") : "") + dureeTxt + (r.joy ? " · joystick (1 ou 2)" + (ok ? " · 2 joysticks : " + eur(2 * r.prix - 5) : "") : "") + "</div></div>") + '<div style="display:flex;align-items:center;gap:8px;margin-left:auto"><button class="btn ghost sq" title="' + (edit ? "Terminer la modification" : "Modifier") + '" aria-label="' + (edit ? "Terminer la modification" : "Modifier") + '" onclick="catEditToggle(\'' + r.id + "')\">" + ICON_EDIT + '</button><button class="btn ghost sq" title="Supprimer" aria-label="Supprimer" style="color:var(--bad);border-color:var(--bad)" onclick="delCat(\'' + r.id + "')\">" + ICON_TRASH + "</button></div></div>";
   if (edit) {
-    const prixBloc = hasQual ? '<label>Prix (€)</label><input value="' + esc(r.prix == null ? "" : r.prix) + '" placeholder="calculé depuis les qualités" disabled>' : '<label>Prix (€)</label><input id="catPx' + r.id + '" inputmode="decimal" value="' + esc(r.prix == null ? "" : r.prix) + '" placeholder="à définir">';
-    return '<div class="card">' + entete + natureFieldsHtml("cat" + r.id, r.nature || "", r.type_rep || "", r.titre || "") + '<div class="two" style="margin-top:8px"><div><label>Durée de réparation</label><input id="catDu' + r.id + '" value="' + esc(r.duree || "") + '" placeholder="Ex. 1h"></div><div>' + prixBloc + '</div></div><div style="display:flex;gap:8px;margin-top:8px"><button class="btn" onclick="catSaveEdit(\'' + r.id + '\')">Enregistrer</button><button class="btn ghost" onclick="catEditToggle(\'' + r.id + '\')">Annuler</button></div><div class="err" id="catErr' + r.id + '"></div>' + catQualBlocHtml(r, true) + (hasQual ? "" : catPiecesBlocHtml(r, true)) + "</div>";
+    const qmode = "<label>Qualités</label><select onchange=\"catEditQModeToggle('" + r.id + "',this.value)\"><option value=\"simple\"" + (hasQual ? "" : " selected") + ">Une qualité</option><option value=\"multi\"" + (hasQual ? " selected" : "") + ">Plusieurs qualités</option></select>";
+    const simpleBox = '<div id="catSimpleBox' + r.id + '" style="display:' + (hasQual ? "none" : "block") + '"><div class="two" style="margin-top:8px"><div><label>Durée de réparation</label><input id="catDu' + r.id + '" value="' + esc(r.duree || "") + '" placeholder="Ex. 1h"></div><div><label>Prix (€)</label><input id="catPx' + r.id + '" inputmode="decimal" value="' + esc(r.prix == null ? "" : r.prix) + '" placeholder="à définir"></div></div>' + catPiecesBlocHtml(r, true) + "</div>";
+    const multiBox = '<div id="catMultiBox' + r.id + '" style="display:' + (hasQual ? "block" : "none") + '">' + catQualBlocHtml(r, true) + "</div>";
+    return '<div class="card">' + entete + natureFieldsHtml("cat" + r.id, r.nature || "", r.type_rep || "", r.titre || "") + qmode + simpleBox + multiBox + '<div style="display:flex;gap:8px;margin-top:8px"><button class="btn" onclick="catSaveEdit(\'' + r.id + '\')">Enregistrer</button><button class="btn ghost" onclick="catEditToggle(\'' + r.id + '\')">Annuler</button></div><div class="err" id="catErr' + r.id + '"></div></div>';
   }
   return '<div class="card" style="min-height:72px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center">' + entete + (hasQual ? catQualBlocHtml(r, false) : catPiecesBlocHtml(r, false)) + "</div>";
 }
@@ -12075,25 +12092,34 @@ function natureCollecter(prefix, err, modele) {
   }
   return { nat, ty, titre, rep: nat + " " + (titre ? titre.toLowerCase() : ty.toLowerCase()) + (modele ? " " + modele : "") };
 }
-function catNewPrixHtml() {
-  const hasQual = CAT_NEW_QUAL.length > 0;
-  return hasQual ? '<label>Prix (€)</label><input value="' + esc(catQualMin(CAT_NEW_QUAL) == null ? "" : catQualMin(CAT_NEW_QUAL)) + '" placeholder="calculé depuis les qualités" disabled>' : '<label>Prix (€)</label><input id="cP" inputmode="decimal" placeholder="à définir">';
+var CAT_NEW_QMODE = "simple";
+function catNewQModeToggle(v) {
+  CAT_NEW_QMODE = v;
+  if ($("cSimpleBox")) $("cSimpleBox").style.display = v === "simple" ? "block" : "none";
+  if ($("cMultiBox")) $("cMultiBox").style.display = v === "multi" ? "block" : "none";
 }
 function addCatForm() {
   const pretAAjouter = CAT_NEW.app && CAT_NEW.cat && CAT_NEW.mod;
-  return '<div class="card" style="margin-top:10px"><div class="t">Ajouter une réparation</div>' + catNewPickerHtml() + (pretAAjouter ? natureFieldsHtml("c", "", "", "") + '<div class="two" style="margin-top:8px"><div id="cPrixBox">' + catNewPrixHtml() + '</div><div><label>Durée de réparation</label><input id="cD" placeholder="Ex. 1h"></div></div><div id="cQualBox">' + catNewQualBlocHtml() + '</div><button class="btn" style="margin-top:8px" onclick="addCat()">Ajouter</button><div class="err" id="cRErr"></div>' : '<p class="m" style="margin-top:8px">Choisis d’abord l’appareil, la marque et le modèle concernés.</p>') + "</div>";
+  const qmode = "<label>Qualités</label><select id=\"cQMode\" onchange=\"catNewQModeToggle(this.value)\"><option value=\"simple\"" + (CAT_NEW_QMODE === "simple" ? " selected" : "") + ">Une qualité</option><option value=\"multi\"" + (CAT_NEW_QMODE === "multi" ? " selected" : "") + ">Plusieurs qualités</option></select>";
+  const simpleBox = '<div id="cSimpleBox" style="display:' + (CAT_NEW_QMODE === "multi" ? "none" : "block") + '"><div class="two" style="margin-top:8px"><div><label>Prix (€)</label><input id="cP" inputmode="decimal" placeholder="à définir"></div><div><label>Durée de réparation</label><input id="cD" placeholder="Ex. 1h"></div></div></div>';
+  const multiBox = '<div id="cMultiBox" style="display:' + (CAT_NEW_QMODE === "multi" ? "block" : "none") + '"><div id="cQualBox">' + catNewQualBlocHtml() + "</div></div>";
+  return '<div class="card" style="margin-top:10px"><div class="t">Ajouter une réparation</div>' + catNewPickerHtml() + (pretAAjouter ? natureFieldsHtml("c", "", "", "") + qmode + simpleBox + multiBox + '<button class="btn" style="margin-top:8px" onclick="addCat()">Ajouter</button><div class="err" id="cRErr"></div>' : '<p class="m" style="margin-top:8px">Choisis d’abord l’appareil, la marque et le modèle concernés.</p>') + "</div>";
 }
 async function addCat() {
   const err = $("cRErr");
   err.textContent = "";
   const n = natureCollecter("c", err, CAT_NEW.mod);
   if (!n) return;
-  const hasQual = CAT_NEW_QUAL.length > 0;
-  const du = $("cD").value.trim();
-  let pr = null;
+  const hasQual = CAT_NEW_QMODE === "multi";
+  let pr = null, du = "";
   if (hasQual) {
+    if (!CAT_NEW_QUAL.length) {
+      err.textContent = "Ajoute au moins une qualité, ou repasse en « Une qualité ».";
+      return;
+    }
     pr = catQualMin(CAT_NEW_QUAL);
   } else {
+    du = $("cD").value.trim();
     const raw = $("cP").value.trim().replace(",", ".");
     if (raw !== "" && raw !== "devis" && (isNaN(+raw) || +raw < 0)) {
       err.textContent = "Prix invalide.";
@@ -12108,6 +12134,7 @@ async function addCat() {
   }
   CAT_NEW_QUAL = [];
   CAT_NEW_QUAL_ADD = false;
+  CAT_NEW_QMODE = "simple";
   toast("Réparation ajoutée");
   await reload();
 }
