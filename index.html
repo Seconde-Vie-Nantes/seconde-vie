@@ -14774,9 +14774,16 @@ function stkImportCsv(input) {
   input.value = "";
 }
 function parseCommandeCsv(text) {
+  if (text.charCodeAt(0) === 0xfeff) text = text.slice(1);
   const lines = text.split(/\r\n|\n|\r/).map((l) => l.trim()).filter(Boolean);
   if (!lines.length) return [];
-  const sep = lines[0].indexOf(";") > -1 ? ";" : ",";
+  const compte = (l, s) => l.split(s).length - 1;
+  const candidats = [";", ",", "\t"];
+  let sep = ";", meilleur = -1;
+  candidats.forEach((s) => {
+    const n = compte(lines[0], s);
+    if (n > meilleur) { meilleur = n; sep = s; }
+  });
   const splitRow = (l) => {
     const out = [];
     let cur = "", inQ = false;
@@ -14798,7 +14805,8 @@ function parseCommandeCsv(text) {
     const sku = (c[0] || "").trim();
     if (!sku) continue;
     const nom = (c[1] || "").trim();
-    const qte = parseInt(String(c[2] || "0").replace(",", "."), 10) || 0;
+    const qteBrute = c[2] === undefined || c[2] === "" ? "1" : c[2];
+    const qte = parseInt(String(qteBrute).replace(",", "."), 10) || 0;
     const pu = parseFloat(String(c[3] || "0").replace(",", ".")) || 0;
     if (qte > 0) out.push({ sku, nom, qte, pu });
   }
