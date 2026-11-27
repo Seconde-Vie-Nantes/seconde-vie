@@ -11629,8 +11629,65 @@ function catResetFiltres() {
 }
 function catAddToggle() {
   CAT_ADD_OPEN = !CAT_ADD_OPEN;
-  if (CAT_ADD_OPEN) CAT_NEW = { app: CAT.app || "", cat: CAT.cat || "", gam: CAT.gam || "", mod: CAT.mod || "" };
+  if (CAT_ADD_OPEN) {
+    CAT_NEW = { app: CAT.app || "", cat: CAT.cat || "", gam: CAT.gam || "", mod: CAT.mod || "" };
+    CAT_NEW_QUAL = [];
+    CAT_NEW_QUAL_ADD = false;
+  }
   render();
+}
+var CAT_NEW_QUAL = [], CAT_NEW_QUAL_ADD = false;
+function catNewQualRefresh() {
+  const box = $("cQualBox");
+  if (!box) {
+    render();
+    return;
+  }
+  box.innerHTML = catNewQualBlocHtml();
+  const px = $("cPrixBox");
+  if (px) px.innerHTML = catNewPrixHtml();
+}
+function catNewQualAddToggle() {
+  CAT_NEW_QUAL_ADD = !CAT_NEW_QUAL_ADD;
+  catNewQualRefresh();
+}
+function catNewQualAjouterForm() {
+  return '<div class="card" style="margin-top:6px;padding:10px 12px"><label>Nom de la qualité</label><input id="cQl" placeholder="Ex. LCD, OLED, Reconditionné"><label>Prix (€)</label><input id="cQp" inputmode="decimal" placeholder="0"><label>Pièce liée</label><input list="cQDl" id="cQs" placeholder="Nom ou SKU…"><datalist id="cQDl">' + (S.stock || []).map((s) => '<option value="' + esc(s.nom + " (SKU " + s.sku + ")") + '">').join("") + '</datalist><div style="display:flex;gap:8px;margin-top:8px"><button class="btn" onclick="catNewQualAjouter()">Ajouter</button><button class="btn ghost" onclick="catNewQualAddToggle()">Annuler</button></div><div class="err" id="cQErr"></div></div>';
+}
+function catNewQualAjouter() {
+  const err = $("cQErr");
+  err.textContent = "";
+  const label = $("cQl").value.trim();
+  const prixRaw = $("cQp").value.trim().replace(",", ".");
+  const skuVal = $("cQs").value.trim();
+  const m = /\(SKU (.+)\)\s*$/.exec(skuVal);
+  if (!label) {
+    err.textContent = "Donne un nom à cette qualité.";
+    return;
+  }
+  if (prixRaw === "" || isNaN(+prixRaw) || +prixRaw < 0) {
+    err.textContent = "Prix invalide.";
+    return;
+  }
+  if (!m) {
+    err.textContent = "Choisis une pièce dans la liste.";
+    return;
+  }
+  CAT_NEW_QUAL.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), label, prix: prixRaw, sku: m[1] });
+  CAT_NEW_QUAL_ADD = false;
+  catNewQualRefresh();
+}
+function catNewQualSupprimer(qid) {
+  CAT_NEW_QUAL = CAT_NEW_QUAL.filter((q) => q.id !== qid);
+  catNewQualRefresh();
+}
+function catNewQualBlocHtml() {
+  const sorted = CAT_NEW_QUAL.slice().sort((a, b) => (parseFloat(a.prix) || 0) - (parseFloat(b.prix) || 0));
+  const ligne = (q) => {
+    const s = (S.stock || []).find((x) => x.sku === q.sku);
+    return '<div class="card" style="margin:6px 0;padding:10px 12px"><div class="row" style="align-items:center"><div style="flex:1;min-width:0"><div class="t" style="font-size:14px">' + esc(q.label) + " · " + eur(q.prix) + '</div><div class="m">' + esc(s ? s.nom : q.sku) + ' · <span class="code">' + esc(q.sku) + '</span></div></div><button class="btn ghost sq" title="Retirer cette qualité" aria-label="Retirer cette qualité" style="color:var(--bad);border-color:var(--bad)" onclick="catNewQualSupprimer(\'' + q.id + "')\">" + ICON_TRASH + "</button></div></div>";
+  };
+  return '<div style="margin-top:12px"><label>Qualités de pièce (facultatif — sinon prix et pièce uniques ci-dessus)</label>' + (sorted.length ? sorted.map(ligne).join("") : '<p class="m">Aucune qualité ajoutée.</p>') + (CAT_NEW_QUAL_ADD ? catNewQualAjouterForm() : '<button class="chip" style="margin-top:6px" onclick="catNewQualAddToggle()">+ Ajouter une qualité</button>') + "</div>";
 }
 function setCatNew(k, v) {
   CAT_NEW[k] = v;
@@ -12018,25 +12075,39 @@ function natureCollecter(prefix, err, modele) {
   }
   return { nat, ty, titre, rep: nat + " " + (titre ? titre.toLowerCase() : ty.toLowerCase()) + (modele ? " " + modele : "") };
 }
+function catNewPrixHtml() {
+  const hasQual = CAT_NEW_QUAL.length > 0;
+  return hasQual ? '<label>Prix (€)</label><input value="' + esc(catQualMin(CAT_NEW_QUAL) == null ? "" : catQualMin(CAT_NEW_QUAL)) + '" placeholder="calculé depuis les qualités" disabled>' : '<label>Prix (€)</label><input id="cP" inputmode="decimal" placeholder="à définir">';
+}
 function addCatForm() {
   const pretAAjouter = CAT_NEW.app && CAT_NEW.cat && CAT_NEW.mod;
-  return '<div class="card" style="margin-top:10px"><div class="t">Ajouter une réparation</div>' + catNewPickerHtml() + (pretAAjouter ? natureFieldsHtml("c", "", "", "") + '<div class="two" style="margin-top:8px"><div><label>Prix (€)</label><input id="cP" inputmode="decimal" placeholder="à définir"></div><div><label>Durée de réparation</label><input id="cD" placeholder="Ex. 1h"></div></div><button class="btn" style="margin-top:8px" onclick="addCat()">Ajouter</button><div class="err" id="cRErr"></div>' : '<p class="m" style="margin-top:8px">Choisis d’abord l’appareil, la marque et le modèle concernés.</p>') + "</div>";
+  return '<div class="card" style="margin-top:10px"><div class="t">Ajouter une réparation</div>' + catNewPickerHtml() + (pretAAjouter ? natureFieldsHtml("c", "", "", "") + '<div class="two" style="margin-top:8px"><div id="cPrixBox">' + catNewPrixHtml() + '</div><div><label>Durée de réparation</label><input id="cD" placeholder="Ex. 1h"></div></div><div id="cQualBox">' + catNewQualBlocHtml() + '</div><button class="btn" style="margin-top:8px" onclick="addCat()">Ajouter</button><div class="err" id="cRErr"></div>' : '<p class="m" style="margin-top:8px">Choisis d’abord l’appareil, la marque et le modèle concernés.</p>') + "</div>";
 }
 async function addCat() {
   const err = $("cRErr");
   err.textContent = "";
   const n = natureCollecter("c", err, CAT_NEW.mod);
   if (!n) return;
-  const pr = $("cP").value.trim().replace(",", "."), du = $("cD").value.trim();
-  if (pr !== "" && pr !== "devis" && (isNaN(+pr) || +pr < 0)) {
-    err.textContent = "Prix invalide.";
-    return;
+  const hasQual = CAT_NEW_QUAL.length > 0;
+  const du = $("cD").value.trim();
+  let pr = null;
+  if (hasQual) {
+    pr = catQualMin(CAT_NEW_QUAL);
+  } else {
+    const raw = $("cP").value.trim().replace(",", ".");
+    if (raw !== "" && raw !== "devis" && (isNaN(+raw) || +raw < 0)) {
+      err.textContent = "Prix invalide.";
+      return;
+    }
+    pr = raw === "" ? null : raw;
   }
-  const { error } = await SB.from("catalogue").insert({ appareil: CAT_NEW.app, categorie: CAT_NEW.cat, modele: CAT_NEW.mod, reparation: n.rep, prix: pr === "" ? null : pr, duree: durNorm(du), joy: false, type_rep: n.ty || null, nature: n.nat, titre: n.titre || null });
+  const { error } = await SB.from("catalogue").insert({ appareil: CAT_NEW.app, categorie: CAT_NEW.cat, modele: CAT_NEW.mod, reparation: n.rep, prix: pr, duree: durNorm(du), joy: false, type_rep: n.ty || null, nature: n.nat, titre: n.titre || null, qualites: hasQual ? CAT_NEW_QUAL : null });
   if (error) {
     err.textContent = msgErr(error);
     return;
   }
+  CAT_NEW_QUAL = [];
+  CAT_NEW_QUAL_ADD = false;
   toast("Réparation ajoutée");
   await reload();
 }
