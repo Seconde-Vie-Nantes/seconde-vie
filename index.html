@@ -6329,7 +6329,7 @@ function pstOpts(p) {
 }
 const PUCES = [["Puce Switch V1", "Switch V1"], ["Puce Switch V2", "Switch V2"], ["Puce Switch Lite", "Switch Lite"], ["Puce Switch OLED", "Switch OLED"]];
 const GMAPS_KEY = "";
-const REP_NAV = [["accueil", "Accueil"], ["dashboard", "Tableau de bord"], ["clients", "Clients"], ["depenses", "Dépenses"], ["dossiers", "Réparations et ventes"], ["appareils", "Appareils"], ["ventes", "Ventes"], ["stock", "Stock"], ["catalogue", "Nos prestations"], ["agenda", "Agenda"], ["qualirepar", "Qualirépar"], ["new", "Nouvelle prestation"], ["newvente", "Nouvelle vente"], ["avisClients", "Avis clients"]];
+const REP_NAV = [["accueil", "Accueil"], ["dashboard", "Tableau de bord"], ["clients", "Clients"], ["depenses", "Dépenses"], ["dossiers", "Réparations et ventes"], ["appareils", "Appareils"], ["stock", "Stock"], ["catalogue", "Nos prestations"], ["ventes", "Ventes"], ["agenda", "Agenda"], ["qualirepar", "Qualirépar"], ["new", "Nouvelle prestation"], ["newvente", "Nouvelle vente"], ["avisClients", "Avis clients"]];
 const REP_NAV_AVIS = ["avis", "Suggestions & Bugs"];
 const REP_NAV_DBADMIN = ["dbadmin", "Bases de données"];
 const REP_NAV_ALL = REP_NAV.concat([REP_NAV_AVIS, REP_NAV_DBADMIN]);
@@ -6867,7 +6867,8 @@ function render() {
     nav.classList.remove("hide");
     const __navTop = nav.scrollTop, __navLeft = nav.scrollLeft;
     const navBtn = ([v, l]) => `<button class="${VIEW === v ? "on" : ""}" onclick="go('${v}')">${l}</button>`;
-    nav.innerHTML = REP_NAV.filter(([v]) => v !== "ventes").map(navBtn).join("") + '<div class="nav-sep" aria-hidden="true"></div>' + REP_NAV.filter(([v]) => v === "ventes").map(navBtn).join("") + navOutils() + outilsInlineHtml() + navBtn(REP_NAV_DBADMIN) + '<a class="nav-ecran" href="reparations-en-cours.html" target="_blank" rel="noopener">Réparations en cours ↗</a><button class="nav-copy" title="Copie toutes les suggestions et bugs non archivés" onclick="copierRecapNonArchive()">Copier le récap</button>' + navBtn(REP_NAV_AVIS) + '<button class="nav-logout" onclick="logout()">Déconnexion</button>';
+    const REP_NAV_GROUPE_BAS = ["agenda", "qualirepar", "new", "newvente", "avisClients"];
+    nav.innerHTML = REP_NAV.filter(([v]) => !REP_NAV_GROUPE_BAS.includes(v)).map(navBtn).join("") + '<div class="nav-sep" aria-hidden="true"></div>' + REP_NAV.filter(([v]) => REP_NAV_GROUPE_BAS.includes(v)).map(navBtn).join("") + navOutils() + outilsInlineHtml() + navBtn(REP_NAV_DBADMIN) + '<a class="nav-ecran" href="reparations-en-cours.html" target="_blank" rel="noopener">Réparations en cours ↗</a><button class="nav-copy" title="Copie toutes les suggestions et bugs non archivés" onclick="copierRecapNonArchive()">Copier le récap</button>' + navBtn(REP_NAV_AVIS) + '<button class="nav-logout" onclick="logout()">Déconnexion</button>';
     nav.scrollTop = __navTop;
     nav.scrollLeft = __navLeft;
     /* L'en-tête (logo) est gardé tel quel d'une page à l'autre : on ne remplace que le contenu en dessous, sinon le haut de la page saute à chaque clic */
