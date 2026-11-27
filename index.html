@@ -7430,12 +7430,33 @@ async function updateDepense(id) {
 function depEntete() {
   return '<h2 style="margin:0;' + (DEP_OPEN ? "margin-bottom:10px;" : "") + '"><button type="button" class="dep-tog" aria-expanded="' + (DEP_OPEN ? "true" : "false") + '" onclick="depToggle()" style="background:none;border:0;padding:0;color:inherit;font:inherit;text-align:left;cursor:pointer;width:100%;display:flex;justify-content:space-between;align-items:center;gap:8px">Nouvelle dépense <span aria-hidden="true" style="color:var(--mut)">' + (DEP_OPEN ? "▴" : "▾") + "</span></button></h2>";
 }
+var DEP_F = { cat: "", from: "", to: "" }, DEP_SORT = "recent";
+function depSet(k, v) {
+  DEP_F[k] = v;
+  render();
+}
+function depSortSet(v) {
+  DEP_SORT = v;
+  render();
+}
+function depResetFiltres() {
+  DEP_F = { cat: "", from: "", to: "" };
+  DEP_SORT = "recent";
+  render();
+}
 function depensesPage() {
   const cur = todayIso().slice(0, 7);
   const cats = ["Pièces", "Outillage", "Loyer", "Transport", "Fournitures", "Accessoire", "Protection", "Autre"];
-  const list = (S.depenses || []).slice().sort((a, b) => String(b.date).localeCompare(String(a.date)));
+  const all = (S.depenses || []).slice();
+  const depTris = {
+    recent: (a, b) => String(b.date).localeCompare(String(a.date)),
+    ancien: (a, b) => String(a.date).localeCompare(String(b.date)),
+    montant_desc: (a, b) => (+b.montant || 0) - (+a.montant || 0),
+    montant_asc: (a, b) => (+a.montant || 0) - (+b.montant || 0)
+  };
+  const list = all.filter((x) => (!DEP_F.cat || x.categorie === DEP_F.cat) && (!DEP_F.from || String(x.date) >= DEP_F.from) && (!DEP_F.to || String(x.date) <= DEP_F.to)).sort(depTris[DEP_SORT] || depTris.recent);
   const sumT = (arr) => arr.reduce((t, x) => t + (+x.montant || 0), 0);
-  const moisList = list.filter((x) => String(x.date).slice(0, 7) === cur);
+  const moisList = all.filter((x) => String(x.date).slice(0, 7) === cur);
   const bloc = (label, ttc) => '<div class="card"><div class="m">' + label + '</div><div class="t" style="font-size:22px">' + eur(ttc) + ' TTC</div><div class="m">' + eur(htOf(ttc)) + " HT</div></div>";
   const rowEdit = (x) => '<div class="card"><label>Date</label><div class="date-wrap"><input id="edDate" type="date" value="' + esc(x.date || todayIso()) + `"><button type="button" class="date-x" title="Effacer" onclick="dateClear('edDate')">×</button></div><div class="two"><div><label>Montant HT (€)</label><input id="edHT" inputmode="decimal" placeholder="0" value="` + htOf(x.montant) + `" oninput="depCalc('ht','ed')"></div><div><label>Montant TTC (€) · TVA 20 %</label><input id="edTTC" inputmode="decimal" placeholder="0" value="` + (+x.montant || 0) + `" oninput="depCalc('ttc','ed')"></div></div><label>Libellé</label><input id="edLib" value="` + esc(x.libelle) + `"><label>Catégorie</label><select id="edCat">` + cats.map((c) => "<option" + (c === x.categorie ? " selected" : "") + ">" + c + "</option>").join("") + '</select><div id="edErr" class="err"></div><div style="display:flex;gap:8px"><button class="btn" onclick="updateDepense(\'' + x.id + "')\">Enregistrer</button><button class=\"btn ghost\" onclick=\"DEP_EDIT=null;render()\">Annuler</button></div></div>";
   const factureBtn = (x) => x.facture_path ? '<button class="btn ghost sq" title="Voir la facture" aria-label="Voir la facture" onclick="openFacture(\'' + esc(facturePublicUrl(x.facture_path)) + '\')">' + ICON_DOC + "</button>" : "";
@@ -7443,7 +7464,8 @@ function depensesPage() {
   const rows = list.length ? list.map((x) => DEP_EDIT === x.id ? rowEdit(x) : rowView(x)).join("") : '<p class="m">Aucune dépense enregistrée.</p>';
   const retour = VIEW === "dashpage" ? '<div style="margin:4px 0 10px"><button class="btn small ghost" onclick="go(\'dashboard\')">← Tableau de bord</button></div>' : "";
   const pdfBtn = '<label class="btn ghost small" title="Importer une facture (.pdf)" style="cursor:pointer;position:relative;display:inline-flex;margin-top:10px">' + (DEP_PDF_BUSY ? "Lecture…" : "Importer une facture (.pdf)") + (DEP_PDF_BUSY ? "" : '<input type="file" accept="application/pdf" onchange="depImportPdf(this)" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none">') + "</label>";
-  return retour + `<h1>Dépenses</h1><div class="two" style="margin-bottom:10px">` + bloc("Ce mois", sumT(moisList)) + bloc("Total", sumT(list)) + '</div>' + (DEP_PDF_PREVIEW ? depPdfPreviewHtml() : "") + '<div class="card">' + depEntete() + (DEP_OPEN ? '<label>Date</label><div class="date-wrap"><input id="depDate" type="date" value="' + todayIso() + `"><button type="button" class="date-x" title="Effacer" onclick="dateClear('depDate')">×</button></div><div class="two"><div><label>Montant HT (€)</label><input id="depHT" inputmode="decimal" placeholder="0" oninput="depCalc('ht')"></div><div><label>Montant TTC (€) · TVA 20 %</label><input id="depTTC" inputmode="decimal" placeholder="0" oninput="depCalc('ttc')"></div></div><label>Libellé</label><input id="depLib" placeholder="Ex. Écran PS5 fournisseur"><label>Catégorie</label><select id="depCat">` + cats.map((c) => "<option>" + c + "</option>").join("") + '</select><div id="depErr" class="err"></div><button class="btn" onclick="addDepense()">Ajouter la dépense</button>' : "") + pdfBtn + '</div><h2>Historique</h2>' + rows;
+  const filtres = '<div style="display:flex;gap:8px;align-items:center;margin-top:10px"><button class="btn ghost sq" title="Supprimer les filtres" aria-label="Supprimer les filtres" onclick="depResetFiltres()">' + ICON_FILTER + '</button><div class="stk-filt" style="margin:0;flex:1"><select onchange="depSet(\'cat\',this.value)">' + selOpts([["", "Toutes catégories"]].concat(cats.map((c) => [c, c])), DEP_F.cat) + '</select><div class="date-wrap"><input type="date" value="' + esc(DEP_F.from) + '" onchange="depSet(\'from\',this.value)" placeholder="Du"><button type="button" class="date-x" title="Effacer" onclick="depSet(\'from\',\'\')">×</button></div><div class="date-wrap"><input type="date" value="' + esc(DEP_F.to) + '" onchange="depSet(\'to\',this.value)" placeholder="Au"><button type="button" class="date-x" title="Effacer" onclick="depSet(\'to\',\'\')">×</button></div><select onchange="depSortSet(this.value)">' + selOpts([["recent", "Trier : plus récentes"], ["ancien", "Trier : plus anciennes"], ["montant_desc", "Trier : montant décroissant"], ["montant_asc", "Trier : montant croissant"]], DEP_SORT) + "</select></div></div>";
+  return retour + `<h1>Dépenses</h1><div class="two" style="margin-bottom:10px">` + bloc("Ce mois", sumT(moisList)) + bloc("Total", sumT(all)) + '</div>' + (DEP_PDF_PREVIEW ? depPdfPreviewHtml() : "") + '<div class="card">' + depEntete() + (DEP_OPEN ? '<label>Date</label><div class="date-wrap"><input id="depDate" type="date" value="' + todayIso() + `"><button type="button" class="date-x" title="Effacer" onclick="dateClear('depDate')">×</button></div><div class="two"><div><label>Montant HT (€)</label><input id="depHT" inputmode="decimal" placeholder="0" oninput="depCalc('ht')"></div><div><label>Montant TTC (€) · TVA 20 %</label><input id="depTTC" inputmode="decimal" placeholder="0" oninput="depCalc('ttc')"></div></div><label>Libellé</label><input id="depLib" placeholder="Ex. Écran PS5 fournisseur"><label>Catégorie</label><select id="depCat">` + cats.map((c) => "<option>" + c + "</option>").join("") + '</select><div id="depErr" class="err"></div><button class="btn" onclick="addDepense()">Ajouter la dépense</button>' : "") + pdfBtn + "</div>" + filtres + '<h2 style="margin-top:14px">Historique</h2>' + rows;
 }
 async function addDepense() {
   const err = $("depErr");
