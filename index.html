@@ -519,29 +519,47 @@ body:not(.rep-nav).lg .app{margin-left:auto !important;margin-right:auto !import
 .rep-tab:not(.head):hover{background:#f3f6f4}
 .rep-tab > div[data-l]::before{content:attr(data-l);display:none}
 @media (max-width:899px){ .rep-tab{grid-template-columns:1fr 1fr;gap:8px 12px} .rep-tab.head{display:none} .rep-tab > div[data-l]::before{display:block;font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.04em} }
-/* Agenda */
-.ag-barre{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin:8px 0}
-.ag-cadre{border:1px solid var(--line);border-radius:14px;overflow-x:auto;background:var(--surf)}
+/* Agenda — repris du style visuel de Google Agenda (grille, couleurs, typo) */
+.ag-barre{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin:14px 0}
+.ag-nav{display:flex;gap:2px;align-items:center}
+.ag-nav-btn{width:36px;height:36px;border-radius:50%;border:0;background:transparent;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:#3c4043;font-size:18px;padding:0;margin:0}
+.ag-nav-btn:hover{background:#f1f3f4}
+.ag-today-btn{border:1px solid #dadce0;background:#fff;color:#3c4043;border-radius:4px;padding:8px 14px;font-size:14px;font-weight:500;cursor:pointer;width:auto;margin:0}
+.ag-today-btn:hover{background:#f1f3f4}
+.ag-titre{font-size:20px;color:#3c4043;font-weight:400;margin-left:6px}
+.ag-switch{display:flex;border:1px solid #dadce0;border-radius:4px;overflow:hidden}
+.ag-switch button{border:0;border-right:1px solid #dadce0;background:#fff;color:#3c4043;padding:8px 16px;font-size:14px;cursor:pointer;width:auto;margin:0}
+.ag-switch button:last-child{border-right:0}
+.ag-switch button.ag-actif{background:#e8f0fe;color:#1a73e8;font-weight:500}
+.ag-creer{background:#1a73e8;color:#fff;border:0;border-radius:999px;padding:10px 20px;font-size:14px;font-weight:500;cursor:pointer;width:auto;margin:0;box-shadow:0 1px 3px rgba(60,64,67,.3)}
+.ag-creer:hover{background:#1765cc}
+.ag-cadre{border:1px solid #dadce0;border-radius:8px;overflow-x:auto;background:#fff}
 .ag-entetes,.ag-mois{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
-.ag-entetes div{font-size:12px;color:var(--mut);text-align:center;padding:8px 0;font-weight:600;border-bottom:1px solid var(--line)}
-.ag-case{min-height:92px;min-width:0;overflow:hidden;padding:4px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);cursor:pointer}
+.ag-entetes div{font-size:11px;color:#70757a;text-align:center;padding:10px 0;font-weight:500;text-transform:uppercase;letter-spacing:.3px;border-bottom:1px solid #dadce0}
+.ag-case{min-height:100px;min-width:0;overflow:hidden;padding:6px;border-right:1px solid #e8eaed;border-bottom:1px solid #e8eaed;cursor:pointer;background:#fff}
+.ag-case:hover{background:#f8f9fa}
 .ag-case:nth-child(7n){border-right:0}
-.ag-autre{opacity:.45}
-.ag-num{font-size:12px;font-weight:600;margin-bottom:3px;display:inline-block;min-width:22px;text-align:center}
-.ag-auj .ag-num{background:var(--brand);color:#fff;border-radius:999px;padding:0 6px}
-.ag-ev{font-size:11px;line-height:1.35;padding:1px 5px;border-radius:5px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;color:#fff}
-.ag-rep{background:var(--brand)}
-.ag-ext{background:#8a9b93}
-.ag-plus{font-size:11px;color:var(--mut)}
-.ag-sem{display:grid;grid-template-columns:56px repeat(7,minmax(90px,1fr));min-width:700px}
-.ag-hd{font-size:12px;font-weight:600;text-align:center;padding:8px 0;border-bottom:1px solid var(--line);border-left:1px solid var(--line)}
-.ag-hlab{font-size:11px;color:var(--mut);padding:4px 6px;text-align:right}
-.ag-toute-c{min-height:26px;padding:2px;border-bottom:1px solid var(--line);border-left:1px solid var(--line)}
-.ag-heures div{height:48px;font-size:11px;color:var(--mut);text-align:right;padding-right:6px;box-sizing:border-box;transform:translateY(-7px)}
-.ag-jcol{position:relative;border-left:1px solid var(--line);background:repeating-linear-gradient(to bottom,transparent 0,transparent 47px,var(--line) 47px,var(--line) 48px);cursor:pointer}
-.ag-blk{position:absolute;font-size:11px;line-height:1.3;color:#fff;border-radius:6px;padding:2px 5px;overflow:hidden;cursor:pointer;box-sizing:border-box}
+.ag-autre{background:#fafafa}
+.ag-autre .ag-num{color:#70757a}
+.ag-num{font-size:12px;color:#3c4043;font-weight:400;margin-bottom:4px;display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px}
+.ag-auj .ag-num{background:#1a73e8;color:#fff;border-radius:50%;font-weight:500}
+.ag-ev{font-size:12px;line-height:1.5;padding:1px 6px;border-radius:4px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;color:#fff}
+.ag-rep{background:#1a73e8}
+.ag-ext{background:#616161}
+.ag-plus{font-size:11px;color:#1a73e8;padding-left:2px;cursor:pointer}
+.ag-plus:hover{text-decoration:underline}
+.ag-sem{display:grid;grid-template-columns:56px repeat(7,minmax(90px,1fr));min-width:700px;background:#fff}
+.ag-hd{font-size:11px;font-weight:500;text-align:center;padding:10px 0;border-bottom:1px solid #dadce0;border-left:1px solid #e8eaed;color:#70757a;text-transform:uppercase}
+.ag-hd.ag-auj{color:#1a73e8;font-weight:700}
+.ag-hlab{font-size:10px;color:#70757a;padding:4px 6px;text-align:right}
+.ag-toute-c{min-height:26px;padding:2px;border-bottom:1px solid #dadce0;border-left:1px solid #e8eaed}
+.ag-heures div{height:48px;font-size:10px;color:#70757a;text-align:right;padding-right:8px;box-sizing:border-box;transform:translateY(-7px)}
+.ag-jcol{position:relative;border-left:1px solid #e8eaed;background:repeating-linear-gradient(to bottom,transparent 0,transparent 47px,#e8eaed 47px,#e8eaed 48px);cursor:pointer}
+.ag-blk{position:absolute;font-size:12px;line-height:1.35;color:#fff;border-radius:4px;padding:3px 6px;overflow:hidden;cursor:pointer;box-sizing:border-box;box-shadow:0 1px 2px rgba(60,64,67,.3)}
+.ag-now{position:absolute;left:0;right:0;border-top:2px solid #ea4335;z-index:5;pointer-events:none}
+.ag-now::before{content:"";position:absolute;left:-5px;top:-4px;width:9px;height:9px;border-radius:50%;background:#ea4335}
 .ag-form{margin:8px 0 12px}
-.ag-barre .btn,.ag-statbar .btn,.ag-form .btn{width:auto;margin-top:0;padding:10px 16px}
+.ag-statbar .btn,.ag-form .btn{width:auto;margin-top:0;padding:10px 16px}
 .sg-lbl{display:flex;align-items:center;gap:10px;margin:12px 0 0;font-size:14px;font-weight:500;cursor:pointer}
 .sg-case{width:18px;height:18px;min-width:18px;margin:0;padding:0;flex:0 0 18px;border-radius:4px;accent-color:var(--brand);cursor:pointer}
 .date-wrap{position:relative;display:inline-block;width:100%}
@@ -8269,6 +8287,10 @@ function agSemaineHtml() {
       const top = (b.s - AG_H0 * 60) / 60 * AG_PAS, haut = Math.max(18, (b.f - b.s) / 60 * AG_PAS - 2);
       blocs += '<div class="ag-blk ' + (b.e.modif ? "ag-rep" : "ag-ext") + '" title="' + esc(b.e.titre) + '" style="top:' + top + "px;height:" + haut + "px;left:" + b.c * 100 / b.n + "%;width:" + 100 / b.n + '%" onclick="event.stopPropagation();agEditer(' + b.e.k + ')">' + agHm(b.e.debut) + " " + esc(b.e.titre) + "</div>";
     });
+    if (iso === auj) {
+      const maintenant = (/* @__PURE__ */ new Date()).getHours() * 60 + (/* @__PURE__ */ new Date()).getMinutes();
+      if (maintenant >= AG_H0 * 60 && maintenant <= AG_H1 * 60) blocs += '<div class="ag-now" style="top:' + (maintenant - AG_H0 * 60) / 60 * AG_PAS + 'px"></div>';
+    }
     colonnes += '<div class="ag-jcol" style="height:' + (AG_H1 - AG_H0) * AG_PAS + 'px" onclick="agClicCol(event,\'' + iso + '\')">' + blocs + "</div>";
   }
   return '<div class="ag-sem"><div></div>' + entetes + '<div class="ag-hlab">Journée</div>' + journee + '<div class="ag-heures">' + heures + "</div>" + colonnes + "</div>";
@@ -8450,8 +8472,8 @@ function agVue() {
       '</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" onclick="agRafraichir(true)">Actualiser</button><button class="btn ghost" onclick="agConnecter()">Reconnecter</button><button class="btn ghost" onclick="agDeconnecter()">Déconnecter</button></div></div>';
   }
   if (conf && connecte) {
-    h += '<div class="ag-barre"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><button class="btn ghost" onclick="agNav(-1)" aria-label="Précédent">‹</button><button class="btn ghost" onclick="agAujourdhui()">Aujourd’hui</button><button class="btn ghost" onclick="agNav(1)" aria-label="Suivant">›</button><span class="t" style="margin-left:6px">' + esc(titre) + '</span></div>' +
-      '<div style="display:flex;gap:6px;align-items:center"><button class="btn' + (AG.vue === "mois" ? "" : " ghost") + '" onclick="agVueMode(\'mois\')">Mois</button><button class="btn' + (AG.vue === "semaine" ? "" : " ghost") + '" onclick="agVueMode(\'semaine\')">Semaine</button><button class="btn" onclick="agNouveau(agIso(AG.jour),540)">+ Rendez-vous</button></div></div>';
+    h += '<div class="ag-barre"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="ag-today-btn" onclick="agAujourdhui()">Aujourd’hui</button><div class="ag-nav"><button class="ag-nav-btn" onclick="agNav(-1)" aria-label="Précédent">‹</button><button class="ag-nav-btn" onclick="agNav(1)" aria-label="Suivant">›</button></div><span class="ag-titre">' + esc(titre) + '</span></div>' +
+      '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><div class="ag-switch"><button class="' + (AG.vue === "mois" ? "ag-actif" : "") + '" onclick="agVueMode(\'mois\')">Mois</button><button class="' + (AG.vue === "semaine" ? "ag-actif" : "") + '" onclick="agVueMode(\'semaine\')">Semaine</button></div><button class="ag-creer" onclick="agNouveau(agIso(AG.jour),540)">+ Créer</button></div></div>';
     h += agFormHtml() + agLectureHtml();
     h += '<div id="agGrille" class="ag-cadre">' + agGrilleHtml() + "</div>";
   }
